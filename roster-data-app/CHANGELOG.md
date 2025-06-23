@@ -1,5 +1,27 @@
 # Changelog - Manual Entry Data Collection App
 
+## Version 2.4.1 - Enhanced Email Subject & User Documentation (June 22, 2025)
+
+### 📧 **Email Export Improvements**
+
+#### Enhanced Subject Line
+- **Descriptive email subject** - Now includes "Results for [Event Name] and [Operator Name]"
+- **Consistent across sharing methods** - Both Web Share API and mailto use the same subject format
+- **Professional formatting** - Clear identification of what the email contains and who sent it
+
+#### User Documentation
+- **Comprehensive USER_GUIDE.md** - Complete guide for end users and testers
+- **Step-by-step instructions** - From roster upload to data export
+- **Icon explanations** - Clear descriptions of all app icons and buttons
+- **Email attachment process** - Detailed instructions for downloading and attaching files
+- **Troubleshooting section** - Common issues and solutions
+- **Testing guidance** - Specific instructions for user acceptance testing
+
+### 🎯 **User Experience**
+- **Clear email identification** - Recipients immediately know the event and operator
+- **Better email organization** - Easier to sort and find specific test results
+- **Complete documentation** - Users have all information needed for successful testing
+
 ## Version 2.4.0 - Separate Check-in System & Source Tracking (June 22, 2025)
 
 ### 👥 **New Check-in System**
