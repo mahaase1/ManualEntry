@@ -1,5 +1,37 @@
 # Changelog - Manual Entry Data Collection App
 
+## Version 2.1.0 - UI Streamlining & BAM Logo Integration (June 22, 2025)
+
+### 🎨 User Interface Improvements
+
+#### Start Page Removal
+- **Removed home screen** with large BAM logo and continue button
+- **Direct access** to data entry setup screen
+- **Streamlined workflow** - app starts immediately at the functional screen
+- **Faster user onboarding** - no extra clicks needed
+
+#### Header Logo Integration
+- **Small BAM logo** (32px) added to all page headers
+- **Consistent branding** across startup, main, and spreadsheet views
+- **Professional appearance** maintains brand identity without taking up screen space
+- **Responsive design** - logo scales appropriately on mobile devices
+
+#### New Measurements Added
+- **Vertical jump** measurement with metric/imperial units
+- **Approach jump** measurement with metric/imperial units  
+- **Broad jump** measurement with metric/imperial units
+- **Double-entry validation** for all new measurements
+- **Spreadsheet integration** - new columns in grid view
+- **CSV export support** - all measurements included in data export
+
+### 🔧 Technical Updates
+- **Removed unused CSS** for home screen styling and animations
+- **Updated JavaScript** to remove home screen navigation logic
+- **Enhanced responsive design** for header logos on mobile
+- **Cleaner codebase** with elimination of redundant screen management
+
+---
+
 ## Version 2.0.0 - Enhanced Export & File Management (June 22, 2025)
 
 ### 🚀 Major New Features
