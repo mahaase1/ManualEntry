@@ -321,7 +321,24 @@ class ManualEntryApp {
         document.getElementById('operator-name').addEventListener('input', this.validateStartup.bind(this));
         document.getElementById('event-name').addEventListener('input', this.validateStartup.bind(this));
         document.getElementById('roster-upload').addEventListener('change', this.handleRosterUpload.bind(this));
-        document.getElementById('setup-measurements').addEventListener('click', this.showSetupScreen.bind(this));
+        
+        // Enhanced setup button handling for iPad compatibility
+        const setupButton = document.getElementById('setup-measurements');
+        setupButton.addEventListener('click', this.showSetupScreen.bind(this));
+        setupButton.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            this.showSetupScreen();
+        });
+        
+        // Add visual feedback for touch devices
+        setupButton.addEventListener('touchstart', (e) => {
+            setupButton.style.backgroundColor = '#0056b3';
+        });
+        setupButton.addEventListener('touchend', (e) => {
+            setTimeout(() => {
+                setupButton.style.backgroundColor = '';
+            }, 150);
+        });
         
         // Setup screen events
         document.getElementById('back-to-startup').addEventListener('click', this.showStartupScreen.bind(this));
@@ -536,6 +553,23 @@ class ManualEntryApp {
             rosterFile: rosterFile ? rosterFile.name : 'No file',
             rosterLoaded: this.roster.length
         });
+        
+        // Show debug panel on iPad
+        if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
+            const debugPanel = document.getElementById('debug-panel');
+            const debugInfo = document.getElementById('debug-info');
+            if (debugPanel && debugInfo) {
+                debugPanel.style.display = 'block';
+                debugInfo.innerHTML = `
+                    <strong>iPad Debug v2.5.1:</strong><br>
+                    Operator: "${operatorName}" (${operatorName ? 'OK' : 'MISSING'})<br>
+                    Event: "${eventName}" (${eventName ? 'OK' : 'MISSING'})<br>
+                    File: ${rosterFile ? rosterFile.name : 'No file'}<br>
+                    Roster loaded: ${this.roster.length} people<br>
+                    Button validation: ${operatorName && eventName && (rosterFile || this.roster.length > 0) ? 'SHOULD BE ENABLED' : 'DISABLED'}
+                `;
+            }
+        }
         
         const setupButton = document.getElementById('setup-measurements');
         const isValid = operatorName && eventName && (rosterFile || this.roster.length > 0);
@@ -1735,18 +1769,31 @@ This email was generated automatically by the Manual Entry iPad app.`);
     }
 
     showSetupScreen() {
+        console.log('showSetupScreen called - iPad debug mode');
+        
         const operatorName = document.getElementById('operator-name').value.trim();
         const eventName = document.getElementById('event-name').value.trim();
         const hasRoster = this.roster.length > 0;
+        const rosterFile = document.getElementById('roster-upload').files[0];
+        
+        console.log('Setup screen validation:', {
+            operatorName: operatorName,
+            eventName: eventName,
+            hasRoster: hasRoster,
+            rosterFile: rosterFile ? rosterFile.name : 'No file',
+            userAgent: navigator.userAgent
+        });
         
         // Detailed validation with specific error messages
         if (!operatorName) {
+            console.log('Validation failed: Missing operator name');
             this.showToast('Please enter the operator name first', 'warning');
             document.getElementById('operator-name').focus();
             return;
         }
         
         if (!eventName) {
+            console.log('Validation failed: Missing event name');
             this.showToast('Please enter the event name first', 'warning');
             document.getElementById('event-name').focus();
             return;
@@ -1851,10 +1898,30 @@ This email was generated automatically by the Manual Entry iPad app.`);
     }
 }
 
-// Initialize app when DOM is loaded
+// Initialize app when DOM is loaded with iPad-specific debugging
 let app;
 document.addEventListener('DOMContentLoaded', () => {
-    app = new ManualEntryApp();
+    console.log('DOM loaded - initializing app on:', navigator.userAgent);
+    try {
+        app = new ManualEntryApp();
+        console.log('ManualEntryApp initialized successfully');
+        
+        // Additional iPad-specific initialization
+        if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
+            console.log('iPad/iOS device detected - applying touch optimizations');
+            
+            // Ensure button is properly enabled/disabled on load
+            setTimeout(() => {
+                if (app.validateStartup) {
+                    app.validateStartup();
+                    console.log('Validation run after iPad initialization');
+                }
+            }, 500);
+        }
+    } catch (error) {
+        console.error('Error initializing ManualEntryApp:', error);
+        alert('Error loading app: ' + error.message);
+    }
 });
 
 // Handle page visibility changes to save state

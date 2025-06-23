@@ -969,3 +969,27 @@ header {
     font-weight: normal;
     font-size: 14px;
 }
+
+/* iPad-specific button enhancements */
+#setup-measurements {
+    width: 100%;
+    margin-top: 20px;
+    touch-action: manipulation;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+    position: relative;
+    z-index: 1;
+}
+
+#setup-measurements:active {
+    transform: scale(0.98);
+    background: #004AA3 !important;
+}
+
+/* iOS Safari specific fixes */
+@supports (-webkit-touch-callout: none) {
+    #setup-measurements {
+        -webkit-tap-highlight-color: rgba(0, 122, 255, 0.3);
+    }
+}
