@@ -1,5 +1,81 @@
 # Changelog - Manual Entry Data Collection App
 
+## Version 2.4.0 - Separate Check-in System & Source Tracking (June 22, 2025)
+
+### 👥 **New Check-in System**
+
+#### Separate Check-in Interface
+- **Dedicated check-in section** - Separate interface for managing attendance independent of measurements
+- **Grid-based check-in** - Fast, visual grid layout for quick attendance marking
+- **Enhanced user experience** - Clear visual indicators for present/absent status
+- **Check-in button** - Easy access from roster view with dedicated 👥 Check-in button
+
+#### Edit Mode for Check-in
+- **Gender verification/editing** - Edit mode allows gender verification and correction during check-in
+- **Real-time updates** - Changes save immediately with activity logging
+- **Toggle edit mode** - Simple on/off toggle for edit functionality
+- **Visual feedback** - Clear UI changes when edit mode is active
+
+#### Source Tracking
+- **Roster vs Added tracking** - Every person marked as 'roster' (imported) or 'added' (manually added)
+- **Source badges** - Visual badges in check-in view showing origin (Roster/Added)
+- **CSV export with source** - Source column included in all CSV exports
+- **Complete audit trail** - Full tracking of data origin for compliance and verification
+
+### 🔧 **Measurement Form Improvements**
+
+#### Streamlined Measurement Interface
+- **Removed 'Present' checkbox** - Present status now managed exclusively in check-in section
+- **Focus on measurements** - Measurement form now purely for data collection
+- **Cleaner interface** - Simplified form layout without attendance concerns
+- **Better workflow** - Clear separation between check-in and measurement processes
+
+#### Enhanced Data Flow
+- **Check-in first workflow** - Natural flow from attendance to measurements
+- **Independent systems** - Check-in and measurements can be managed separately
+- **Flexible data collection** - Attendance can be marked without measurements and vice versa
+
+### 📊 **Enhanced Data Export**
+
+#### Comprehensive CSV Format
+- **Source column added** - All CSV exports now include 'Source' column (roster/added)
+- **Complete person tracking** - Full audit trail of how each person was added to the event
+- **Enhanced spreadsheet view** - Spreadsheet now displays Source column for easy verification
+- **Backward compatibility** - Existing data works seamlessly with new source tracking
+
+### 🎨 **UI/UX Improvements**
+
+#### New Check-in Interface
+- **Responsive grid layout** - Optimized for iPad with touch-friendly interactions
+- **Visual status indicators** - Clear ✓/○ indicators for attendance status
+- **Color-coded badges** - Different colors for Roster (blue) vs Added (green) sources
+- **Edit mode styling** - Clear visual changes when gender editing is enabled
+
+#### Enhanced Navigation
+- **New check-in button** - Easy access to attendance management
+- **Better section separation** - Clear distinction between roster, check-in, and measurements
+- **Improved workflow** - Natural progression through check-in to measurements
+
+### 🔧 **Technical Enhancements**
+
+#### New Functions Added
+- **`showCheckinSection()`** - Display check-in interface
+- **`toggleCheckinEditMode()`** - Toggle gender editing capability
+- **`renderCheckinGrid()`** - Generate check-in grid display
+- **`togglePersonPresence()`** - Handle attendance marking
+- **`updatePersonGender()`** - Manage gender updates in edit mode
+
+#### Data Structure Updates
+- **Source field addition** - All person objects now include source tracking
+- **Enhanced roster import** - Automatic source marking during CSV import
+- **Improved person creation** - Source tracking for manually added people
+
+#### CSS Framework
+- **Check-in section styles** - Complete styling framework for check-in interface
+- **Responsive design** - Mobile and tablet optimizations for check-in grid
+- **Badge styling** - Source indicator badges with proper color coding
+- **Edit mode indicators** - Visual feedback for edit mode activation
+
 ## Version 2.3.4 - Reset for New Event & Cache Clearing (June 22, 2025)
 
 ### 🔄 **Reset Functionality Enhancement**

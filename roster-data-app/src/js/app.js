@@ -8,6 +8,7 @@ class ManualEntryApp {
         this.deviceId = this.generateDeviceId();
         this.activityLog = [];
         this.editMode = false;
+        this.checkinEditMode = false;
         
         this.init();
     }
@@ -56,6 +57,7 @@ class ManualEntryApp {
 
     showMainView() {
         document.getElementById('spreadsheet-view').classList.add('hidden');
+        document.getElementById('checkin-section').classList.add('hidden');
         document.getElementById('roster-section').classList.remove('hidden');
         this.renderRoster();
         this.logActivity('MAIN_VIEW_OPENED');
@@ -88,6 +90,7 @@ class ManualEntryApp {
         tableHTML += '<th>Gender</th>';
         tableHTML += '<th>Present</th>';
         tableHTML += '<th>Completed</th>';
+        tableHTML += '<th>Source</th>';
         tableHTML += '<th>Height w/ Shoes</th>';
         tableHTML += '<th>Unit</th>';
         tableHTML += '<th>Height w/o Shoes</th>';
@@ -122,6 +125,7 @@ class ManualEntryApp {
             tableHTML += `<td>${this.escapeHtml(person.gender)}</td>`;
             tableHTML += `<td class="present-indicator ${person.present ? 'present' : 'absent'}">${person.present ? '✓' : '✗'}</td>`;
             tableHTML += `<td class="completed-indicator ${person.completed ? 'completed' : 'incomplete'}">${person.completed ? '✓' : '○'}</td>`;
+            tableHTML += `<td class="source-indicator">${person.source === 'added' ? 'Added' : 'Roster'}</td>`;
             
             // Measurements
             const measurements = ['height_shoes', 'height_no_shoes', 'reach', 'wingspan', 'weight', 'hand_length', 'hand_width', 'vertical', 'approach', 'broad'];
@@ -247,7 +251,10 @@ class ManualEntryApp {
         document.getElementById('export-btn').addEventListener('click', this.exportData.bind(this));
         document.getElementById('name-filter').addEventListener('input', this.filterRoster.bind(this));
         document.getElementById('add-person-btn').addEventListener('click', this.showAddPersonModal.bind(this));
+        document.getElementById('checkin-btn').addEventListener('click', this.showCheckinSection.bind(this));
         document.getElementById('back-to-roster').addEventListener('click', this.showRosterView.bind(this));
+        document.getElementById('back-to-roster-from-checkin').addEventListener('click', this.showRosterView.bind(this));
+        document.getElementById('toggle-checkin-edit').addEventListener('click', this.toggleCheckinEditMode.bind(this));
         document.getElementById('save-measurements').addEventListener('click', this.saveMeasurements.bind(this));
 
         // Spreadsheet view events
@@ -421,7 +428,8 @@ class ManualEntryApp {
                         name: values[1] || '',
                         gender: values[2] || '',
                         present: false,
-                        completed: false
+                        completed: false,
+                        source: 'roster' // Mark as imported from roster
                     });
                 }
             }
@@ -517,7 +525,6 @@ class ManualEntryApp {
         
         if (person) {
             document.getElementById('person-name').textContent = person.name;
-            document.getElementById('present-checkbox').checked = person.present;
             
             const existing = this.measurements.get(personId);
             if (existing) {
@@ -567,6 +574,8 @@ class ManualEntryApp {
 
     showRosterView() {
         document.getElementById('measurement-form').classList.add('hidden');
+        document.getElementById('checkin-section').classList.add('hidden');
+        document.getElementById('spreadsheet-view').classList.add('hidden');
         document.getElementById('roster-section').classList.remove('hidden');
         this.renderRoster();
     }
@@ -576,8 +585,6 @@ class ManualEntryApp {
         const person = this.roster.find(p => (p.id || p.name) === personId);
         
         if (!person) return;
-
-        person.present = document.getElementById('present-checkbox').checked;
 
         const measurements = ['height-shoes', 'height-no-shoes', 'reach', 'wingspan', 'weight', 'hand-length', 'hand-width', 'vertical', 'approach', 'broad'];
         const measurementData = {
@@ -618,7 +625,7 @@ class ManualEntryApp {
             return;
         }
 
-        if (hasValidMeasurements || person.present) {
+        if (hasValidMeasurements) {
             this.measurements.set(personId, measurementData);
             person.completed = hasValidMeasurements;
             this.saveState();
@@ -626,7 +633,6 @@ class ManualEntryApp {
             this.logActivity('MEASUREMENTS_SAVED', { 
                 person: person.name, 
                 measurementsCount: Object.keys(measurementData).filter(k => k !== 'timestamp' && k !== 'operator' && k !== 'device' && k !== 'comments').length,
-                present: person.present,
                 completed: person.completed
             });
             
@@ -637,7 +643,7 @@ class ManualEntryApp {
             this.showToast(`Measurements saved successfully! (Auto-saved to ${savedFilename})`, 'success');
             this.showRosterView();
         } else {
-            this.showToast('Please enter at least one measurement or mark as present', 'warning');
+            this.showToast('Please enter at least one measurement', 'warning');
         }
     }
 
@@ -661,14 +667,15 @@ class ManualEntryApp {
                 name: name,
                 gender: gender,
                 present: false,
-                completed: false
+                completed: false,
+                source: 'added' // Mark as manually added
             };
             
             this.roster.push(newPerson);
             this.hideAddPersonModal();
             this.renderRoster();
             this.saveState();
-            this.logActivity('PERSON_ADDED', { name: name, gender: gender });
+            this.logActivity('PERSON_ADDED', { name: name, gender: gender, source: 'added' });
             this.showToast(`Added ${name} to roster`, 'success');
         }
     }
@@ -847,7 +854,7 @@ class ManualEntryApp {
     }
 
     generateCSV(data) {
-        let csv = 'ID,Name,Gender,Present,Completed,Timestamp,Operator,Device,Comments,';
+        let csv = 'ID,Name,Gender,Present,Completed,Source,Timestamp,Operator,Device,Comments,';
         csv += 'Height_Shoes_Value,Height_Shoes_Unit,Height_No_Shoes_Value,Height_No_Shoes_Unit,';
         csv += 'Reach_Value,Reach_Unit,Wingspan_Value,Wingspan_Unit,Weight_Value,Weight_Unit,';
         csv += 'Hand_Length_Value,Hand_Length_Unit,Hand_Width_Value,Hand_Width_Unit,';
@@ -857,7 +864,7 @@ class ManualEntryApp {
             const personId = person.id || person.name;
             const measurements = data.measurements[personId] || {};
             
-            csv += `"${person.id || ''}","${person.name.replace(/"/g, '""')}","${person.gender}",${person.present},${person.completed},`;
+            csv += `"${person.id || ''}","${person.name.replace(/"/g, '""')}","${person.gender}",${person.present},${person.completed},"${person.source || 'roster'}",`;
             csv += `"${measurements.timestamp || ''}","${measurements.operator || ''}","${measurements.device || ''}",`;
             csv += `"${(measurements.comments || '').replace(/"/g, '""')}",`;
             
@@ -879,7 +886,7 @@ class ManualEntryApp {
 
     generateIndividualMeasurementCSV(personData, measurementData) {
         // Create CSV header if this is the first record
-        let csv = 'Event,Operator,Device,Save_Timestamp,ID,Name,Gender,Present,Completed,Measurement_Timestamp,Comments,';
+        let csv = 'Event,Operator,Device,Save_Timestamp,ID,Name,Gender,Present,Completed,Source,Measurement_Timestamp,Comments,';
         csv += 'Height_Shoes_Value,Height_Shoes_Unit,Height_No_Shoes_Value,Height_No_Shoes_Unit,';
         csv += 'Reach_Value,Reach_Unit,Wingspan_Value,Wingspan_Unit,Weight_Value,Weight_Unit,';
         csv += 'Hand_Length_Value,Hand_Length_Unit,Hand_Width_Value,Hand_Width_Unit,';
@@ -887,7 +894,7 @@ class ManualEntryApp {
 
         // Add the person's data row
         csv += `"${this.currentEvent}","${this.currentOperator}","${this.deviceId}","${new Date().toISOString()}",`;
-        csv += `"${personData.id || ''}","${personData.name.replace(/"/g, '""')}","${personData.gender}",${personData.present},${personData.completed},`;
+        csv += `"${personData.id || ''}","${personData.name.replace(/"/g, '""')}","${personData.gender}",${personData.present},${personData.completed},"${personData.source || 'roster'}",`;
         csv += `"${measurementData.timestamp || ''}","${(measurementData.comments || '').replace(/"/g, '""')}",`;
         
         const measurementFields = ['height_shoes', 'height_no_shoes', 'reach', 'wingspan', 'weight', 'hand_length', 'hand_width', 'vertical', 'approach', 'broad'];
@@ -1249,6 +1256,101 @@ This email was generated automatically by the Manual Entry iPad app.`);
             }
         } catch (error) {
             console.warn('Could not create backup due to storage limitations');
+        }
+    }
+
+    // Check-in Section Methods
+    showCheckinSection() {
+        document.getElementById('roster-section').classList.add('hidden');
+        document.getElementById('measurement-form').classList.add('hidden');
+        document.getElementById('spreadsheet-view').classList.add('hidden');
+        document.getElementById('checkin-section').classList.remove('hidden');
+        this.renderCheckinGrid();
+        this.logActivity('CHECKIN_VIEW_OPENED');
+    }
+
+    toggleCheckinEditMode() {
+        this.checkinEditMode = !this.checkinEditMode;
+        const button = document.getElementById('toggle-checkin-edit');
+        if (this.checkinEditMode) {
+            button.textContent = '📝 Edit Mode: ON';
+            button.classList.add('edit-active');
+        } else {
+            button.textContent = '📝 Edit Mode: OFF';
+            button.classList.remove('edit-active');
+        }
+        this.renderCheckinGrid();
+        this.logActivity('CHECKIN_EDIT_MODE_TOGGLED', { editMode: this.checkinEditMode });
+    }
+
+    renderCheckinGrid() {
+        const grid = document.getElementById('checkin-grid');
+        if (!grid) return;
+
+        grid.innerHTML = this.roster.map(person => {
+            const personId = person.id || person.name;
+            const sourceLabel = person.source === 'added' ? 'Added' : 'Roster';
+            const sourceBadgeClass = person.source === 'added' ? 'added' : 'roster';
+            
+            let genderEdit = '';
+            if (this.checkinEditMode) {
+                genderEdit = `
+                    <div class="checkin-gender-edit">
+                        <select onchange="app.updatePersonGender('${this.escapeHtml(personId)}', this.value)">
+                            <option value="M" ${person.gender === 'M' ? 'selected' : ''}>Male</option>
+                            <option value="F" ${person.gender === 'F' ? 'selected' : ''}>Female</option>
+                            <option value="Other" ${person.gender === 'Other' ? 'selected' : ''}>Other</option>
+                        </select>
+                    </div>
+                `;
+            }
+
+            return `
+                <div class="checkin-item ${person.present ? 'present' : ''}" 
+                     onclick="app.togglePersonPresence('${this.escapeHtml(personId)}')">
+                    <div class="checkin-person-info">
+                        <h4>${this.escapeHtml(person.name)}</h4>
+                        <p>ID: ${person.id || 'N/A'}</p>
+                        <p>Gender: ${person.gender}</p>
+                        <span class="source-badge ${sourceBadgeClass}">${sourceLabel}</span>
+                        ${genderEdit}
+                    </div>
+                    <div class="checkin-status">
+                        ${person.present ? '✓' : '○'}
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    togglePersonPresence(personId) {
+        const person = this.roster.find(p => (p.id || p.name) === personId);
+        if (person) {
+            person.present = !person.present;
+            this.saveState();
+            this.renderCheckinGrid();
+            this.logActivity('PRESENCE_TOGGLED', { 
+                person: person.name, 
+                present: person.present 
+            });
+            
+            const status = person.present ? 'checked in' : 'checked out';
+            this.showToast(`${person.name} ${status}`, 'success');
+        }
+    }
+
+    updatePersonGender(personId, newGender) {
+        const person = this.roster.find(p => (p.id || p.name) === personId);
+        if (person) {
+            const oldGender = person.gender;
+            person.gender = newGender;
+            this.saveState();
+            this.logActivity('GENDER_UPDATED', { 
+                person: person.name, 
+                oldGender: oldGender,
+                newGender: newGender 
+            });
+            this.showToast(`Updated gender for ${person.name}`, 'success');
         }
     }
 }

@@ -41,11 +41,24 @@
                 </div>
             </header>
 
+            <!-- Check-in Section -->
+            <div id="checkin-section" class="hidden">
+                <div class="checkin-header">
+                    <h3>Event Check-in</h3>
+                    <div class="checkin-controls">
+                        <button id="toggle-checkin-edit">📝 Edit Mode: OFF</button>
+                        <button id="back-to-roster-from-checkin">← Back to Roster</button>
+                    </div>
+                </div>
+                <div class="checkin-grid" id="checkin-grid"></div>
+            </div>
+
             <!-- Roster Grid -->
             <div id="roster-section">
                 <div class="controls">
                     <input type="text" id="name-filter" placeholder="Search names...">
                     <button id="add-person-btn">+ Add Person</button>
+                    <button id="checkin-btn">👥 Check-in</button>
                 </div>
                 <div id="roster-grid"></div>
             </div>
@@ -54,12 +67,6 @@
             <div id="measurement-form" class="hidden">
                 <h3 id="person-name"></h3>
                 <button id="back-to-roster">← Back to Roster</button>
-                
-                <div class="form-group">
-                    <label>
-                        <input type="checkbox" id="present-checkbox"> Present
-                    </label>
-                </div>
 
                 <div class="measurements-grid">
                     <div class="measurement-item">
