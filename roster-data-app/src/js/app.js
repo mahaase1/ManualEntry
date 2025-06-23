@@ -1289,21 +1289,7 @@ class ManualEntryApp {
     }
 
     emailDataWithAttachments(csvContent, filename, logContent = '', logFilename = '', perMeasurementContent = '', perMeasurementFilename = '') {
-        const subject = encodeURIComponent(`Results for ${this.currentEvent} and ${this.currentOperator}`);
-        
-        // Create blobs for the files
-        const csvBlob = new Blob([csvContent], { type: 'text/csv;charset=utf-8' });
-        let logBlob = null;
-        let perMeasurementBlob = null;
-        
-        if (logContent) {
-            logBlob = new Blob([logContent], { type: 'text/csv;charset=utf-8' });
-        }
-        if (perMeasurementContent) {
-            perMeasurementBlob = new Blob([perMeasurementContent], { type: 'text/csv;charset=utf-8' });
-        }
-        
-        // Save all files to Downloads folder on iPad
+        // Always save files to Downloads folder first
         this.saveToDownloadsFolder(csvContent, filename);
         if (logContent) {
             this.saveToDownloadsFolder(logContent, logFilename);
@@ -1312,75 +1298,120 @@ class ManualEntryApp {
             this.saveToDownloadsFolder(perMeasurementContent, perMeasurementFilename);
         }
         
-        // Enhanced email body for iPad with three reports
-        let attachmentInfo = `Three CSV reports have been saved to your iPad's Downloads folder and will be attached:
-
-📄 "${filename}" - Main data export with all measurements and adjustments
-📄 "${logFilename}" - Activity log with timestamp sequence`;
-
-        if (perMeasurementContent) {
-            attachmentInfo += `
-📄 "${perMeasurementFilename}" - Per-measurement report (one row per measurement by athlete)`;
-        }
-
-        attachmentInfo += `
-
-Files are saved to Downloads folder and accessible via the Files app.`;
-
-        const body = encodeURIComponent(`Manual Entry Data Collection Results
+        // Create comprehensive email with data and clear instructions
+        const subject = encodeURIComponent(`Manual Entry Data - ${this.currentEvent} - ${new Date().toLocaleDateString()}`);
+        
+        // For small datasets (≤20 people), include CSV data in email body
+        const includeDataInEmail = this.roster.length <= 20;
+        
+        let emailBody = `Manual Entry Data Collection Results
 
 Event: ${this.currentEvent}
 Operator: ${this.currentOperator}
-Device: ${this.deviceId}
 Export Time: ${new Date().toLocaleString()}
 
 📊 Data Summary:
 • Total Roster: ${this.roster.length} people
 • Completed Measurements: ${this.roster.filter(p => p.completed).length} people
 • Present at Event: ${this.roster.filter(p => p.present).length} people
-• Activity Log Entries: ${this.activityLog.length} actions
 
-${attachmentInfo}
+📁 Files Created:
+• ${filename} - Main data export
+• ${logFilename} - Activity log${perMeasurementFilename ? `\n• ${perMeasurementFilename} - Per-measurement report` : ''}
 
-CSV files are saved to your iPad's Downloads folder for attachment or sharing.
-This email was generated automatically by the Manual Entry iPad app.`);
-        
-        // iPad-optimized email approach with Web Share API for file attachment
-        if (navigator.share && navigator.canShare) {
-            // Create files array for sharing
-            const files = [
-                new File([csvBlob], filename, { type: 'text/csv' })
-            ];
-            
-            if (logBlob) {
-                files.push(new File([logBlob], logFilename, { type: 'text/csv' }));
-            }
-            
-            if (perMeasurementBlob) {
-                files.push(new File([perMeasurementBlob], perMeasurementFilename, { type: 'text/csv' }));
-            }
+📎 TO ATTACH FILES TO THIS EMAIL:
+1. Files are saved to your Downloads folder
+2. In Mail app, tap the 📎 attachment icon
+3. Choose "Browse" or "Files"
+4. Navigate to Downloads folder
+5. Select the CSV files to attach
 
-            const shareData = {
-                title: `Results for ${this.currentEvent}`,
-                text: `Manual Entry results for ${this.currentEvent} by ${this.currentOperator}`,
-                files: files
-            };
+Alternative: You can also find the files in the Files app > Downloads folder for sharing via other methods.`;
 
-            if (navigator.canShare(shareData)) {
-                navigator.share(shareData)
-                    .then(() => {
-                        this.showToast(`Files shared successfully!`, 'success');
-                    })
-                    .catch((error) => {
-                        console.log('Share failed:', error);
-                        this.fallbackEmailMethod(subject, body);
-                    });
-                return;
-            }
+        if (includeDataInEmail) {
+            emailBody += `
+
+📋 CSV DATA (copy if needed):
+${csvContent.substring(0, 2000)}${csvContent.length > 2000 ? '...\n[Data truncated - see attached files for complete data]' : ''}`;
         }
+
+        const body = encodeURIComponent(emailBody);
+        const mailtoUrl = `mailto:?subject=${subject}&body=${body}`;
         
-        // Fallback to traditional email method
-        this.fallbackEmailMethod(subject, body);
+        // Show user options
+        this.showExportOptions(mailtoUrl, csvContent, filename);
+    }
+
+    showExportOptions(mailtoUrl, csvContent, filename) {
+        // Create a modal with export options
+        const modal = document.createElement('div');
+        modal.style.cssText = `
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); z-index: 10000; display: flex;
+            align-items: center; justify-content: center; padding: 20px;
+        `;
+        
+        modal.innerHTML = `
+            <div style="background: white; padding: 20px; border-radius: 10px; max-width: 500px; width: 100%;">
+                <h3>📊 Data Export Options</h3>
+                <p>Files saved to Downloads folder! Choose how to share:</p>
+                
+                <button id="email-option" style="width: 100%; margin: 10px 0; padding: 15px; font-size: 16px; background: #007AFF; color: white; border: none; border-radius: 8px;">
+                    📧 Open Email with Instructions
+                </button>
+                
+                <button id="copy-option" style="width: 100%; margin: 10px 0; padding: 15px; font-size: 16px; background: #34C759; color: white; border: none; border-radius: 8px;">
+                    📋 Copy Data to Clipboard
+                </button>
+                
+                <button id="files-option" style="width: 100%; margin: 10px 0; padding: 15px; font-size: 16px; background: #FF9500; color: white; border: none; border-radius: 8px;">
+                    📁 View Files in Downloads
+                </button>
+                
+                <button id="close-modal" style="width: 100%; margin: 10px 0; padding: 10px; font-size: 14px; background: #8E8E93; color: white; border: none; border-radius: 8px;">
+                    Close
+                </button>
+                
+                <p style="font-size: 12px; color: #666; margin-top: 15px;">
+                    💡 Tip: Files are automatically saved to Downloads. Use the Files app to access them.
+                </p>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        // Add event listeners
+        modal.querySelector('#email-option').onclick = () => {
+            window.location.href = mailtoUrl;
+            document.body.removeChild(modal);
+            this.showToast('📧 Email opened! Files are in Downloads folder - use 📎 to attach', 'success');
+        };
+        
+        modal.querySelector('#copy-option').onclick = () => {
+            navigator.clipboard.writeText(csvContent).then(() => {
+                document.body.removeChild(modal);
+                this.showToast('📋 Data copied to clipboard!', 'success');
+            }).catch(() => {
+                document.body.removeChild(modal);
+                this.showToast('Copy failed - data is in Downloads folder', 'warning');
+            });
+        };
+        
+        modal.querySelector('#files-option').onclick = () => {
+            document.body.removeChild(modal);
+            this.showToast('📁 Check Downloads folder in Files app for your CSV files', 'info');
+        };
+        
+        modal.querySelector('#close-modal').onclick = () => {
+            document.body.removeChild(modal);
+        };
+        
+        // Close on background click
+        modal.onclick = (e) => {
+            if (e.target === modal) {
+                document.body.removeChild(modal);
+            }
+        };
     }
 
     // Keep the original method for compatibility
