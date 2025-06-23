@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Test</title>
+</head>
+<body>
+    <h1>JavaScript Debug Test</h1>
+    <div id="debug-output"></div>
+    
+    <script>
+    try {
+        // Test if the main script loads without errors
+        const script = document.createElement('script');
+        script.src = 'js/app.js';
+        script.onerror = function() {
+            document.getElementById('debug-output').innerHTML += '<p style="color: red;">❌ Script failed to load</p>';
+        };
+        script.onload = function() {
+            document.getElementById('debug-output').innerHTML += '<p style="color: green;">✅ Script loaded successfully</p>';
+            
+            // Test if ManualEntryApp class exists
+            if (typeof ManualEntryApp !== 'undefined') {
+                document.getElementById('debug-output').innerHTML += '<p style="color: green;">✅ ManualEntryApp class found</p>';
+                
+                try {
+                    const testApp = new ManualEntryApp();
+                    document.getElementById('debug-output').innerHTML += '<p style="color: green;">✅ ManualEntryApp instantiated successfully</p>';
+                } catch (e) {
+                    document.getElementById('debug-output').innerHTML += '<p style="color: red;">❌ Error instantiating ManualEntryApp: ' + e.message + '</p>';
+                }
+            } else {
+                document.getElementById('debug-output').innerHTML += '<p style="color: red;">❌ ManualEntryApp class not found</p>';
+            }
+        };
+        document.head.appendChild(script);
+    } catch (e) {
+        document.getElementById('debug-output').innerHTML += '<p style="color: red;">❌ Error: ' + e.message + '</p>';
+    }
+    </script>
+</body>
+</html>

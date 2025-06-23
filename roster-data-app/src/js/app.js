@@ -584,7 +584,7 @@ class ManualEntryApp {
         
         this.logActivity('ROSTER_IMPORTED', { 
             totalPeople: this.roster.length,
-            filename: document.getElementById('roster-upload').files[0]?.name || 'unknown'
+            filename: document.getElementById('roster-upload').files[0] ? document.getElementById('roster-upload').files[0].name : 'unknown'
         });
     }
 
@@ -920,7 +920,7 @@ class ManualEntryApp {
         document.getElementById('reset-password').value = '';
     }
 
-    async confirmReset() {
+    confirmReset() {
         const password = document.getElementById('reset-password').value;
         if (password === '00000') {
             // Clear localStorage data
@@ -934,7 +934,7 @@ class ManualEntryApp {
             this.currentPersonId = null;
             
             // Clear web app cache for fresh start
-            await this.clearWebAppCache();
+            this.clearWebAppCache();
             
             // Return to startup screen
             document.getElementById('main-screen').classList.remove('active');
@@ -953,23 +953,26 @@ class ManualEntryApp {
         }
     }
 
-    async clearWebAppCache() {
+    clearWebAppCache() {
         try {
             // Clear Service Worker cache if available
             if ('serviceWorker' in navigator && 'caches' in window) {
-                const cacheNames = await caches.keys();
-                const deletePromises = cacheNames.map(cacheName => caches.delete(cacheName));
-                await Promise.all(deletePromises);
-                console.log('Service Worker caches cleared');
+                caches.keys().then(cacheNames => {
+                    const deletePromises = cacheNames.map(cacheName => caches.delete(cacheName));
+                    return Promise.all(deletePromises);
+                }).then(() => {
+                    console.log('Service Worker caches cleared');
+                });
             }
 
             // Clear browser cache by reloading without cache
             if ('serviceWorker' in navigator) {
-                const registrations = await navigator.serviceWorker.getRegistrations();
-                for (let registration of registrations) {
-                    await registration.unregister();
-                }
-                console.log('Service Workers unregistered');
+                navigator.serviceWorker.getRegistrations().then(registrations => {
+                    for (let registration of registrations) {
+                        registration.unregister();
+                    }
+                    console.log('Service Workers unregistered');
+                });
             }
 
             // Clear application cache (deprecated but may still be used)
@@ -1387,38 +1390,17 @@ This email was generated automatically by the Manual Entry iPad app.`);
     }
 
     fallbackEmailMethod(subject, body) {
-            const testShareData = {
-                files: [new File([csvBlob], filename, { type: 'text/csv' })]
-            };
-            
-            if (navigator.canShare(testShareData)) {
-                const shareData = {
-                    title: `Results for ${this.currentEvent} and ${this.currentOperator}`,
-                    text: `Data collection results for ${this.currentEvent}. Files: ${filename}${logContent ? `, ${logFilename}` : ''}`,
-                    files: logContent ? [
-                        new File([csvBlob], filename, { type: 'text/csv' }),
-                        new File([logBlob], logFilename, { type: 'text/csv' })
-                    ] : [new File([csvBlob], filename, { type: 'text/csv' })]
-                };
-                
-                navigator.share(shareData)
-                    .then(() => {
-                        this.showToast(`Files attached to email and saved to Downloads folder!`, 'success');
-                    })
-                    .catch((error) => {
-                        console.log('Web Share API failed, using mail link:', error);
-                        this.fallbackEmailMethod(subject, body);
-                    });
-                return;
-            }
-        }
+        // Open the email app
+        const mailtoUrl = `mailto:?subject=${subject}&body=${body}`;
         
-        // Fallback to traditional email method
-        this.fallbackEmailMethod(subject, body);
+        try {
+            window.location.href = mailtoUrl;
+            this.showToast('Email opened. Files saved to Downloads folder - attach from there.', 'success');
+        } catch (error) {
+            console.error('Error opening email:', error);
+            this.showToast('Error opening email. Files saved to Downloads folder.', 'error');
+        }
     }
-
-    // Keep the original method for compatibility
-    emailDataWithAttachment(csvContent, filename, logContent = '', logFilename = '') {
         return this.emailDataWithAttachments(csvContent, filename, logContent, logFilename);
     }
 
