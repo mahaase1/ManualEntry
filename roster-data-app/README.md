@@ -12,7 +12,9 @@ A standalone web application for collecting physical measurements with local sto
 ✅ **iPad optimized** - Large fonts and touch-friendly interface  
 ✅ **Session persistence** - Resumes where you left off  
 ✅ **Password-protected purge** - Secure data removal (password: 00000)  
-✅ **CSV export** - Data export with email integration  
+✅ **CSV export** - Data export with email integration and auto-attachment
+✅ **Local file management** - Organized "Manual entry" directory with file browser
+✅ **Auto-attachment** - CSV files automatically attached to email (when supported)
 ✅ **Add new people** - Simple form to add roster entries  
 ✅ **Check-in system** - Mark people as present with comments  
 
@@ -84,13 +86,23 @@ ID,Name,Gender
 
 ### Export Data
 - Click export button (📤)
-- CSV file downloads automatically
-- Email app opens with pre-filled subject/body
-- Manually attach the downloaded CSV file
+- CSV file automatically saved to "Manual entry" local directory
+- CSV file downloads to device
+- Email app opens with pre-filled subject/body and automatic attachment
+- File automatically attached if email client supports data URLs
+- Fallback to manual attachment if needed
+
+### File Management
+- **View saved files**: Settings → View Saved Files
+- **Download files**: Re-download any previously exported file
+- **Delete files**: Remove files from local directory
+- **Auto-cleanup**: System keeps last 10 files automatically
 
 ### Data Management
 - **Auto-save**: All changes saved automatically
 - **Backup**: Local backups created on each save
+- **Local directory**: All exports saved to organized "Manual entry" folder
+- **File browser**: Access, download, and manage all saved files
 - **Purge**: Settings → Purge Data (password: 00000)
 - **Resume**: App resumes where you left off
 
@@ -122,10 +134,12 @@ roster-data-app/
 
 ## Technical Notes
 
-- **Storage**: Uses localStorage for all data persistence
+- **Storage**: Uses localStorage for all data persistence and file management
+- **Local Directory**: Creates virtual "Manual entry" folder in localStorage
 - **Backup**: Maintains 5 most recent backups automatically
+- **File Management**: Organized metadata system with automatic cleanup
 - **Validation**: Double-entry with floating-point tolerance
-- **Export**: CSV format with timestamp and device info
+- **Export**: CSV format with timestamp and device info, auto-attachment support
 - **PWA**: Can be installed as Progressive Web App
 
 ## Troubleshooting
@@ -141,9 +155,10 @@ roster-data-app/
 - Try refreshing and re-entering
 
 **Export not working:**
-- Check if downloads are enabled
-- Manually save file if auto-download fails
-- Copy data from app and paste into email
+- Files automatically saved to "Manual entry" directory
+- Use Settings → View Saved Files to access exports
+- Check if email client supports automatic attachments
+- Manually download files if auto-attachment fails
 
 ## Security & Privacy
 
