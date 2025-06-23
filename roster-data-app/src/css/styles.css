@@ -318,6 +318,33 @@ header {
     background: #f8fff8;
 }
 
+.measurement-save-btn {
+    background: #28a745;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 16px;
+    cursor: pointer;
+    margin-top: 8px;
+    width: 100%;
+    transition: background-color 0.2s;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.measurement-save-btn:hover {
+    background: #218838;
+}
+
+.measurement-save-btn:active {
+    background: #1e7e34;
+}
+
+.measurement-save-btn:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+}
+
 #comments {
     width: 100%;
     min-height: 120px;
@@ -747,6 +774,12 @@ header {
     .measurement-item input {
         font-size: 20px;
         padding: 16px;
+    }
+    
+    .measurement-save-btn {
+        font-size: 18px;
+        padding: 12px 16px;
+        min-height: 48px;
     }
     
     .roster-item h4 {

@@ -259,12 +259,23 @@ class ManualEntryApp {
 
         // Measurement validation events
         this.bindMeasurementValidation();
+        this.bindIndividualSaveButtons();
 
         // Auto-save on input (debounced)
         let saveTimeout;
         document.addEventListener('input', () => {
             clearTimeout(saveTimeout);
             saveTimeout = setTimeout(() => this.saveState(), 1000);
+        });
+    }
+
+    bindIndividualSaveButtons() {
+        // Add event listeners for individual measurement save buttons
+        document.addEventListener('click', (event) => {
+            if (event.target.classList.contains('measurement-save-btn')) {
+                const measurement = event.target.getAttribute('data-measurement');
+                this.saveIndividualMeasurement(measurement);
+            }
         });
     }
 
@@ -301,6 +312,66 @@ class ManualEntryApp {
             input1.className = '';
             input2.className = '';
         }
+    }
+
+    saveIndividualMeasurement(measurement) {
+        const personId = this.currentPersonId;
+        const person = this.roster.find(p => (p.id || p.name) === personId);
+        
+        if (!person) {
+            this.showToast('No person selected', 'error');
+            return;
+        }
+
+        const input1 = document.getElementById(`${measurement}-1`);
+        const input2 = document.getElementById(`${measurement}-2`);
+        const unit = document.getElementById(`${measurement}-unit`).value;
+        
+        if (!input1.value || !input2.value) {
+            this.showToast(`Please enter both ${measurement.replace('-', ' ')} values`, 'warning');
+            return;
+        }
+
+        const value1 = parseFloat(input1.value);
+        const value2 = parseFloat(input2.value);
+        
+        if (Math.abs(value1 - value2) >= 0.01) {
+            this.showToast(`${measurement.replace('-', ' ')} values do not match`, 'error');
+            return;
+        }
+
+        // Get or create measurement data
+        let measurementData = this.measurements.get(personId) || {
+            timestamp: new Date().toISOString(),
+            operator: this.currentOperator,
+            device: this.deviceId,
+            comments: document.getElementById('comments').value || ''
+        };
+
+        // Update the specific measurement
+        const key = measurement.replace('-', '_');
+        measurementData[key] = {
+            value: value1,
+            unit: unit
+        };
+
+        // Update measurements and person status
+        this.measurements.set(personId, measurementData);
+        
+        // Check if person has any valid measurements
+        const hasValidMeasurements = ['height_shoes', 'height_no_shoes', 'reach', 'wingspan', 'weight', 'hand_length', 'hand_width', 'vertical', 'approach', 'broad']
+            .some(type => measurementData[type] && measurementData[type].value);
+        person.completed = hasValidMeasurements;
+
+        this.saveState();
+        this.logActivity('INDIVIDUAL_MEASUREMENT_SAVED', { 
+            person: person.name, 
+            measurement: measurement,
+            value: value1,
+            unit: unit
+        });
+        
+        this.showToast(`${measurement.replace('-', ' ')} saved successfully!`, 'success');
     }
 
     validateStartup() {
