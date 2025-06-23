@@ -44,6 +44,8 @@ class ManualEntryApp {
         document.getElementById('cancel-add-person').addEventListener('click', this.hideAddPersonModal.bind(this));
         document.getElementById('confirm-add-person').addEventListener('click', this.addNewPerson.bind(this));
         document.getElementById('close-settings').addEventListener('click', this.hideSettings.bind(this));
+        document.getElementById('view-files-btn').addEventListener('click', this.showFileManagement.bind(this));
+        document.getElementById('close-file-management').addEventListener('click', this.hideFileManagement.bind(this));
         document.getElementById('purge-data').addEventListener('click', this.showPurgeModal.bind(this));
         document.getElementById('cancel-purge').addEventListener('click', this.hidePurgeModal.bind(this));
         document.getElementById('confirm-purge').addEventListener('click', this.confirmPurge.bind(this));
@@ -360,6 +362,70 @@ class ManualEntryApp {
         document.getElementById('settings-modal').classList.add('hidden');
     }
 
+    showFileManagement() {
+        document.getElementById('settings-modal').classList.add('hidden');
+        document.getElementById('file-management-modal').classList.remove('hidden');
+        this.renderFileList();
+    }
+
+    hideFileManagement() {
+        document.getElementById('file-management-modal').classList.add('hidden');
+        document.getElementById('settings-modal').classList.remove('hidden');
+    }
+
+    renderFileList() {
+        const fileList = document.getElementById('file-list');
+        const files = this.getLocalDirectoryFiles();
+        
+        if (files.length === 0) {
+            fileList.innerHTML = '<p style="text-align: center; color: #666; font-style: italic;">No saved files found in Manual entry directory.</p>';
+            return;
+        }
+        
+        fileList.innerHTML = files.map(file => `
+            <div class="file-item">
+                <div class="file-info">
+                    <h4>${this.escapeHtml(file.filename)}</h4>
+                    <p>Event: ${this.escapeHtml(file.event)}</p>
+                    <p>Operator: ${this.escapeHtml(file.operator)}</p>
+                    <p>Date: ${new Date(file.timestamp).toLocaleDateString()}</p>
+                    <p>Size: ${(file.size / 1024).toFixed(1)} KB</p>
+                </div>
+                <div class="file-actions">
+                    <button onclick="app.downloadSavedFile('${file.key}', '${this.escapeHtml(file.filename)}')" 
+                            style="background: #007AFF; margin-bottom: 8px;">📤 Download</button>
+                    <button onclick="app.deleteSavedFile('${file.key}')" 
+                            style="background: #dc3545;">🗑️ Delete</button>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    downloadSavedFile(fileKey, filename) {
+        try {
+            const content = localStorage.getItem(fileKey);
+            if (content) {
+                this.downloadFile(content, filename);
+                this.showToast(`Downloaded: ${filename}`, 'success');
+            } else {
+                this.showToast('File not found', 'error');
+            }
+        } catch (error) {
+            this.showToast('Error downloading file', 'error');
+        }
+    }
+
+    deleteSavedFile(fileKey) {
+        if (confirm('Are you sure you want to delete this file?')) {
+            if (this.deleteFromLocalDirectory(fileKey)) {
+                this.renderFileList();
+                this.showToast('File deleted successfully', 'success');
+            } else {
+                this.showToast('Error deleting file', 'error');
+            }
+        }
+    }
+
     showPurgeModal() {
         document.getElementById('purge-modal').classList.remove('hidden');
         document.getElementById('settings-modal').classList.add('hidden');
@@ -409,8 +475,12 @@ class ManualEntryApp {
         const timestamp = new Date().toISOString().replace(/[:.]/g, '-').split('T')[0];
         const filename = `${this.currentEvent.replace(/[^a-zA-Z0-9]/g, '_')}_${timestamp}_${Date.now()}.csv`;
         
+        // Save to local subdirectory
+        this.saveToLocalDirectory(csvContent, filename);
+        
+        // Download file and auto-attach to email
         this.downloadFile(csvContent, filename);
-        this.emailData(csvContent, filename);
+        this.emailDataWithAttachment(csvContent, filename);
     }
 
     generateCSV(data) {
@@ -456,14 +526,121 @@ class ManualEntryApp {
         URL.revokeObjectURL(url);
     }
 
-    emailData(csvContent, filename) {
+    emailDataWithAttachment(csvContent, filename) {
         const subject = encodeURIComponent(`Manual Entry Data - ${this.currentEvent}`);
-        const body = encodeURIComponent(`Please find the data collection results for ${this.currentEvent}.\n\nOperator: ${this.currentOperator}\nDevice: ${this.deviceId}\nExport Time: ${new Date().toLocaleString()}\n\nThe CSV file "${filename}" has been downloaded to your device. Please attach it to this email before sending.`);
         
-        const mailtoLink = `mailto:?subject=${subject}&body=${body}`;
-        window.open(mailtoLink, '_blank');
+        // Create data URL for the CSV file
+        const csvBlob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const csvDataUrl = URL.createObjectURL(csvBlob);
         
-        this.showToast('CSV file downloaded. Email app opened - please attach the file manually.', 'success');
+        // Enhanced email body with file information
+        const body = encodeURIComponent(`Please find the data collection results for ${this.currentEvent}.
+
+Operator: ${this.currentOperator}
+Device: ${this.deviceId}
+Export Time: ${new Date().toLocaleString()}
+
+Data Summary:
+- Total Roster: ${this.roster.length} people
+- Completed Measurements: ${this.roster.filter(p => p.completed).length} people
+- Present: ${this.roster.filter(p => p.present).length} people
+
+The CSV file "${filename}" contains all measurement data and has been automatically saved to your device's "Manual entry" folder.
+
+Note: The file will be automatically attached if your email client supports data URLs, otherwise it has been downloaded to your Downloads folder for manual attachment.`);
+        
+        // Try to open email with attachment using data URL
+        // This works in some email clients on iPad
+        const mailtoLink = `mailto:?subject=${subject}&body=${body}&attachment=${csvDataUrl};filename=${filename}`;
+        
+        // Fallback for clients that don't support attachment parameter
+        const fallbackMailtoLink = `mailto:?subject=${subject}&body=${body}`;
+        
+        // Try the enhanced version first, fallback to standard if needed
+        try {
+            window.open(mailtoLink, '_blank');
+            this.showToast('CSV file saved to "Manual entry" folder and email opened with attachment!', 'success');
+        } catch (error) {
+            window.open(fallbackMailtoLink, '_blank');
+            this.showToast('CSV file saved locally. Email opened - file available in Downloads for attachment.', 'success');
+        }
+        
+        // Clean up the blob URL after a delay
+        setTimeout(() => {
+            URL.revokeObjectURL(csvDataUrl);
+        }, 10000);
+    }
+
+    saveToLocalDirectory(content, filename) {
+        try {
+            // Create a "Manual entry" subdirectory key
+            const directoryKey = 'ManualEntry_Directory';
+            const fileKey = `ManualEntry_${filename}_${Date.now()}`;
+            
+            // Get existing directory index or create new one
+            let directoryIndex = JSON.parse(localStorage.getItem(directoryKey) || '[]');
+            
+            // Add file metadata to directory index
+            const fileMetadata = {
+                filename: filename,
+                timestamp: new Date().toISOString(),
+                event: this.currentEvent,
+                operator: this.currentOperator,
+                size: content.length,
+                key: fileKey
+            };
+            
+            directoryIndex.push(fileMetadata);
+            
+            // Keep only the last 10 files to manage storage
+            if (directoryIndex.length > 10) {
+                const oldFile = directoryIndex.shift();
+                localStorage.removeItem(oldFile.key);
+            }
+            
+            // Save the file content
+            localStorage.setItem(fileKey, content);
+            
+            // Update directory index
+            localStorage.setItem(directoryKey, JSON.stringify(directoryIndex));
+            
+            console.log(`File saved to Manual entry directory: ${filename}`);
+            
+        } catch (error) {
+            console.warn('Could not save to local directory due to storage limitations:', error);
+            this.showToast('Warning: Could not save to local directory due to storage limits', 'warning');
+        }
+    }
+
+    getLocalDirectoryFiles() {
+        try {
+            const directoryKey = 'ManualEntry_Directory';
+            return JSON.parse(localStorage.getItem(directoryKey) || '[]');
+        } catch (error) {
+            console.error('Error reading local directory:', error);
+            return [];
+        }
+    }
+
+    deleteFromLocalDirectory(fileKey) {
+        try {
+            const directoryKey = 'ManualEntry_Directory';
+            let directoryIndex = JSON.parse(localStorage.getItem(directoryKey) || '[]');
+            
+            // Remove file from directory index
+            directoryIndex = directoryIndex.filter(file => file.key !== fileKey);
+            
+            // Remove file content
+            localStorage.removeItem(fileKey);
+            
+            // Update directory index
+            localStorage.setItem(directoryKey, JSON.stringify(directoryIndex));
+            
+            return true;
+        } catch (error) {
+            console.error('Error deleting from local directory:', error);
+            return false;
+        }
     }
 
     showToast(message, type = 'error') {

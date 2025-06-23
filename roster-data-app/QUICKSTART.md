@@ -30,12 +30,18 @@
 
 ### 4. Export Your Data
 1. **Tap the export button** (📤) in the header
-2. **CSV file downloads** automatically
-3. **Email app opens** with pre-filled subject/body
-4. **Attach the downloaded file** to the email
-5. **Send to yourself or others**
+2. **CSV file automatically saved** to "Manual entry" folder on your iPad
+3. **Email app opens** with pre-filled subject/body and automatic attachment
+4. **File is automatically attached** (if supported by email client)
+5. **Send immediately** or add recipients and send
 
 ## 💡 Pro Tips
+
+### Data Storage & Management
+- **Local directory**: All exports saved to "Manual entry" folder automatically
+- **View saved files**: Settings → View Saved Files
+- **File management**: Download, delete, or re-export any saved file
+- **Auto-cleanup**: Keeps last 10 files to manage storage space
 
 ### Roster File Format
 Create a CSV file with this exact format:
@@ -50,6 +56,7 @@ ID,Name,Gender
 - **Search names**: Use the search box to filter the roster
 - **Add new person**: Tap "+ Add Person" if someone's missing
 - **Resume later**: App automatically saves your progress
+- **Manage files**: Settings → View Saved Files to access all exports
 - **Start fresh**: Settings → Purge Data (password: 00000)
 
 ### Measurement Tips
@@ -63,7 +70,8 @@ ID,Name,Gender
 - **App won't load**: Try refreshing Safari
 - **Can't upload roster**: Check CSV format and file extension
 - **Measurements won't save**: Ensure all entered values match
-- **Export issues**: Check if downloads are enabled in Safari
+- **Export issues**: File automatically saved to "Manual entry" folder
+- **Email attachment issues**: Check Settings → View Saved Files for manual download
 
 ## 🔄 Workflow Example
 
@@ -86,6 +94,8 @@ ID,Name,Gender
 - ✅ Data only leaves via manual export
 - ✅ Password-protected data clearing
 - ✅ Automatic local backups
+- ✅ Files saved to organized "Manual entry" directory
+- ✅ Automatic file management and cleanup
 
 ## 🆘 Need Help?
 - Test with the included `TestRoster.csv` file

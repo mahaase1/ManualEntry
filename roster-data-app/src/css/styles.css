@@ -395,13 +395,74 @@ header {
     background: #c82333;
 }
 
-#close-settings {
+#view-files-btn {
+    background: #007AFF;
+    width: 100%;
+    margin-bottom: 16px;
+}
+
+#view-files-btn:hover {
+    background: #0056CC;
+}
+
+#close-settings,
+#close-file-management {
     background: #6c757d;
     width: 100%;
 }
 
-#close-settings:hover {
+#close-settings:hover,
+#close-file-management:hover {
     background: #545b62;
+}
+
+/* File Management Styles */
+#file-list {
+    max-height: 400px;
+    overflow-y: auto;
+    margin-bottom: 16px;
+}
+
+.file-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 12px;
+}
+
+.file-info {
+    flex: 1;
+}
+
+.file-info h4 {
+    margin: 0 0 8px 0;
+    color: #333;
+    font-size: 16px;
+    word-break: break-word;
+}
+
+.file-info p {
+    margin: 2px 0;
+    color: #666;
+    font-size: 14px;
+}
+
+.file-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-left: 16px;
+}
+
+.file-actions button {
+    padding: 8px 12px;
+    font-size: 14px;
+    min-height: auto;
+    white-space: nowrap;
 }
 
 /* Toast Messages */
