@@ -28,11 +28,6 @@
                 <input type="file" id="roster-upload" accept=".csv" required>
             </div>
             <button id="setup-measurements">Next: Setup Measurements</button>
-            
-            <!-- Debug panel for iPad troubleshooting -->
-            <div id="debug-panel" style="margin-top: 20px; padding: 10px; background: #f8f9fa; border-radius: 5px; font-size: 12px; color: #666; display: none;">
-                <div id="debug-info">Debug info will appear here...</div>
-            </div>
         </div>
 
         <!-- Measurement Setup Screen -->
@@ -368,6 +363,17 @@
         <!-- Validation Message -->
         <div id="validation-toast" class="toast hidden">
             <span id="toast-message"></span>
+        </div>
+
+        <!-- Debug Panel for iPad Testing -->
+        <div id="debug-panel" style="position: fixed; top: 10px; right: 10px; background: rgba(0,0,0,0.8); color: white; padding: 10px; border-radius: 5px; font-size: 12px; z-index: 9999; max-width: 200px; display: none;">
+            <div><strong>Debug Info</strong></div>
+            <div>Version: v2.5.1</div>
+            <div id="debug-operator">Operator: -</div>
+            <div id="debug-event">Event: -</div>
+            <div id="debug-roster">Roster: -</div>
+            <div id="debug-button">Button: -</div>
+            <button onclick="app && app.showSetupScreen()" style="margin-top: 5px; padding: 2px 5px;">Force Setup</button>
         </div>
     </div>
 
