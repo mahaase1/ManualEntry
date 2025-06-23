@@ -11,7 +11,7 @@ A standalone web application for collecting physical measurements with local sto
 ✅ **Individual unit selection** - Choose metric/imperial per measurement  
 ✅ **iPad optimized** - Large fonts and touch-friendly interface  
 ✅ **Session persistence** - Resumes where you left off  
-✅ **Password-protected purge** - Secure data removal (password: 00000)  
+✅ **Password-protected reset** - Secure data removal and cache clearing (password: 00000)  
 ✅ **CSV export** - Data export with email integration and auto-attachment
 ✅ **Local file management** - Organized "Manual entry" directory with file browser
 ✅ **Auto-attachment** - CSV files automatically attached to email (when supported)
@@ -115,7 +115,7 @@ ID,Name,Gender
 - **Backup**: Local backups created on each save
 - **Local directory**: All exports saved to organized "Manual entry" folder
 - **File browser**: Access, download, and manage all saved files
-- **Purge**: Settings → Purge Data (password: 00000)
+- **Reset**: Settings → Reset for New Event (password: 00000)
 - **Resume**: App resumes where you left off
 
 ## File Structure
@@ -179,7 +179,7 @@ roster-data-app/
 - All data stored locally on device
 - No external servers or tracking
 - Data only leaves device via manual export
-- Password protection for data purge
+- Password protection for data reset and cache clearing
 
 ## Support
 

@@ -403,22 +403,22 @@ header {
 }
 
 #cancel-add-person,
-#cancel-purge {
+#cancel-reset {
     background: #6c757d;
 }
 
 #cancel-add-person:hover,
-#cancel-purge:hover {
+#cancel-reset:hover {
     background: #545b62;
 }
 
-#purge-data {
+#reset-data {
     background: #dc3545;
     width: 100%;
     margin-bottom: 16px;
 }
 
-#purge-data:hover {
+#reset-data:hover {
     background: #c82333;
 }
 

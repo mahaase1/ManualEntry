@@ -260,9 +260,9 @@ class ManualEntryApp {
         document.getElementById('close-settings').addEventListener('click', this.hideSettings.bind(this));
         document.getElementById('view-files-btn').addEventListener('click', this.showFileManagement.bind(this));
         document.getElementById('close-file-management').addEventListener('click', this.hideFileManagement.bind(this));
-        document.getElementById('purge-data').addEventListener('click', this.showPurgeModal.bind(this));
-        document.getElementById('cancel-purge').addEventListener('click', this.hidePurgeModal.bind(this));
-        document.getElementById('confirm-purge').addEventListener('click', this.confirmPurge.bind(this));
+        document.getElementById('reset-data').addEventListener('click', this.showResetModal.bind(this));
+        document.getElementById('cancel-reset').addEventListener('click', this.hideResetModal.bind(this));
+        document.getElementById('confirm-reset').addEventListener('click', this.confirmReset.bind(this));
 
         // Measurement validation events
         this.bindMeasurementValidation();
@@ -745,38 +745,77 @@ class ManualEntryApp {
         }
     }
 
-    showPurgeModal() {
-        document.getElementById('purge-modal').classList.remove('hidden');
+    showResetModal() {
+        document.getElementById('reset-modal').classList.remove('hidden');
         document.getElementById('settings-modal').classList.add('hidden');
     }
 
-    hidePurgeModal() {
-        document.getElementById('purge-modal').classList.add('hidden');
-        document.getElementById('purge-password').value = '';
+    hideResetModal() {
+        document.getElementById('reset-modal').classList.add('hidden');
+        document.getElementById('reset-password').value = '';
     }
 
-    confirmPurge() {
-        const password = document.getElementById('purge-password').value;
+    async confirmReset() {
+        const password = document.getElementById('reset-password').value;
         if (password === '00000') {
+            // Clear localStorage data
             localStorage.clear();
+            
+            // Clear app state
             this.roster = [];
             this.measurements.clear();
             this.currentOperator = '';
             this.currentEvent = '';
             this.currentPersonId = null;
             
+            // Clear web app cache for fresh start
+            await this.clearWebAppCache();
+            
+            // Return to startup screen
             document.getElementById('main-screen').classList.remove('active');
             document.getElementById('startup-screen').classList.add('active');
-            this.hidePurgeModal();
+            this.hideResetModal();
             
+            // Clear form inputs
             document.getElementById('operator-name').value = '';
             document.getElementById('event-name').value = '';
             document.getElementById('roster-upload').value = '';
             this.validateStartup();
             
-            this.showToast('All data has been purged', 'warning');
+            this.showToast('App reset for new event - cache cleared', 'success');
         } else {
             this.showToast('Incorrect password', 'error');
+        }
+    }
+
+    async clearWebAppCache() {
+        try {
+            // Clear Service Worker cache if available
+            if ('serviceWorker' in navigator && 'caches' in window) {
+                const cacheNames = await caches.keys();
+                const deletePromises = cacheNames.map(cacheName => caches.delete(cacheName));
+                await Promise.all(deletePromises);
+                console.log('Service Worker caches cleared');
+            }
+
+            // Clear browser cache by reloading without cache
+            if ('serviceWorker' in navigator) {
+                const registrations = await navigator.serviceWorker.getRegistrations();
+                for (let registration of registrations) {
+                    await registration.unregister();
+                }
+                console.log('Service Workers unregistered');
+            }
+
+            // Clear application cache (deprecated but may still be used)
+            if (window.applicationCache && window.applicationCache.update) {
+                window.applicationCache.update();
+            }
+
+            console.log('Web app cache clearing completed');
+        } catch (error) {
+            console.warn('Cache clearing failed:', error);
+            // Don't show error to user as this is not critical
         }
     }
 

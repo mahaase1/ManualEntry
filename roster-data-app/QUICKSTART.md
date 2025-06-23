@@ -58,7 +58,7 @@ ID,Name,Gender
 - **Add new person**: Tap "+ Add Person" if someone's missing
 - **Resume later**: App automatically saves your progress
 - **Manage files**: Settings → View Saved Files to access all exports
-- **Start fresh**: Settings → Purge Data (password: 00000)
+- **Start fresh**: Settings → Reset for New Event (password: 00000)
 
 ### Measurement Tips
 - **Double entry required**: Enter each measurement twice

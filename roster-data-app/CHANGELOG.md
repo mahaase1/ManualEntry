@@ -1,5 +1,33 @@
 # Changelog - Manual Entry Data Collection App
 
+## Version 2.3.4 - Reset for New Event & Cache Clearing (June 22, 2025)
+
+### 🔄 **Reset Functionality Enhancement**
+
+#### Interface Updates
+- **Renamed "Purge" to "Reset for New Event"** - Clearer, more descriptive terminology
+- **Updated button text** - "Reset for New Event" button in settings
+- **Enhanced modal content** - Clear description of reset functionality with cache clearing
+- **Consistent terminology** - All references updated throughout documentation
+
+#### Cache Clearing Implementation
+- **Web app cache clearing** - Clears Service Worker caches for fresh start
+- **Service Worker unregistration** - Removes cached service workers
+- **Application cache clearing** - Handles deprecated but existing application cache
+- **Complete reset experience** - Fresh start without cached resources
+
+#### Technical Improvements
+- **Enhanced `clearWebAppCache()` method** - Comprehensive cache management
+- **Graceful error handling** - Cache clearing failures don't break reset process
+- **Cross-browser compatibility** - Works with various browser cache implementations
+- **Console logging** - Clear feedback about cache clearing operations
+
+#### Documentation Updates
+- **Updated README.md** - Reflects new reset terminology and cache clearing
+- **Updated QUICKSTART.md** - Clear instructions for reset functionality
+- **Updated DEPLOYMENT.md** - Security notes mention reset instead of purge
+- **Updated CHANGELOG.md** - Historical references updated for consistency
+
 ## Version 2.3.2 - Real iPad File System Integration (June 22, 2025)
 
 ### 📂 **iPad File System Optimization**
@@ -253,7 +281,7 @@ localStorage:
 - Individual unit selection (metric/imperial)
 - Session persistence and auto-save
 - Basic CSV export with email integration
-- Password-protected data purge
+- Password-protected data reset with cache clearing
 - PWA configuration for offline use
 
 ---

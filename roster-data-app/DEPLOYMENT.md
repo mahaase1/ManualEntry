@@ -123,7 +123,7 @@ The exported file includes:
 - All data stored locally on device
 - No external servers involved
 - Data only leaves device via manual export
-- Password protection for data purge (password: 00000)
+- Password protection for data reset and cache clearing (password: 00000)
 
 ## Browser Support
 - **Primary**: Safari on iPad (iOS 12+)

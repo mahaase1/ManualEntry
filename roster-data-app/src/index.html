@@ -244,7 +244,7 @@
             <div class="modal-content">
                 <h3>Settings</h3>
                 <button id="view-files-btn">View Saved Files</button>
-                <button id="purge-data">Purge Old Data</button>
+                <button id="reset-data">Reset for New Event</button>
                 <button id="close-settings">Close</button>
             </div>
         </div>
@@ -260,15 +260,16 @@
             </div>
         </div>
 
-        <!-- Purge Confirmation Modal -->
-        <div id="purge-modal" class="modal hidden">
+        <!-- Reset Confirmation Modal -->
+        <div id="reset-modal" class="modal hidden">
             <div class="modal-content">
-                <h3>Confirm Purge</h3>
-                <p>Enter password to purge old data:</p>
-                <input type="password" id="purge-password" placeholder="Enter 00000">
+                <h3>Reset for New Event</h3>
+                <p>This will clear all current data and cache to start a new event.</p>
+                <p>Enter password to confirm reset:</p>
+                <input type="password" id="reset-password" placeholder="Enter 00000">
                 <div class="modal-buttons">
-                    <button id="cancel-purge">Cancel</button>
-                    <button id="confirm-purge">Purge Data</button>
+                    <button id="cancel-reset">Cancel</button>
+                    <button id="confirm-reset">Reset App</button>
                 </div>
             </div>
         </div>
