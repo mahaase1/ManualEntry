@@ -30,63 +30,18 @@ body {
     display: none !important;
 }
 
-/* Home Screen with BAM Logo */
-#home-screen {
+/* Header Logo Styles */
+.header-with-logo {
     display: flex;
-    justify-content: center;
     align-items: center;
-    min-height: 100vh;
-    background: linear-gradient(135deg, #007AFF 0%, #0056CC 100%);
-    margin: -20px;
-    padding: 20px;
+    gap: 12px;
 }
 
-.home-container {
-    text-align: center;
-    background: white;
-    padding: 60px 40px;
-    border-radius: 20px;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-    max-width: 500px;
-    width: 100%;
-}
-
-.bam-logo {
-    margin-bottom: 30px;
-    display: flex;
-    justify-content: center;
-}
-
-.home-container h1 {
-    font-size: 42px;
-    color: #333;
-    margin-bottom: 16px;
-    font-weight: 700;
-}
-
-.home-container p {
-    font-size: 20px;
-    color: #666;
-    margin-bottom: 40px;
-}
-
-#continue-to-app {
-    background: #007AFF;
-    color: white;
-    border: none;
-    padding: 18px 36px;
-    border-radius: 12px;
-    font-size: 20px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 15px rgba(0,122,255,0.3);
-}
-
-#continue-to-app:hover {
-    background: #0056CC;
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(0,122,255,0.4);
+.header-logo {
+    width: 32px;
+    height: 32px;
+    object-fit: contain;
+    flex-shrink: 0;
 }
 
 /* Startup Screen */
@@ -759,6 +714,15 @@ header {
         justify-content: center;
     }
     
+    .header-with-logo {
+        justify-content: center;
+    }
+    
+    .header-logo {
+        width: 28px;
+        height: 28px;
+    }
+    
     #roster-grid {
         grid-template-columns: 1fr;
     }
@@ -781,18 +745,6 @@ header {
     .spreadsheet-table th,
     .spreadsheet-table td {
         padding: 6px 8px;
-    }
-    
-    .home-container {
-        padding: 40px 20px;
-    }
-    
-    .home-container h1 {
-        font-size: 32px;
-    }
-    
-    .home-container p {
-        font-size: 18px;
     }
 }
 

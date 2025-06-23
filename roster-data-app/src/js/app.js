@@ -41,9 +41,9 @@ class ManualEntryApp {
     }
 
     showStartupScreen() {
-        document.getElementById('home-screen').classList.remove('active');
+        // Direct navigation to startup screen - no home screen anymore
         document.getElementById('startup-screen').classList.add('active');
-        this.logActivity('APP_STARTED', { from: 'home_screen' });
+        this.logActivity('APP_STARTED');
     }
 
     showSpreadsheetView() {
@@ -228,9 +228,6 @@ class ManualEntryApp {
     }
 
     bindEvents() {
-        // Home screen events
-        document.getElementById('continue-to-app').addEventListener('click', this.showStartupScreen.bind(this));
-
         // Startup screen events
         document.getElementById('operator-name').addEventListener('input', this.validateStartup.bind(this));
         document.getElementById('event-name').addEventListener('input', this.validateStartup.bind(this));

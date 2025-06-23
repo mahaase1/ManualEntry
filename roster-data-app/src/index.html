@@ -12,21 +12,12 @@
 </head>
 <body>
     <div id="app">
-        <!-- Home Page with BAM Logo -->
-        <div id="home-screen" class="screen active">
-            <div class="home-container">
-                <div class="bam-logo">
-                    <img src="assets/BAM LOGO-final.png" alt="BAM Logo" width="120" height="120">
-                </div>
-                <h1>Manual Entry</h1>
-                <p>Manual Entry</p>
-                <button id="continue-to-app">Press to Continue</button>
-            </div>
-        </div>
-
         <!-- Startup Screen -->
-        <div id="startup-screen" class="screen">
-            <h1>Manual Entry</h1>
+        <div id="startup-screen" class="screen active">
+            <div class="header-with-logo">
+                <img src="assets/BAM LOGO-final.png" alt="BAM Logo" class="header-logo">
+                <h1>Manual Entry</h1>
+            </div>
             <div class="form-group">
                 <label for="operator-name">Enter Your Name:</label>
                 <input type="text" id="operator-name" required>
@@ -45,7 +36,10 @@
         <!-- Main Screen -->
         <div id="main-screen" class="screen">
             <header>
-                <h2 id="event-title"></h2>
+                <div class="header-with-logo">
+                    <img src="assets/BAM LOGO-final.png" alt="BAM Logo" class="header-logo">
+                    <h2 id="event-title"></h2>
+                </div>
                 <div class="header-controls">
                     <button id="spreadsheet-btn">📊</button>
                     <button id="settings-btn">⚙️</button>
@@ -206,7 +200,10 @@
             <!-- Spreadsheet View -->
             <div id="spreadsheet-view" class="hidden">
                 <div class="spreadsheet-header">
-                    <h3>Data Spreadsheet View</h3>
+                    <div class="header-with-logo">
+                        <img src="assets/BAM LOGO-final.png" alt="BAM Logo" class="header-logo">
+                        <h3>Data Spreadsheet View</h3>
+                    </div>
                     <div class="spreadsheet-controls">
                         <button id="toggle-edit-mode">📝 Edit Mode: OFF</button>
                         <button id="back-to-main">← Back to Main</button>
