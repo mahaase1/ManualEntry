@@ -1,0 +1,41 @@
+{
+  "name": "manual-entry-data-collection",
+  "version": "1.0.0",
+  "description": "Standalone web application for collecting physical measurements with local storage and offline capability",
+  "main": "src/index.html",
+  "scripts": {
+    "start": "python3 -m http.server 8000",
+    "serve": "npx serve .",
+    "build": "echo 'No build step required - static files ready for deployment'",
+    "deploy": "echo 'Deploy to GitHub Pages: Push to main branch and enable Pages in repository settings'"
+  },
+  "keywords": [
+    "data-collection",
+    "measurements",
+    "ipad",
+    "pwa",
+    "offline",
+    "local-storage",
+    "csv-export"
+  ],
+  "author": "Manual Entry App",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mahaase1/ManualEntry.git"
+  },
+  "bugs": {
+    "url": "https://github.com/mahaase1/ManualEntry/issues"
+  },
+  "homepage": "https://mahaase1.github.io/ManualEntry/roster-data-app/src/",
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "browserslist": [
+    "iOS >= 12",
+    "Safari >= 12",
+    "Chrome >= 70",
+    "Firefox >= 65",
+    "Edge >= 79"
+  ]
+}

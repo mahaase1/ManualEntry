@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manual Entry - Data Collection</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="manifest" href="../manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Manual Entry">
+</head>
+<body>
+    <div id="app">
+        <!-- Startup Screen -->
+        <div id="startup-screen" class="screen active">
+            <h1>Manual Entry</h1>
+            <div class="form-group">
+                <label for="operator-name">Enter Your Name:</label>
+                <input type="text" id="operator-name" required>
+            </div>
+            <div class="form-group">
+                <label for="event-name">Event Name:</label>
+                <input type="text" id="event-name" required>
+            </div>
+            <div class="form-group">
+                <label for="roster-upload">Import Roster (CSV):</label>
+                <input type="file" id="roster-upload" accept=".csv" required>
+            </div>
+            <button id="start-event" disabled>Start Event</button>
+        </div>
+
+        <!-- Main Screen -->
+        <div id="main-screen" class="screen">
+            <header>
+                <h2 id="event-title"></h2>
+                <div class="header-controls">
+                    <button id="settings-btn">⚙️</button>
+                    <button id="export-btn">📤</button>
+                </div>
+            </header>
+
+            <!-- Roster Grid -->
+            <div id="roster-section">
+                <div class="controls">
+                    <input type="text" id="name-filter" placeholder="Search names...">
+                    <button id="add-person-btn">+ Add Person</button>
+                </div>
+                <div id="roster-grid"></div>
+            </div>
+
+            <!-- Measurement Form -->
+            <div id="measurement-form" class="hidden">
+                <h3 id="person-name"></h3>
+                <button id="back-to-roster">← Back to Roster</button>
+                
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="present-checkbox"> Present
+                    </label>
+                </div>
+
+                <div class="measurements-grid">
+                    <div class="measurement-item">
+                        <label>Height with shoes</label>
+                        <div class="unit-selector">
+                            <select id="height-shoes-unit">
+                                <option value="inches">inches</option>
+                                <option value="cm">cm</option>
+                            </select>
+                        </div>
+                        <input type="number" step="0.01" id="height-shoes-1" placeholder="Enter value">
+                        <input type="number" step="0.01" id="height-shoes-2" placeholder="Confirm value">
+                    </div>
+
+                    <div class="measurement-item">
+                        <label>Height without shoes</label>
+                        <div class="unit-selector">
+                            <select id="height-no-shoes-unit">
+                                <option value="inches">inches</option>
+                                <option value="cm">cm</option>
+                            </select>
+                        </div>
+                        <input type="number" step="0.01" id="height-no-shoes-1" placeholder="Enter value">
+                        <input type="number" step="0.01" id="height-no-shoes-2" placeholder="Confirm value">
+                    </div>
+
+                    <div class="measurement-item">
+                        <label>Reach</label>
+                        <div class="unit-selector">
+                            <select id="reach-unit">
+                                <option value="inches">inches</option>
+                                <option value="cm">cm</option>
+                            </select>
+                        </div>
+                        <input type="number" step="0.01" id="reach-1" placeholder="Enter value">
+                        <input type="number" step="0.01" id="reach-2" placeholder="Confirm value">
+                    </div>
+
+                    <div class="measurement-item">
+                        <label>Wingspan</label>
+                        <div class="unit-selector">
+                            <select id="wingspan-unit">
+                                <option value="inches">inches</option>
+                                <option value="cm">cm</option>
+                            </select>
+                        </div>
+                        <input type="number" step="0.01" id="wingspan-1" placeholder="Enter value">
+                        <input type="number" step="0.01" id="wingspan-2" placeholder="Confirm value">
+                    </div>
+
+                    <div class="measurement-item">
+                        <label>Weight</label>
+                        <div class="unit-selector">
+                            <select id="weight-unit">
+                                <option value="lbs">lbs</option>
+                                <option value="kg">kg</option>
+                            </select>
+                        </div>
+                        <input type="number" step="0.01" id="weight-1" placeholder="Enter value">
+                        <input type="number" step="0.01" id="weight-2" placeholder="Confirm value">
+                    </div>
+
+                    <div class="measurement-item">
+                        <label>Hand length</label>
+                        <div class="unit-selector">
+                            <select id="hand-length-unit">
+                                <option value="inches">inches</option>
+                                <option value="cm">cm</option>
+                            </select>
+                        </div>
+                        <input type="number" step="0.01" id="hand-length-1" placeholder="Enter value">
+                        <input type="number" step="0.01" id="hand-length-2" placeholder="Confirm value">
+                    </div>
+
+                    <div class="measurement-item">
+                        <label>Hand width</label>
+                        <div class="unit-selector">
+                            <select id="hand-width-unit">
+                                <option value="inches">inches</option>
+                                <option value="cm">cm</option>
+                            </select>
+                        </div>
+                        <input type="number" step="0.01" id="hand-width-1" placeholder="Enter value">
+                        <input type="number" step="0.01" id="hand-width-2" placeholder="Confirm value">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="comments">Comments:</label>
+                    <textarea id="comments" placeholder="Any notes or reasons for incomplete data..."></textarea>
+                </div>
+
+                <button id="save-measurements">Save Measurements</button>
+            </div>
+        </div>
+
+        <!-- Add Person Modal -->
+        <div id="add-person-modal" class="modal hidden">
+            <div class="modal-content">
+                <h3>Add New Person</h3>
+                <div class="form-group">
+                    <label for="new-person-name">Name:</label>
+                    <input type="text" id="new-person-name" required>
+                </div>
+                <div class="form-group">
+                    <label for="new-person-gender">Gender:</label>
+                    <select id="new-person-gender">
+                        <option value="M">Male</option>
+                        <option value="F">Female</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="modal-buttons">
+                    <button id="cancel-add-person">Cancel</button>
+                    <button id="confirm-add-person">Add Person</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Settings Modal -->
+        <div id="settings-modal" class="modal hidden">
+            <div class="modal-content">
+                <h3>Settings</h3>
+                <button id="purge-data">Purge Old Data</button>
+                <button id="close-settings">Close</button>
+            </div>
+        </div>
+
+        <!-- Purge Confirmation Modal -->
+        <div id="purge-modal" class="modal hidden">
+            <div class="modal-content">
+                <h3>Confirm Purge</h3>
+                <p>Enter password to purge old data:</p>
+                <input type="password" id="purge-password" placeholder="Enter 00000">
+                <div class="modal-buttons">
+                    <button id="cancel-purge">Cancel</button>
+                    <button id="confirm-purge">Purge Data</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Validation Message -->
+        <div id="validation-toast" class="toast hidden">
+            <span id="toast-message"></span>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+</body>
+</html>
