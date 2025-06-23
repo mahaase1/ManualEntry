@@ -225,6 +225,13 @@ class ManualEntryApp {
             measurement: measurementType, 
             value: value 
         });
+        
+        // Automatically save to CSV file in 'Manual entry' directory for spreadsheet updates
+        const personData = this.roster.find(p => (p.id || p.name) === personId);
+        if (personData && measurementData) {
+            const csvContent = this.generateIndividualMeasurementCSV(personData, measurementData);
+            this.appendToCSVFile(csvContent, true);
+        }
     }
 
     bindEvents() {
@@ -371,7 +378,11 @@ class ManualEntryApp {
             unit: unit
         });
         
-        this.showToast(`${measurement.replace('-', ' ')} saved successfully!`, 'success');
+        // Automatically save to CSV file in 'Manual entry' directory
+        const csvContent = this.generateIndividualMeasurementCSV(person, measurementData);
+        const savedFilename = this.appendToCSVFile(csvContent, true);
+        
+        this.showToast(`${measurement.replace('-', ' ')} saved successfully! (Saved to ${savedFilename})`, 'success');
     }
 
     validateStartup() {
@@ -618,7 +629,12 @@ class ManualEntryApp {
                 present: person.present,
                 completed: person.completed
             });
-            this.showToast('Measurements saved successfully!', 'success');
+            
+            // Automatically save to CSV file in 'Manual entry' directory
+            const csvContent = this.generateIndividualMeasurementCSV(person, measurementData);
+            const savedFilename = this.appendToCSVFile(csvContent, false);
+            
+            this.showToast(`Measurements saved successfully! (Saved to ${savedFilename})`, 'success');
             this.showRosterView();
         } else {
             this.showToast('Please enter at least one measurement or mark as present', 'warning');
@@ -826,6 +842,66 @@ class ManualEntryApp {
         });
 
         return csv;
+    }
+
+    generateIndividualMeasurementCSV(personData, measurementData) {
+        // Create CSV header if this is the first record
+        let csv = 'Event,Operator,Device,Save_Timestamp,ID,Name,Gender,Present,Completed,Measurement_Timestamp,Comments,';
+        csv += 'Height_Shoes_Value,Height_Shoes_Unit,Height_No_Shoes_Value,Height_No_Shoes_Unit,';
+        csv += 'Reach_Value,Reach_Unit,Wingspan_Value,Wingspan_Unit,Weight_Value,Weight_Unit,';
+        csv += 'Hand_Length_Value,Hand_Length_Unit,Hand_Width_Value,Hand_Width_Unit,';
+        csv += 'Vertical_Value,Vertical_Unit,Approach_Value,Approach_Unit,Broad_Value,Broad_Unit\n';
+
+        // Add the person's data row
+        csv += `"${this.currentEvent}","${this.currentOperator}","${this.deviceId}","${new Date().toISOString()}",`;
+        csv += `"${personData.id || ''}","${personData.name.replace(/"/g, '""')}","${personData.gender}",${personData.present},${personData.completed},`;
+        csv += `"${measurementData.timestamp || ''}","${(measurementData.comments || '').replace(/"/g, '""')}",`;
+        
+        const measurementFields = ['height_shoes', 'height_no_shoes', 'reach', 'wingspan', 'weight', 'hand_length', 'hand_width', 'vertical', 'approach', 'broad'];
+        measurementFields.forEach(field => {
+            const measurement = measurementData[field];
+            if (measurement) {
+                csv += `${measurement.value},"${measurement.unit}",`;
+            } else {
+                csv += ',"",';
+            }
+        });
+        
+        csv += '\n';
+        return csv;
+    }
+
+    appendToCSVFile(csvContent, isIndividualSave = false) {
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-').split('T')[0];
+        const timeOnly = new Date().toISOString().replace(/[:.]/g, '-').split('T')[1].split('-')[0];
+        const saveType = isIndividualSave ? 'individual' : 'full';
+        const filename = `${this.currentEvent.replace(/[^a-zA-Z0-9]/g, '_')}_${timestamp}_${saveType}_saves.csv`;
+        
+        // Check if file already exists in the directory
+        const directoryKey = 'ManualEntry_Directory';
+        let directoryIndex = JSON.parse(localStorage.getItem(directoryKey) || '[]');
+        const existingFile = directoryIndex.find(file => file.filename === filename);
+        
+        let finalContent = csvContent;
+        
+        if (existingFile) {
+            // Append to existing file (remove header from new content)
+            const existingContent = localStorage.getItem(existingFile.key) || '';
+            const csvLines = csvContent.split('\n');
+            const dataLines = csvLines.slice(1).join('\n'); // Remove header
+            finalContent = existingContent + dataLines;
+            
+            // Update existing file
+            localStorage.setItem(existingFile.key, finalContent);
+            existingFile.size = finalContent.length;
+            existingFile.timestamp = new Date().toISOString();
+            localStorage.setItem(directoryKey, JSON.stringify(directoryIndex));
+        } else {
+            // Create new file
+            this.saveToLocalDirectory(finalContent, filename);
+        }
+        
+        return filename;
     }
 
     generateLogCSV(data) {

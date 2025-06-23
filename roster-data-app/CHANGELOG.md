@@ -1,5 +1,28 @@
 # Changelog - Manual Entry Data Collection App
 
+## Version 2.3.0 - Automatic CSV Saving & Enhanced Data Recording (June 22, 2025)
+
+### 🚀 **New Auto-Save Features**
+
+#### Automatic CSV Writing
+- **Every save writes to CSV** - Both individual measurement saves and full saves automatically write to CSV files in 'Manual entry' directory
+- **Enhanced data recording** - Each CSV record includes event name, operator, device ID, and save timestamp
+- **Separate file tracking** - Individual saves go to `[Event]_[Date]_individual_saves.csv`, full saves to `[Event]_[Date]_full_saves.csv`
+- **Intelligent file appending** - Multiple saves append to the same daily file, preventing file proliferation
+- **Complete audit trail** - Every measurement action is preserved with full context
+
+#### Enhanced CSV Format
+- **Event metadata** - Event name, operator, and device included in every record
+- **Dual timestamps** - Save timestamp (when saved) and measurement timestamp (when collected)
+- **Comprehensive data** - All measurements, units, presence status, and completion status included
+- **Real-time updates** - Spreadsheet changes also trigger automatic CSV saves
+
+### 🔧 **Technical Improvements**
+- **New `generateIndividualMeasurementCSV()` function** for single-record CSV generation
+- **New `appendToCSVFile()` function** for intelligent file management and appending
+- **Enhanced data context** - Every save action includes complete environmental data
+- **Improved file organization** - Clear naming convention distinguishes save types
+
 ## Version 2.2.0 - Logo Removal & Clean Interface (June 22, 2025)
 
 ### 🎨 User Interface Improvements
