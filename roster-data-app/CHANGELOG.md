@@ -1,5 +1,21 @@
 # Changelog - Manual Entry Data Collection App
 
+## Version 2.2.0 - Logo Removal & Clean Interface (June 22, 2025)
+
+### 🎨 User Interface Improvements
+
+#### Logo Removal
+- **Removed BAM logo** from all page headers (startup, main, and spreadsheet views)
+- **Simplified header structure** for cleaner appearance
+- **Eliminated logo-related CSS** classes and styling
+- **Streamlined design** focusing on functionality over branding
+
+### 🔧 Technical Updates
+- **Removed logo asset files** from project directory
+- **Cleaned up CSS** by removing `.header-with-logo` and `.header-logo` classes
+- **Updated responsive styles** to remove logo-specific mobile adjustments
+- **Simplified HTML structure** in headers across all views
+
 ## Version 2.1.0 - UI Streamlining & BAM Logo Integration (June 22, 2025)
 
 ### 🎨 User Interface Improvements

@@ -30,20 +30,6 @@ body {
     display: none !important;
 }
 
-/* Header Logo Styles */
-.header-with-logo {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.header-logo {
-    width: 32px;
-    height: 32px;
-    object-fit: contain;
-    flex-shrink: 0;
-}
-
 /* Startup Screen */
 #startup-screen {
     max-width: 600px;
@@ -712,15 +698,6 @@ header {
     
     .header-controls {
         justify-content: center;
-    }
-    
-    .header-with-logo {
-        justify-content: center;
-    }
-    
-    .header-logo {
-        width: 28px;
-        height: 28px;
     }
     
     #roster-grid {

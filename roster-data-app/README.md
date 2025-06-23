@@ -15,7 +15,6 @@ A standalone web application for collecting physical measurements with local sto
 ✅ **CSV export** - Data export with email integration and auto-attachment
 ✅ **Local file management** - Organized "Manual entry" directory with file browser
 ✅ **Auto-attachment** - CSV files automatically attached to email (when supported)
-✅ **Professional branding** - BAM logo integrated in all page headers
 ✅ **Streamlined UI** - Direct access to setup screen without start page
 ✅ **Spreadsheet view** - Grid-based data entry and viewing with edit mode
 ✅ **Activity logging** - Complete audit trail of all user actions
