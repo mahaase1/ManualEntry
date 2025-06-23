@@ -93,21 +93,22 @@ ID,Name,Gender
 
 ### Export Data
 - Click export button (📤)
-- CSV files automatically saved to "Manual entry" local directory
-- Files automatically download to device
+- **CSV files automatically saved to iPad's Downloads folder**
 - **iPad Mail app automatically opens** with pre-filled email
 - **Files automatically attach** via Web Share API (iPad optimized)
+- **Real file attachments** - not just links or data URLs
 - **Smart fallback system** for older devices:
-  - Downloads files to local storage
+  - Downloads files to Downloads folder
   - Opens mailto link in default email app
-  - Files available for manual attachment if needed
+  - Files available for manual attachment from Downloads
 - **Complete email package** includes data summary and metadata
 
 ### File Management
-- **View saved files**: Settings → View Saved Files
+- **View saved files**: Settings → View Saved Files (app backup storage)
 - **Download files**: Re-download any previously exported file
-- **Delete files**: Remove files from local directory
-- **Auto-cleanup**: System keeps last 10 files automatically
+- **Delete files**: Remove files from app backup storage
+- **Auto-cleanup**: App keeps last 10 files in backup storage automatically
+- **Primary storage**: All exports go to iPad's Downloads folder
 
 ### Data Management
 - **Auto-save**: All changes saved automatically
@@ -145,12 +146,13 @@ roster-data-app/
 
 ## Technical Notes
 
-- **Storage**: Uses localStorage for all data persistence and file management
-- **Local Directory**: Creates virtual "Manual entry" folder in localStorage
-- **Backup**: Maintains 5 most recent backups automatically
+- **Storage**: Uses localStorage for app data persistence and backup file management
+- **Primary File Location**: CSV exports save directly to iPad's Downloads folder
+- **Backup Storage**: Maintains backup copies in localStorage for file management
 - **File Management**: Organized metadata system with automatic cleanup
 - **Validation**: Double-entry with floating-point tolerance
-- **Export**: CSV format with timestamp and device info, auto-attachment support
+- **Export**: CSV format with timestamp and device info, real file attachments
+- **Email Integration**: Web Share API for native iPad attachment, mailto fallback
 - **PWA**: Can be installed as Progressive Web App
 
 ## Troubleshooting
@@ -166,10 +168,11 @@ roster-data-app/
 - Try refreshing and re-entering
 
 **Export not working:**
-- Files automatically saved to "Manual entry" directory
-- Use Settings → View Saved Files to access exports
-- Check if email client supports automatic attachments
-- Manually download files if auto-attachment fails
+- Files automatically saved to iPad's Downloads folder
+- Use Settings → View Saved Files to access backup copies
+- Check if Web Share API attached files automatically
+- Look in Downloads folder for manual attachment if needed
+- Use Files app on iPad to locate exported CSV files
 
 ## Security & Privacy
 

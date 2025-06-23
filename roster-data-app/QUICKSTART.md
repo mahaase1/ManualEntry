@@ -71,8 +71,8 @@ ID,Name,Gender
 - **App won't load**: Try refreshing Safari
 - **Can't upload roster**: Check CSV format and file extension
 - **Measurements won't save**: Ensure all entered values match
-- **Export issues**: File automatically saved to "Manual entry" folder
-- **Email attachment issues**: Check Settings → View Saved Files for manual download
+- **Export issues**: Files automatically saved to iPad's Downloads folder
+- **Email attachment issues**: Use Web Share API or check Downloads folder for manual attachment
 
 ## 🔄 Workflow Example
 

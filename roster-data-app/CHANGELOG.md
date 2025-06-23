@@ -1,5 +1,33 @@
 # Changelog - Manual Entry Data Collection App
 
+## Version 2.3.2 - Real iPad File System Integration (June 22, 2025)
+
+### 📂 **iPad File System Optimization**
+
+#### Real File Storage
+- **Downloads folder integration** - CSV files save directly to iPad's Downloads folder (not virtual directory)
+- **Real file attachments** - Files are actual iPad files, not data URLs or blobs
+- **Native Files app access** - Exported files accessible via iPad's Files app
+- **Proper file management** - Files persist independently of the web app
+
+#### Enhanced Email Attachments
+- **Web Share API with real files** - Creates actual File objects for native sharing
+- **Improved attachment reliability** - Files are real iPad files, not temporary blobs
+- **Better fallback handling** - Downloads folder ensures files are always available
+- **Dual storage approach** - Primary: Downloads folder, Backup: localStorage
+
+#### Technical Improvements
+- **New `saveToDownloadsFolder()` function** - Direct iPad Downloads folder integration
+- **Enhanced `openMailWithDownloadedFiles()` function** - Better iPad Mail app integration
+- **Improved file lifecycle** - Real files persist beyond app session
+- **Better error handling** - Clear feedback about file locations
+
+#### User Experience
+- **Clear file locations** - Users know exactly where files are saved
+- **No confusion about directories** - No reference to non-existent "Manual entry" folder
+- **Better instructions** - Clear guidance about Downloads folder and Files app
+- **Reliable attachments** - Real files always work with Mail app
+
 ## Version 2.3.1 - Enhanced iPad Email Attachments (June 22, 2025)
 
 ### 📧 **iPad Email Optimization**
