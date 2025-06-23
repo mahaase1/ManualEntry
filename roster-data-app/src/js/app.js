@@ -931,66 +931,113 @@ class ManualEntryApp {
     emailDataWithAttachment(csvContent, filename, logContent = '', logFilename = '') {
         const subject = encodeURIComponent(`Manual Entry Data - ${this.currentEvent}`);
         
-        // Create data URLs for the files
+        // Create blobs for the files
         const csvBlob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const csvDataUrl = URL.createObjectURL(csvBlob);
-        
-        let logDataUrl = '';
+        let logBlob = null;
         if (logContent) {
-            const logBlob = new Blob([logContent], { type: 'text/csv;charset=utf-8;' });
-            logDataUrl = URL.createObjectURL(logBlob);
+            logBlob = new Blob([logContent], { type: 'text/csv;charset=utf-8;' });
         }
         
-        // Enhanced email body with file information
+        // Enhanced email body with file information for iPad
         const attachmentInfo = logContent ? 
-            `Two files have been generated:
-1. "${filename}" - Main data export with all measurements
-2. "${logFilename}" - Activity log with timestamp sequence of all entries` :
-            `The CSV file "${filename}" contains all measurement data`;
+            `Two files have been automatically attached to this email:
 
-        const body = encodeURIComponent(`Please find the data collection results for ${this.currentEvent}.
+📄 "${filename}" - Main data export with all measurements
+📄 "${logFilename}" - Activity log with timestamp sequence
 
+If attachments did not transfer automatically, both files are saved in your device's "Manual entry" folder and Downloads folder for manual attachment.` :
+            `📄 The CSV file "${filename}" has been automatically attached to this email.
+
+If the attachment did not transfer automatically, the file is saved in your device's "Manual entry" folder and Downloads folder for manual attachment.`;
+
+        const body = encodeURIComponent(`Manual Entry Data Collection Results
+
+Event: ${this.currentEvent}
 Operator: ${this.currentOperator}
 Device: ${this.deviceId}
 Export Time: ${new Date().toLocaleString()}
 
-Data Summary:
-- Total Roster: ${this.roster.length} people
-- Completed Measurements: ${this.roster.filter(p => p.completed).length} people
-- Present: ${this.roster.filter(p => p.present).length} people
-- Activity Log Entries: ${this.activityLog.length} actions
+📊 Data Summary:
+• Total Roster: ${this.roster.length} people
+• Completed Measurements: ${this.roster.filter(p => p.completed).length} people
+• Present at Event: ${this.roster.filter(p => p.present).length} people
+• Activity Log Entries: ${this.activityLog.length} actions
 
 ${attachmentInfo}
 
-Files have been automatically saved to your device's "Manual entry" folder.
-
-Note: Files will be automatically attached if your email client supports data URLs, otherwise they have been downloaded to your Downloads folder for manual attachment.`);
+This email was generated automatically by the Manual Entry iPad app.`);
         
-        // Try to open email with attachments
-        let mailtoLink = `mailto:?subject=${subject}&body=${body}`;
-        if (logContent) {
-            mailtoLink += `&attachment=${csvDataUrl};filename=${filename}&attachment=${logDataUrl};filename=${logFilename}`;
+        // iPad-optimized email approach with Web Share API fallback
+        if (navigator.share) {
+            // Use Web Share API for iPad when available
+            const shareData = {
+                title: `Manual Entry Data - ${this.currentEvent}`,
+                text: `Data collection results for ${this.currentEvent}. Files: ${filename}${logContent ? `, ${logFilename}` : ''}`,
+                files: logContent ? [
+                    new File([csvBlob], filename, { type: 'text/csv' }),
+                    new File([logBlob], logFilename, { type: 'text/csv' })
+                ] : [new File([csvBlob], filename, { type: 'text/csv' })]
+            };
+            
+            navigator.share(shareData)
+                .then(() => {
+                    this.showToast(`Files shared successfully via iPad Mail app!`, 'success');
+                })
+                .catch((error) => {
+                    console.log('Web Share API failed, falling back to mailto:', error);
+                    this.openMailtoWithDownloads(subject, body, filename, logFilename);
+                });
         } else {
-            mailtoLink += `&attachment=${csvDataUrl};filename=${filename}`;
+            // Fallback to enhanced mailto approach
+            this.openMailtoWithDownloads(subject, body, filename, logFilename);
+        }
+    }
+
+    openMailtoWithDownloads(subject, body, filename, logFilename = '') {
+        // Force download files first to ensure they're available for manual attachment
+        const csvContent = this.generateCSV({
+            event: this.currentEvent,
+            operator: this.currentOperator,
+            device: this.deviceId,
+            exportTime: new Date().toISOString(),
+            roster: this.roster,
+            measurements: Object.fromEntries(this.measurements),
+            activityLog: this.activityLog
+        });
+        
+        this.downloadFile(csvContent, filename);
+        
+        if (logFilename) {
+            const logContent = this.generateLogCSV({
+                event: this.currentEvent,
+                operator: this.currentOperator,
+                device: this.deviceId,
+                exportTime: new Date().toISOString(),
+                roster: this.roster,
+                measurements: Object.fromEntries(this.measurements),
+                activityLog: this.activityLog
+            });
+            this.downloadFile(logContent, logFilename);
         }
         
-        // Fallback for clients that don't support attachment parameter
-        const fallbackMailtoLink = `mailto:?subject=${subject}&body=${body}`;
+        // Enhanced mailto for iPad Mail app
+        const mailtoLink = `mailto:?subject=${subject}&body=${body}`;
         
-        // Try the enhanced version first, fallback to standard if needed
+        // Open the email app
         try {
-            window.open(mailtoLink, '_blank');
-            this.showToast(`Files saved to "Manual entry" folder and email opened with ${logContent ? 'data and log' : 'data'} attachments!`, 'success');
+            // Use window.location for better iPad compatibility
+            window.location.href = mailtoLink;
+            
+            // Show instructions for manual attachment
+            setTimeout(() => {
+                this.showToast(`📧 Email opened in Mail app. Files downloaded to attach manually if needed.`, 'success');
+            }, 500);
+            
         } catch (error) {
-            window.open(fallbackMailtoLink, '_blank');
-            this.showToast('Files saved locally. Email opened - files available in Downloads for attachment.', 'success');
+            // Ultimate fallback
+            window.open(mailtoLink, '_blank');
+            this.showToast('Email opened. Files available in Downloads and "Manual entry" folder for attachment.', 'success');
         }
-        
-        // Clean up the blob URLs after a delay
-        setTimeout(() => {
-            URL.revokeObjectURL(csvDataUrl);
-            if (logDataUrl) URL.revokeObjectURL(logDataUrl);
-        }, 10000);
     }
 
     saveToLocalDirectory(content, filename) {

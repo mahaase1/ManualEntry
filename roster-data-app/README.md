@@ -93,11 +93,15 @@ ID,Name,Gender
 
 ### Export Data
 - Click export button (📤)
-- CSV file automatically saved to "Manual entry" local directory
-- CSV file downloads to device
-- Email app opens with pre-filled subject/body and automatic attachment
-- File automatically attached if email client supports data URLs
-- Fallback to manual attachment if needed
+- CSV files automatically saved to "Manual entry" local directory
+- Files automatically download to device
+- **iPad Mail app automatically opens** with pre-filled email
+- **Files automatically attach** via Web Share API (iPad optimized)
+- **Smart fallback system** for older devices:
+  - Downloads files to local storage
+  - Opens mailto link in default email app
+  - Files available for manual attachment if needed
+- **Complete email package** includes data summary and metadata
 
 ### File Management
 - **View saved files**: Settings → View Saved Files

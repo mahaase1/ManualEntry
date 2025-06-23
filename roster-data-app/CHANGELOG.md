@@ -1,5 +1,27 @@
 # Changelog - Manual Entry Data Collection App
 
+## Version 2.3.1 - Enhanced iPad Email Attachments (June 22, 2025)
+
+### 📧 **iPad Email Optimization**
+
+#### Advanced Attachment System
+- **Web Share API integration** - Native iPad sharing for seamless file attachment
+- **Automatic email composition** - Pre-filled subject, body, and attachments
+- **Smart fallback system** - Progressive enhancement for maximum compatibility
+- **Enhanced email content** - Rich formatting with emojis and data summaries
+
+#### iPad-Specific Improvements
+- **Native Mail app integration** - Direct integration with iPad's Mail app
+- **Automatic file attachment** - CSV files automatically attach via Web Share API
+- **Improved user experience** - Single-tap export with complete email package
+- **Better error handling** - Graceful fallbacks if Web Share API unavailable
+
+#### Technical Enhancements
+- **Enhanced `emailDataWithAttachment()` function** - iPad-optimized email generation
+- **New `openMailtoWithDownloads()` function** - Fallback email handling
+- **Web Share API detection** - Progressive enhancement for modern browsers
+- **Improved blob management** - Better memory handling for file attachments
+
 ## Version 2.3.0 - Automatic CSV Saving & Enhanced Data Recording (June 22, 2025)
 
 ### 🚀 **New Auto-Save Features**
