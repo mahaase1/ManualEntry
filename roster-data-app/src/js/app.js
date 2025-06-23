@@ -6,6 +6,8 @@ class ManualEntryApp {
         this.measurements = new Map();
         this.currentPersonId = null;
         this.deviceId = this.generateDeviceId();
+        this.activityLog = [];
+        this.editMode = false;
         
         this.init();
     }
@@ -25,7 +27,204 @@ class ManualEntryApp {
         return deviceId;
     }
 
+    logActivity(action, details = {}) {
+        const logEntry = {
+            timestamp: new Date().toISOString(),
+            action: action,
+            operator: this.currentOperator,
+            event: this.currentEvent,
+            device: this.deviceId,
+            details: details
+        };
+        this.activityLog.push(logEntry);
+        console.log('Activity logged:', logEntry);
+    }
+
+    showStartupScreen() {
+        document.getElementById('home-screen').classList.remove('active');
+        document.getElementById('startup-screen').classList.add('active');
+        this.logActivity('APP_STARTED', { from: 'home_screen' });
+    }
+
+    showSpreadsheetView() {
+        document.getElementById('roster-section').classList.add('hidden');
+        document.getElementById('measurement-form').classList.add('hidden');
+        document.getElementById('spreadsheet-view').classList.remove('hidden');
+        this.renderSpreadsheet();
+        this.logActivity('SPREADSHEET_VIEW_OPENED');
+    }
+
+    showMainView() {
+        document.getElementById('spreadsheet-view').classList.add('hidden');
+        document.getElementById('roster-section').classList.remove('hidden');
+        this.renderRoster();
+        this.logActivity('MAIN_VIEW_OPENED');
+    }
+
+    toggleEditMode() {
+        this.editMode = !this.editMode;
+        const button = document.getElementById('toggle-edit-mode');
+        if (this.editMode) {
+            button.textContent = '📝 Edit Mode: ON';
+            button.classList.add('edit-active');
+        } else {
+            button.textContent = '📝 Edit Mode: OFF';
+            button.classList.remove('edit-active');
+        }
+        this.renderSpreadsheet();
+        this.logActivity('EDIT_MODE_TOGGLED', { editMode: this.editMode });
+    }
+
+    renderSpreadsheet() {
+        const container = document.getElementById('spreadsheet-container');
+        if (!container) return;
+
+        // Create table HTML
+        let tableHTML = '<table class="spreadsheet-table"><thead><tr>';
+        
+        // Headers
+        tableHTML += '<th class="name-column header">Name</th>';
+        tableHTML += '<th>ID</th>';
+        tableHTML += '<th>Gender</th>';
+        tableHTML += '<th>Present</th>';
+        tableHTML += '<th>Completed</th>';
+        tableHTML += '<th>Height w/ Shoes</th>';
+        tableHTML += '<th>Unit</th>';
+        tableHTML += '<th>Height w/o Shoes</th>';
+        tableHTML += '<th>Unit</th>';
+        tableHTML += '<th>Reach</th>';
+        tableHTML += '<th>Unit</th>';
+        tableHTML += '<th>Wingspan</th>';
+        tableHTML += '<th>Unit</th>';
+        tableHTML += '<th>Weight</th>';
+        tableHTML += '<th>Unit</th>';
+        tableHTML += '<th>Hand Length</th>';
+        tableHTML += '<th>Unit</th>';
+        tableHTML += '<th>Hand Width</th>';
+        tableHTML += '<th>Unit</th>';
+        tableHTML += '<th>Comments</th>';
+        tableHTML += '</tr></thead><tbody>';
+
+        // Data rows
+        this.roster.forEach(person => {
+            const personId = person.id || person.name;
+            const measurement = this.measurements.get(personId) || {};
+            
+            tableHTML += '<tr>';
+            tableHTML += `<td class="name-column">${this.escapeHtml(person.name)}</td>`;
+            tableHTML += `<td>${this.escapeHtml(person.id || '')}</td>`;
+            tableHTML += `<td>${this.escapeHtml(person.gender)}</td>`;
+            tableHTML += `<td class="present-indicator ${person.present ? 'present' : 'absent'}">${person.present ? '✓' : '✗'}</td>`;
+            tableHTML += `<td class="completed-indicator ${person.completed ? 'completed' : 'incomplete'}">${person.completed ? '✓' : '○'}</td>`;
+            
+            // Measurements
+            const measurements = ['height_shoes', 'height_no_shoes', 'reach', 'wingspan', 'weight', 'hand_length', 'hand_width'];
+            measurements.forEach(measurementType => {
+                const data = measurement[measurementType];
+                if (this.editMode) {
+                    tableHTML += `<td class="measurement-cell">
+                        <input type="number" step="0.01" class="measurement-input" 
+                               data-person="${this.escapeHtml(personId)}" 
+                               data-measurement="${measurementType}"
+                               value="${data ? data.value : ''}" 
+                               placeholder="Enter">
+                    </td>`;
+                    tableHTML += `<td class="measurement-cell">
+                        <select class="measurement-input" 
+                                data-person="${this.escapeHtml(personId)}" 
+                                data-measurement="${measurementType}_unit">
+                            <option value="inches" ${data && data.unit === 'inches' ? 'selected' : ''}>inches</option>
+                            <option value="cm" ${data && data.unit === 'cm' ? 'selected' : ''}>cm</option>
+                            <option value="lbs" ${data && data.unit === 'lbs' ? 'selected' : ''}>lbs</option>
+                            <option value="kg" ${data && data.unit === 'kg' ? 'selected' : ''}>kg</option>
+                        </select>
+                    </td>`;
+                } else {
+                    tableHTML += `<td class="measurement-display">${data ? data.value : ''}</td>`;
+                    tableHTML += `<td class="measurement-display">${data ? data.unit : ''}</td>`;
+                }
+            });
+            
+            // Comments
+            if (this.editMode) {
+                tableHTML += `<td class="measurement-cell">
+                    <input type="text" class="measurement-input" 
+                           data-person="${this.escapeHtml(personId)}" 
+                           data-measurement="comments"
+                           value="${measurement.comments || ''}" 
+                           placeholder="Comments">
+                </td>`;
+            } else {
+                tableHTML += `<td class="measurement-display">${measurement.comments || ''}</td>`;
+            }
+            
+            tableHTML += '</tr>';
+        });
+
+        tableHTML += '</tbody></table>';
+        container.innerHTML = tableHTML;
+
+        // Add event listeners for edit mode
+        if (this.editMode) {
+            container.querySelectorAll('.measurement-input').forEach(input => {
+                input.addEventListener('change', this.handleSpreadsheetInput.bind(this));
+                input.addEventListener('blur', this.handleSpreadsheetInput.bind(this));
+            });
+        }
+    }
+
+    handleSpreadsheetInput(event) {
+        const input = event.target;
+        const personId = input.getAttribute('data-person');
+        const measurementType = input.getAttribute('data-measurement');
+        const value = input.value;
+
+        // Get or create measurement data
+        let measurementData = this.measurements.get(personId) || {
+            timestamp: new Date().toISOString(),
+            operator: this.currentOperator,
+            device: this.deviceId,
+            comments: ''
+        };
+
+        if (measurementType === 'comments') {
+            measurementData.comments = value;
+        } else if (measurementType.endsWith('_unit')) {
+            const baseType = measurementType.replace('_unit', '');
+            if (!measurementData[baseType]) {
+                measurementData[baseType] = { value: '', unit: value };
+            } else {
+                measurementData[baseType].unit = value;
+            }
+        } else {
+            if (!measurementData[measurementType]) {
+                measurementData[measurementType] = { value: parseFloat(value) || '', unit: 'inches' };
+            } else {
+                measurementData[measurementType].value = parseFloat(value) || '';
+            }
+        }
+
+        // Update measurements and person status
+        this.measurements.set(personId, measurementData);
+        const person = this.roster.find(p => (p.id || p.name) === personId);
+        if (person) {
+            const hasValidMeasurements = ['height_shoes', 'height_no_shoes', 'reach', 'wingspan', 'weight', 'hand_length', 'hand_width']
+                .some(type => measurementData[type] && measurementData[type].value);
+            person.completed = hasValidMeasurements;
+        }
+
+        this.saveState();
+        this.logActivity('MEASUREMENT_UPDATED', { 
+            person: personId, 
+            measurement: measurementType, 
+            value: value 
+        });
+    }
+
     bindEvents() {
+        // Home screen events
+        document.getElementById('continue-to-app').addEventListener('click', this.showStartupScreen.bind(this));
+
         // Startup screen events
         document.getElementById('operator-name').addEventListener('input', this.validateStartup.bind(this));
         document.getElementById('event-name').addEventListener('input', this.validateStartup.bind(this));
@@ -33,12 +232,17 @@ class ManualEntryApp {
         document.getElementById('start-event').addEventListener('click', this.startEvent.bind(this));
 
         // Main screen events
+        document.getElementById('spreadsheet-btn').addEventListener('click', this.showSpreadsheetView.bind(this));
         document.getElementById('settings-btn').addEventListener('click', this.showSettings.bind(this));
         document.getElementById('export-btn').addEventListener('click', this.exportData.bind(this));
         document.getElementById('name-filter').addEventListener('input', this.filterRoster.bind(this));
         document.getElementById('add-person-btn').addEventListener('click', this.showAddPersonModal.bind(this));
         document.getElementById('back-to-roster').addEventListener('click', this.showRosterView.bind(this));
         document.getElementById('save-measurements').addEventListener('click', this.saveMeasurements.bind(this));
+
+        // Spreadsheet view events
+        document.getElementById('toggle-edit-mode').addEventListener('click', this.toggleEditMode.bind(this));
+        document.getElementById('back-to-main').addEventListener('click', this.showMainView.bind(this));
 
         // Modal events
         document.getElementById('cancel-add-person').addEventListener('click', this.hideAddPersonModal.bind(this));
@@ -137,6 +341,11 @@ class ManualEntryApp {
                 }
             }
         }
+        
+        this.logActivity('ROSTER_IMPORTED', { 
+            totalPeople: this.roster.length,
+            filename: document.getElementById('roster-upload').files[0]?.name || 'unknown'
+        });
     }
 
     parseCSVLine(line) {
@@ -165,12 +374,24 @@ class ManualEntryApp {
         this.currentOperator = document.getElementById('operator-name').value.trim();
         this.currentEvent = document.getElementById('event-name').value.trim();
         
+        // Check for duplicate event names and append timestamp if needed
+        const existingEvents = this.getLocalDirectoryFiles()
+            .filter(file => file.event === this.currentEvent)
+            .map(file => file.filename);
+        
+        if (existingEvents.length > 0) {
+            const timestamp = new Date().toISOString().slice(0, 16).replace('T', '_').replace(':', '-');
+            this.currentEvent = `${this.currentEvent}_${timestamp}`;
+            this.showToast(`Event name was duplicated. Renamed to: ${this.currentEvent}`, 'warning');
+        }
+        
         document.getElementById('event-title').textContent = this.currentEvent;
         document.getElementById('startup-screen').classList.remove('active');
         document.getElementById('main-screen').classList.add('active');
         
         this.renderRoster();
         this.saveState();
+        this.logActivity('EVENT_STARTED', { eventName: this.currentEvent, operator: this.currentOperator });
         this.showToast(`Event "${this.currentEvent}" started successfully!`, 'success');
     }
 
@@ -221,6 +442,7 @@ class ManualEntryApp {
             }
             
             this.showMeasurementForm();
+            this.logActivity('PERSON_SELECTED', { person: person.name, id: person.id });
         }
     }
 
@@ -316,6 +538,12 @@ class ManualEntryApp {
             person.completed = hasValidMeasurements;
             this.saveState();
             this.createBackup();
+            this.logActivity('MEASUREMENTS_SAVED', { 
+                person: person.name, 
+                measurementsCount: Object.keys(measurementData).filter(k => k !== 'timestamp' && k !== 'operator' && k !== 'device' && k !== 'comments').length,
+                present: person.present,
+                completed: person.completed
+            });
             this.showToast('Measurements saved successfully!', 'success');
             this.showRosterView();
         } else {
@@ -350,6 +578,7 @@ class ManualEntryApp {
             this.hideAddPersonModal();
             this.renderRoster();
             this.saveState();
+            this.logActivity('PERSON_ADDED', { name: name, gender: gender });
             this.showToast(`Added ${name} to roster`, 'success');
         }
     }
@@ -468,19 +697,30 @@ class ManualEntryApp {
             device: this.deviceId,
             exportTime: new Date().toISOString(),
             roster: this.roster,
-            measurements: Object.fromEntries(this.measurements)
+            measurements: Object.fromEntries(this.measurements),
+            activityLog: this.activityLog
         };
 
         const csvContent = this.generateCSV(data);
+        const logContent = this.generateLogCSV(data);
         const timestamp = new Date().toISOString().replace(/[:.]/g, '-').split('T')[0];
         const filename = `${this.currentEvent.replace(/[^a-zA-Z0-9]/g, '_')}_${timestamp}_${Date.now()}.csv`;
+        const logFilename = `${this.currentEvent.replace(/[^a-zA-Z0-9]/g, '_')}_${timestamp}_${Date.now()}_LOG.csv`;
         
         // Save to local subdirectory
         this.saveToLocalDirectory(csvContent, filename);
+        this.saveToLocalDirectory(logContent, logFilename);
         
-        // Download file and auto-attach to email
+        // Download files and auto-attach to email
         this.downloadFile(csvContent, filename);
-        this.emailDataWithAttachment(csvContent, filename);
+        this.downloadFile(logContent, logFilename);
+        this.emailDataWithAttachment(csvContent, filename, logContent, logFilename);
+        
+        this.logActivity('DATA_EXPORTED', { 
+            filename: filename, 
+            logFilename: logFilename,
+            totalRecords: this.roster.length 
+        });
     }
 
     generateCSV(data) {
@@ -513,6 +753,17 @@ class ManualEntryApp {
         return csv;
     }
 
+    generateLogCSV(data) {
+        let csv = 'Timestamp,Action,Operator,Event,Device,Details\n';
+        
+        data.activityLog.forEach(logEntry => {
+            csv += `"${logEntry.timestamp}","${logEntry.action}","${logEntry.operator || ''}","${logEntry.event || ''}","${logEntry.device || ''}",`;
+            csv += `"${JSON.stringify(logEntry.details).replace(/"/g, '""')}"\n`;
+        });
+
+        return csv;
+    }
+
     downloadFile(content, filename) {
         const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
         const url = URL.createObjectURL(blob);
@@ -526,14 +777,26 @@ class ManualEntryApp {
         URL.revokeObjectURL(url);
     }
 
-    emailDataWithAttachment(csvContent, filename) {
+    emailDataWithAttachment(csvContent, filename, logContent = '', logFilename = '') {
         const subject = encodeURIComponent(`Manual Entry Data - ${this.currentEvent}`);
         
-        // Create data URL for the CSV file
+        // Create data URLs for the files
         const csvBlob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
         const csvDataUrl = URL.createObjectURL(csvBlob);
         
+        let logDataUrl = '';
+        if (logContent) {
+            const logBlob = new Blob([logContent], { type: 'text/csv;charset=utf-8;' });
+            logDataUrl = URL.createObjectURL(logBlob);
+        }
+        
         // Enhanced email body with file information
+        const attachmentInfo = logContent ? 
+            `Two files have been generated:
+1. "${filename}" - Main data export with all measurements
+2. "${logFilename}" - Activity log with timestamp sequence of all entries` :
+            `The CSV file "${filename}" contains all measurement data`;
+
         const body = encodeURIComponent(`Please find the data collection results for ${this.currentEvent}.
 
 Operator: ${this.currentOperator}
@@ -544,14 +807,21 @@ Data Summary:
 - Total Roster: ${this.roster.length} people
 - Completed Measurements: ${this.roster.filter(p => p.completed).length} people
 - Present: ${this.roster.filter(p => p.present).length} people
+- Activity Log Entries: ${this.activityLog.length} actions
 
-The CSV file "${filename}" contains all measurement data and has been automatically saved to your device's "Manual entry" folder.
+${attachmentInfo}
 
-Note: The file will be automatically attached if your email client supports data URLs, otherwise it has been downloaded to your Downloads folder for manual attachment.`);
+Files have been automatically saved to your device's "Manual entry" folder.
+
+Note: Files will be automatically attached if your email client supports data URLs, otherwise they have been downloaded to your Downloads folder for manual attachment.`);
         
-        // Try to open email with attachment using data URL
-        // This works in some email clients on iPad
-        const mailtoLink = `mailto:?subject=${subject}&body=${body}&attachment=${csvDataUrl};filename=${filename}`;
+        // Try to open email with attachments
+        let mailtoLink = `mailto:?subject=${subject}&body=${body}`;
+        if (logContent) {
+            mailtoLink += `&attachment=${csvDataUrl};filename=${filename}&attachment=${logDataUrl};filename=${logFilename}`;
+        } else {
+            mailtoLink += `&attachment=${csvDataUrl};filename=${filename}`;
+        }
         
         // Fallback for clients that don't support attachment parameter
         const fallbackMailtoLink = `mailto:?subject=${subject}&body=${body}`;
@@ -559,15 +829,16 @@ Note: The file will be automatically attached if your email client supports data
         // Try the enhanced version first, fallback to standard if needed
         try {
             window.open(mailtoLink, '_blank');
-            this.showToast('CSV file saved to "Manual entry" folder and email opened with attachment!', 'success');
+            this.showToast(`Files saved to "Manual entry" folder and email opened with ${logContent ? 'data and log' : 'data'} attachments!`, 'success');
         } catch (error) {
             window.open(fallbackMailtoLink, '_blank');
-            this.showToast('CSV file saved locally. Email opened - file available in Downloads for attachment.', 'success');
+            this.showToast('Files saved locally. Email opened - files available in Downloads for attachment.', 'success');
         }
         
-        // Clean up the blob URL after a delay
+        // Clean up the blob URLs after a delay
         setTimeout(() => {
             URL.revokeObjectURL(csvDataUrl);
+            if (logDataUrl) URL.revokeObjectURL(logDataUrl);
         }, 10000);
     }
 
@@ -663,6 +934,7 @@ Note: The file will be automatically attached if your email client supports data
             roster: this.roster,
             measurements: Object.fromEntries(this.measurements),
             currentPersonId: this.currentPersonId,
+            activityLog: this.activityLog,
             timestamp: new Date().toISOString()
         };
         
@@ -679,6 +951,7 @@ Note: The file will be automatically attached if your email client supports data
                 this.roster = state.roster || [];
                 this.measurements = new Map(Object.entries(state.measurements || {}));
                 this.currentPersonId = state.currentPersonId;
+                this.activityLog = state.activityLog || [];
             } catch (error) {
                 console.error('Error loading saved state:', error);
             }

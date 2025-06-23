@@ -30,6 +30,65 @@ body {
     display: none !important;
 }
 
+/* Home Screen with BAM Logo */
+#home-screen {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #007AFF 0%, #0056CC 100%);
+    margin: -20px;
+    padding: 20px;
+}
+
+.home-container {
+    text-align: center;
+    background: white;
+    padding: 60px 40px;
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    max-width: 500px;
+    width: 100%;
+}
+
+.bam-logo {
+    margin-bottom: 30px;
+    display: flex;
+    justify-content: center;
+}
+
+.home-container h1 {
+    font-size: 42px;
+    color: #333;
+    margin-bottom: 16px;
+    font-weight: 700;
+}
+
+.home-container p {
+    font-size: 20px;
+    color: #666;
+    margin-bottom: 40px;
+}
+
+#continue-to-app {
+    background: #007AFF;
+    color: white;
+    border: none;
+    padding: 18px 36px;
+    border-radius: 12px;
+    font-size: 20px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0,122,255,0.3);
+}
+
+#continue-to-app:hover {
+    background: #0056CC;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0,122,255,0.4);
+}
+
 /* Startup Screen */
 #startup-screen {
     max-width: 600px;
@@ -423,6 +482,177 @@ header {
     margin-bottom: 16px;
 }
 
+/* Spreadsheet View Styles */
+#spreadsheet-view {
+    background: white;
+    padding: 24px;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.spreadsheet-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.spreadsheet-header h3 {
+    font-size: 24px;
+    color: #333;
+    margin: 0;
+}
+
+.spreadsheet-controls {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+#toggle-edit-mode {
+    background: #6c757d;
+    font-size: 16px;
+    padding: 12px 20px;
+}
+
+#toggle-edit-mode:hover {
+    background: #545b62;
+}
+
+#toggle-edit-mode.edit-active {
+    background: #28a745;
+}
+
+#toggle-edit-mode.edit-active:hover {
+    background: #218838;
+}
+
+#back-to-main {
+    background: #007AFF;
+    font-size: 16px;
+    padding: 12px 20px;
+}
+
+#back-to-main:hover {
+    background: #0056CC;
+}
+
+#spreadsheet-container {
+    overflow-x: auto;
+    overflow-y: auto;
+    max-height: 70vh;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+}
+
+.spreadsheet-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+    min-width: 1200px;
+}
+
+.spreadsheet-table th,
+.spreadsheet-table td {
+    border: 1px solid #e9ecef;
+    padding: 8px 12px;
+    text-align: left;
+    vertical-align: middle;
+}
+
+.spreadsheet-table th {
+    background: #f8f9fa;
+    font-weight: 600;
+    color: #333;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.spreadsheet-table tr:nth-child(even) {
+    background: #f8f9fa;
+}
+
+.spreadsheet-table tr:hover {
+    background: #e3f2fd;
+}
+
+.spreadsheet-table .name-column {
+    font-weight: 600;
+    background: #fff;
+    position: sticky;
+    left: 0;
+    z-index: 5;
+    min-width: 150px;
+}
+
+.spreadsheet-table .name-column.header {
+    z-index: 15;
+    background: #f8f9fa;
+}
+
+.measurement-cell {
+    position: relative;
+    min-width: 100px;
+}
+
+.measurement-input {
+    width: 100%;
+    border: none;
+    background: transparent;
+    padding: 4px;
+    font-size: 14px;
+    text-align: center;
+}
+
+.measurement-input:focus {
+    outline: 2px solid #007AFF;
+    background: #fff;
+}
+
+.measurement-input.error {
+    background: #fff5f5;
+    border: 1px solid #dc3545;
+}
+
+.measurement-input.valid {
+    background: #f8fff8;
+    border: 1px solid #28a745;
+}
+
+.measurement-display {
+    text-align: center;
+    padding: 4px;
+}
+
+.present-indicator {
+    text-align: center;
+    font-weight: 600;
+}
+
+.present-indicator.present {
+    color: #28a745;
+}
+
+.present-indicator.absent {
+    color: #dc3545;
+}
+
+.completed-indicator {
+    text-align: center;
+    font-weight: 600;
+}
+
+.completed-indicator.completed {
+    color: #28a745;
+}
+
+.completed-indicator.incomplete {
+    color: #ffc107;
+}
+
 .file-item {
     display: flex;
     justify-content: space-between;
@@ -531,6 +761,38 @@ header {
     
     #roster-grid {
         grid-template-columns: 1fr;
+    }
+    
+    /* Mobile spreadsheet adjustments */
+    .spreadsheet-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .spreadsheet-controls {
+        justify-content: center;
+    }
+    
+    .spreadsheet-table {
+        font-size: 12px;
+        min-width: 800px;
+    }
+    
+    .spreadsheet-table th,
+    .spreadsheet-table td {
+        padding: 6px 8px;
+    }
+    
+    .home-container {
+        padding: 40px 20px;
+    }
+    
+    .home-container h1 {
+        font-size: 32px;
+    }
+    
+    .home-container p {
+        font-size: 18px;
     }
 }
 
