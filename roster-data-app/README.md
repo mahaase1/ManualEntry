@@ -15,6 +15,10 @@ A standalone web application for collecting physical measurements with local sto
 ✅ **CSV export** - Data export with email integration and auto-attachment
 ✅ **Local file management** - Organized "Manual entry" directory with file browser
 ✅ **Auto-attachment** - CSV files automatically attached to email (when supported)
+✅ **BAM logo homepage** - Professional branded entry point
+✅ **Spreadsheet view** - Grid-based data entry and viewing with edit mode
+✅ **Activity logging** - Complete audit trail of all user actions
+✅ **Duplicate event protection** - Automatic timestamp appending for duplicate names
 ✅ **Add new people** - Simple form to add roster entries  
 ✅ **Check-in system** - Mark people as present with comments  
 
@@ -27,6 +31,9 @@ A standalone web application for collecting physical measurements with local sto
 - Weight
 - Hand length
 - Hand width
+- Vertical
+- Approach
+- Broad
 
 Each measurement supports both metric (cm/kg) and imperial (inches/lbs) units.
 

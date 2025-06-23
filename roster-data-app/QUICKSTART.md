@@ -24,6 +24,7 @@
    - Height without shoes
    - Reach, Wingspan, Weight
    - Hand length, Hand width
+   - Vertical, Approach, Broad
 4. **Choose units** (inches/cm, lbs/kg) for each measurement
 5. **Add comments** if needed
 6. **Tap "Save Measurements"**
@@ -84,6 +85,7 @@ ID,Name,Gender
    - Measure wingspan and reach
    - Record weight
    - Measure hand dimensions
+   - Record vertical, approach, and broad jump measurements
    - Add any notes
 4. Export data when complete
 5. Email results to coach

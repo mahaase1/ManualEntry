@@ -102,6 +102,12 @@ class ManualEntryApp {
         tableHTML += '<th>Unit</th>';
         tableHTML += '<th>Hand Width</th>';
         tableHTML += '<th>Unit</th>';
+        tableHTML += '<th>Vertical</th>';
+        tableHTML += '<th>Unit</th>';
+        tableHTML += '<th>Approach</th>';
+        tableHTML += '<th>Unit</th>';
+        tableHTML += '<th>Broad</th>';
+        tableHTML += '<th>Unit</th>';
         tableHTML += '<th>Comments</th>';
         tableHTML += '</tr></thead><tbody>';
 
@@ -118,7 +124,7 @@ class ManualEntryApp {
             tableHTML += `<td class="completed-indicator ${person.completed ? 'completed' : 'incomplete'}">${person.completed ? '✓' : '○'}</td>`;
             
             // Measurements
-            const measurements = ['height_shoes', 'height_no_shoes', 'reach', 'wingspan', 'weight', 'hand_length', 'hand_width'];
+            const measurements = ['height_shoes', 'height_no_shoes', 'reach', 'wingspan', 'weight', 'hand_length', 'hand_width', 'vertical', 'approach', 'broad'];
             measurements.forEach(measurementType => {
                 const data = measurement[measurementType];
                 if (this.editMode) {
@@ -208,7 +214,7 @@ class ManualEntryApp {
         this.measurements.set(personId, measurementData);
         const person = this.roster.find(p => (p.id || p.name) === personId);
         if (person) {
-            const hasValidMeasurements = ['height_shoes', 'height_no_shoes', 'reach', 'wingspan', 'weight', 'hand_length', 'hand_width']
+            const hasValidMeasurements = ['height_shoes', 'height_no_shoes', 'reach', 'wingspan', 'weight', 'hand_length', 'hand_width', 'vertical', 'approach', 'broad']
                 .some(type => measurementData[type] && measurementData[type].value);
             person.completed = hasValidMeasurements;
         }
@@ -266,7 +272,7 @@ class ManualEntryApp {
     }
 
     bindMeasurementValidation() {
-        const measurements = ['height-shoes', 'height-no-shoes', 'reach', 'wingspan', 'weight', 'hand-length', 'hand-width'];
+        const measurements = ['height-shoes', 'height-no-shoes', 'reach', 'wingspan', 'weight', 'hand-length', 'hand-width', 'vertical', 'approach', 'broad'];
         
         measurements.forEach(measurement => {
             const input1 = document.getElementById(`${measurement}-1`);
@@ -447,7 +453,7 @@ class ManualEntryApp {
     }
 
     loadMeasurementData(data) {
-        const measurements = ['height-shoes', 'height-no-shoes', 'reach', 'wingspan', 'weight', 'hand-length', 'hand-width'];
+        const measurements = ['height-shoes', 'height-no-shoes', 'reach', 'wingspan', 'weight', 'hand-length', 'hand-width', 'vertical', 'approach', 'broad'];
         
         measurements.forEach(measurement => {
             const key = measurement.replace('-', '_');
@@ -463,7 +469,7 @@ class ManualEntryApp {
     }
 
     clearMeasurementForm() {
-        const measurements = ['height-shoes', 'height-no-shoes', 'reach', 'wingspan', 'weight', 'hand-length', 'hand-width'];
+        const measurements = ['height-shoes', 'height-no-shoes', 'reach', 'wingspan', 'weight', 'hand-length', 'hand-width', 'vertical', 'approach', 'broad'];
         
         measurements.forEach(measurement => {
             document.getElementById(`${measurement}-1`).value = '';
@@ -494,7 +500,7 @@ class ManualEntryApp {
 
         person.present = document.getElementById('present-checkbox').checked;
 
-        const measurements = ['height-shoes', 'height-no-shoes', 'reach', 'wingspan', 'weight', 'hand-length', 'hand-width'];
+        const measurements = ['height-shoes', 'height-no-shoes', 'reach', 'wingspan', 'weight', 'hand-length', 'hand-width', 'vertical', 'approach', 'broad'];
         const measurementData = {
             timestamp: new Date().toISOString(),
             operator: this.currentOperator,
@@ -727,7 +733,8 @@ class ManualEntryApp {
         let csv = 'ID,Name,Gender,Present,Completed,Timestamp,Operator,Device,Comments,';
         csv += 'Height_Shoes_Value,Height_Shoes_Unit,Height_No_Shoes_Value,Height_No_Shoes_Unit,';
         csv += 'Reach_Value,Reach_Unit,Wingspan_Value,Wingspan_Unit,Weight_Value,Weight_Unit,';
-        csv += 'Hand_Length_Value,Hand_Length_Unit,Hand_Width_Value,Hand_Width_Unit\n';
+        csv += 'Hand_Length_Value,Hand_Length_Unit,Hand_Width_Value,Hand_Width_Unit,';
+        csv += 'Vertical_Value,Vertical_Unit,Approach_Value,Approach_Unit,Broad_Value,Broad_Unit\n';
 
         data.roster.forEach(person => {
             const personId = person.id || person.name;
@@ -737,7 +744,7 @@ class ManualEntryApp {
             csv += `"${measurements.timestamp || ''}","${measurements.operator || ''}","${measurements.device || ''}",`;
             csv += `"${(measurements.comments || '').replace(/"/g, '""')}",`;
             
-            const measurementFields = ['height_shoes', 'height_no_shoes', 'reach', 'wingspan', 'weight', 'hand_length', 'hand_width'];
+            const measurementFields = ['height_shoes', 'height_no_shoes', 'reach', 'wingspan', 'weight', 'hand_length', 'hand_width', 'vertical', 'approach', 'broad'];
             measurementFields.forEach(field => {
                 const measurement = measurements[field];
                 if (measurement) {

@@ -16,17 +16,10 @@
         <div id="home-screen" class="screen active">
             <div class="home-container">
                 <div class="bam-logo">
-                    <svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <circle cx="60" cy="60" r="60" fill="#007AFF"/>
-                        <rect x="20" y="30" width="20" height="60" fill="white" rx="4"/>
-                        <rect x="50" y="20" width="20" height="80" fill="white" rx="4"/>
-                        <rect x="80" y="40" width="20" height="40" fill="white" rx="4"/>
-                        <text x="60" y="110" font-family="-apple-system, BlinkMacSystemFont, sans-serif" 
-                              font-size="16" font-weight="600" text-anchor="middle" fill="#007AFF">BAM</text>
-                    </svg>
+                    <img src="assets/BAM LOGO-final.png" alt="BAM Logo" width="120" height="120">
                 </div>
                 <h1>Manual Entry</h1>
-                <p>Professional Data Collection System</p>
+                <p>Manual Entry</p>
                 <button id="continue-to-app">Press to Continue</button>
             </div>
         </div>
@@ -163,6 +156,42 @@
                         </div>
                         <input type="number" step="0.01" id="hand-width-1" placeholder="Enter value">
                         <input type="number" step="0.01" id="hand-width-2" placeholder="Confirm value">
+                    </div>
+
+                    <div class="measurement-item">
+                        <label>Vertical</label>
+                        <div class="unit-selector">
+                            <select id="vertical-unit">
+                                <option value="inches">inches</option>
+                                <option value="cm">cm</option>
+                            </select>
+                        </div>
+                        <input type="number" step="0.01" id="vertical-1" placeholder="Enter value">
+                        <input type="number" step="0.01" id="vertical-2" placeholder="Confirm value">
+                    </div>
+
+                    <div class="measurement-item">
+                        <label>Approach</label>
+                        <div class="unit-selector">
+                            <select id="approach-unit">
+                                <option value="inches">inches</option>
+                                <option value="cm">cm</option>
+                            </select>
+                        </div>
+                        <input type="number" step="0.01" id="approach-1" placeholder="Enter value">
+                        <input type="number" step="0.01" id="approach-2" placeholder="Confirm value">
+                    </div>
+
+                    <div class="measurement-item">
+                        <label>Broad</label>
+                        <div class="unit-selector">
+                            <select id="broad-unit">
+                                <option value="inches">inches</option>
+                                <option value="cm">cm</option>
+                            </select>
+                        </div>
+                        <input type="number" step="0.01" id="broad-1" placeholder="Enter value">
+                        <input type="number" step="0.01" id="broad-2" placeholder="Confirm value">
                     </div>
                 </div>
 
