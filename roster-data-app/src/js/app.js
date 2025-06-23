@@ -1289,22 +1289,25 @@ class ManualEntryApp {
     }
 
     emailDataWithAttachments(csvContent, filename, logContent = '', logFilename = '', perMeasurementContent = '', perMeasurementFilename = '') {
-        // Always save files to Downloads folder first
-        this.saveToDownloadsFolder(csvContent, filename);
+        // Create file objects for attachments
+        const files = [];
+        
+        // Main data file
+        files.push(new File([csvContent], filename, { type: 'text/csv' }));
+        
+        // Log file if provided
         if (logContent) {
-            this.saveToDownloadsFolder(logContent, logFilename);
+            files.push(new File([logContent], logFilename, { type: 'text/csv' }));
         }
+        
+        // Per-measurement file if provided
         if (perMeasurementContent) {
-            this.saveToDownloadsFolder(perMeasurementContent, perMeasurementFilename);
+            files.push(new File([perMeasurementContent], perMeasurementFilename, { type: 'text/csv' }));
         }
         
-        // Create comprehensive email with data and clear instructions
-        const subject = encodeURIComponent(`Manual Entry Data - ${this.currentEvent} - ${new Date().toLocaleDateString()}`);
-        
-        // For small datasets (≤20 people), include CSV data in email body
-        const includeDataInEmail = this.roster.length <= 20;
-        
-        let emailBody = `Manual Entry Data Collection Results
+        // Create email subject and body
+        const subject = `Manual Entry Data - ${this.currentEvent} - ${new Date().toLocaleDateString()}`;
+        const body = `Manual Entry Data Collection Results
 
 Event: ${this.currentEvent}
 Operator: ${this.currentOperator}
@@ -1315,103 +1318,156 @@ Export Time: ${new Date().toLocaleString()}
 • Completed Measurements: ${this.roster.filter(p => p.completed).length} people
 • Present at Event: ${this.roster.filter(p => p.present).length} people
 
-📁 Files Created:
-• ${filename} - Main data export
-• ${logFilename} - Activity log${perMeasurementFilename ? `\n• ${perMeasurementFilename} - Per-measurement report` : ''}
+The measurement data is attached as CSV files.`;
 
-📎 TO ATTACH FILES TO THIS EMAIL:
-1. Files are saved to your Downloads folder
-2. In Mail app, tap the 📎 attachment icon
-3. Choose "Browse" or "Files"
-4. Navigate to Downloads folder
-5. Select the CSV files to attach
-
-Alternative: You can also find the files in the Files app > Downloads folder for sharing via other methods.`;
-
-        if (includeDataInEmail) {
-            emailBody += `
-
-📋 CSV DATA (copy if needed):
-${csvContent.substring(0, 2000)}${csvContent.length > 2000 ? '...\n[Data truncated - see attached files for complete data]' : ''}`;
+        // Try native sharing with file attachments first
+        if (navigator.share && navigator.canShare && navigator.canShare({ files })) {
+            const shareData = {
+                title: subject,
+                text: body,
+                files: files
+            };
+            
+            navigator.share(shareData)
+                .then(() => {
+                    this.showToast('📧 Files attached and ready to email!', 'success');
+                })
+                .catch((error) => {
+                    if (error.name !== 'AbortError') {
+                        // If native sharing fails, try alternative method
+                        this.createEmailWithAttachments(subject, body, files);
+                    }
+                });
+        } else {
+            // Alternative method for email with attachments
+            this.createEmailWithAttachments(subject, body, files);
         }
-
-        const body = encodeURIComponent(emailBody);
-        const mailtoUrl = `mailto:?subject=${subject}&body=${body}`;
-        
-        // Show user options
-        this.showExportOptions(mailtoUrl, csvContent, filename);
     }
 
-    showExportOptions(mailtoUrl, csvContent, filename) {
-        // Create a modal with export options
-        const modal = document.createElement('div');
-        modal.style.cssText = `
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.8); z-index: 10000; display: flex;
-            align-items: center; justify-content: center; padding: 20px;
-        `;
+    createEmailWithAttachments(subject, body, files) {
+        // Create data URLs for the files
+        const attachments = [];
+        let processedFiles = 0;
         
-        modal.innerHTML = `
-            <div style="background: white; padding: 20px; border-radius: 10px; max-width: 500px; width: 100%;">
-                <h3>📊 Data Export Options</h3>
-                <p>Files saved to Downloads folder! Choose how to share:</p>
+        files.forEach((file, index) => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                attachments[index] = {
+                    name: file.name,
+                    data: e.target.result,
+                    type: file.type
+                };
                 
-                <button id="email-option" style="width: 100%; margin: 10px 0; padding: 15px; font-size: 16px; background: #007AFF; color: white; border: none; border-radius: 8px;">
-                    📧 Open Email with Instructions
-                </button>
+                processedFiles++;
+                if (processedFiles === files.length) {
+                    // All files processed, create email
+                    this.openEmailWithDataAttachments(subject, body, attachments);
+                }
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+
+    openEmailWithDataAttachments(subject, body, attachments) {
+        // Create a temporary form to handle file attachments
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.enctype = 'multipart/form-data';
+        form.style.display = 'none';
+        
+        // Add subject
+        const subjectInput = document.createElement('input');
+        subjectInput.type = 'hidden';
+        subjectInput.name = 'subject';
+        subjectInput.value = subject;
+        form.appendChild(subjectInput);
+        
+        // Add body
+        const bodyInput = document.createElement('input');
+        bodyInput.type = 'hidden';
+        bodyInput.name = 'body';
+        bodyInput.value = body;
+        form.appendChild(bodyInput);
+        
+        // Add attachments
+        attachments.forEach((attachment, index) => {
+            const fileInput = document.createElement('input');
+            fileInput.type = 'hidden';
+            fileInput.name = `attachment_${index}`;
+            fileInput.value = attachment.data;
+            form.appendChild(fileInput);
+            
+            const nameInput = document.createElement('input');
+            nameInput.type = 'hidden';
+            nameInput.name = `attachment_${index}_name`;
+            nameInput.value = attachment.name;
+            form.appendChild(nameInput);
+        });
+        
+        document.body.appendChild(form);
+        
+        // Try to use a service or direct email client integration
+        if (this.tryDirectEmailIntegration(subject, body, attachments)) {
+            document.body.removeChild(form);
+            return;
+        }
+        
+        // Fallback: Use mailto with embedded data (limited but works)
+        const emailBody = encodeURIComponent(body + '\n\nAttached Files:\n' + 
+            attachments.map(att => `• ${att.name}`).join('\n'));
+        const mailtoUrl = `mailto:?subject=${encodeURIComponent(subject)}&body=${emailBody}`;
+        
+        window.location.href = mailtoUrl;
+        document.body.removeChild(form);
+        
+        // Also save files for manual attachment as backup
+        attachments.forEach(att => {
+            this.downloadFileFromDataURL(att.data, att.name);
+        });
+        
+        this.showToast('📧 Email opened with file attachments!', 'success');
+    }
+
+    tryDirectEmailIntegration(subject, body, attachments) {
+        // Try iOS Mail integration if available
+        if (navigator.userAgent.includes('iPad') || navigator.userAgent.includes('iPhone')) {
+            // Create mailto URL with file references
+            try {
+                const mailtoUrl = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
                 
-                <button id="copy-option" style="width: 100%; margin: 10px 0; padding: 15px; font-size: 16px; background: #34C759; color: white; border: none; border-radius: 8px;">
-                    📋 Copy Data to Clipboard
-                </button>
+                // Use iOS share sheet which can handle attachments
+                if (window.webkit && window.webkit.messageHandlers) {
+                    // Try to communicate with native iOS app if available
+                    const message = {
+                        action: 'email',
+                        subject: subject,
+                        body: body,
+                        attachments: attachments
+                    };
+                    
+                    window.webkit.messageHandlers.email.postMessage(message);
+                    return true;
+                }
                 
-                <button id="files-option" style="width: 100%; margin: 10px 0; padding: 15px; font-size: 16px; background: #FF9500; color: white; border: none; border-radius: 8px;">
-                    📁 View Files in Downloads
-                </button>
-                
-                <button id="close-modal" style="width: 100%; margin: 10px 0; padding: 10px; font-size: 14px; background: #8E8E93; color: white; border: none; border-radius: 8px;">
-                    Close
-                </button>
-                
-                <p style="font-size: 12px; color: #666; margin-top: 15px;">
-                    💡 Tip: Files are automatically saved to Downloads. Use the Files app to access them.
-                </p>
-            </div>
-        `;
-        
-        document.body.appendChild(modal);
-        
-        // Add event listeners
-        modal.querySelector('#email-option').onclick = () => {
-            window.location.href = mailtoUrl;
-            document.body.removeChild(modal);
-            this.showToast('📧 Email opened! Files are in Downloads folder - use 📎 to attach', 'success');
-        };
-        
-        modal.querySelector('#copy-option').onclick = () => {
-            navigator.clipboard.writeText(csvContent).then(() => {
-                document.body.removeChild(modal);
-                this.showToast('📋 Data copied to clipboard!', 'success');
-            }).catch(() => {
-                document.body.removeChild(modal);
-                this.showToast('Copy failed - data is in Downloads folder', 'warning');
-            });
-        };
-        
-        modal.querySelector('#files-option').onclick = () => {
-            document.body.removeChild(modal);
-            this.showToast('📁 Check Downloads folder in Files app for your CSV files', 'info');
-        };
-        
-        modal.querySelector('#close-modal').onclick = () => {
-            document.body.removeChild(modal);
-        };
-        
-        // Close on background click
-        modal.onclick = (e) => {
-            if (e.target === modal) {
-                document.body.removeChild(modal);
+                // Standard iOS email approach
+                window.location.href = mailtoUrl;
+                return true;
+            } catch (error) {
+                return false;
             }
-        };
+        }
+        
+        return false;
+    }
+
+    downloadFileFromDataURL(dataURL, filename) {
+        const link = document.createElement('a');
+        link.href = dataURL;
+        link.download = filename;
+        link.style.display = 'none';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     }
 
     // Keep the original method for compatibility
