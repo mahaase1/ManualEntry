@@ -969,7 +969,7 @@ class ManualEntryApp {
     }
 
     emailDataWithAttachment(csvContent, filename, logContent = '', logFilename = '') {
-        const subject = encodeURIComponent(`Manual Entry Data - ${this.currentEvent}`);
+        const subject = encodeURIComponent(`Results for ${this.currentEvent} and ${this.currentOperator}`);
         
         // Create blobs for the files
         const csvBlob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -1023,7 +1023,7 @@ This email was generated automatically by the Manual Entry iPad app.`);
             
             if (navigator.canShare(testShareData)) {
                 const shareData = {
-                    title: `Manual Entry Data - ${this.currentEvent}`,
+                    title: `Results for ${this.currentEvent} and ${this.currentOperator}`,
                     text: `Data collection results for ${this.currentEvent}. Files: ${filename}${logContent ? `, ${logFilename}` : ''}`,
                     files: logContent ? [
                         new File([csvBlob], filename, { type: 'text/csv' }),
