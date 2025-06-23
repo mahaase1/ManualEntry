@@ -10,6 +10,28 @@ class ManualEntryApp {
         this.editMode = false;
         this.checkinEditMode = false;
         
+        // New setup properties
+        this.measurementUnits = {
+            height: 'inches',
+            reach: 'inches', 
+            wingspan: 'inches',
+            vertical: 'inches',
+            approach: 'inches',
+            broad: 'inches'
+        };
+        this.adjustments = {
+            height_shoes: { M: 0, F: 0 },
+            height_no_shoes: { M: 0, F: 0 },
+            reach: { M: 0, F: 0 },
+            wingspan: { M: 0, F: 0 },
+            weight: { M: 0, F: 0 },
+            hand_length: { M: 0, F: 0 },
+            hand_width: { M: 0, F: 0 },
+            vertical: { M: 0, F: 0 },
+            approach: { M: 0, F: 0 },
+            broad: { M: 0, F: 0 }
+        };
+        
         this.init();
     }
 
@@ -42,9 +64,9 @@ class ManualEntryApp {
     }
 
     showStartupScreen() {
-        // Direct navigation to startup screen - no home screen anymore
+        document.querySelectorAll('.screen').forEach(screen => screen.classList.remove('active'));
         document.getElementById('startup-screen').classList.add('active');
-        this.logActivity('APP_STARTED');
+        this.logActivity('STARTUP_SCREEN_OPENED');
     }
 
     showSpreadsheetView() {
@@ -81,36 +103,45 @@ class ManualEntryApp {
         const container = document.getElementById('spreadsheet-container');
         if (!container) return;
 
-        // Create table HTML
+        // Create table HTML with all required columns
         let tableHTML = '<table class="spreadsheet-table"><thead><tr>';
         
-        // Headers
+        // Basic info headers
         tableHTML += '<th class="name-column header">Name</th>';
         tableHTML += '<th>ID</th>';
         tableHTML += '<th>Gender</th>';
         tableHTML += '<th>Present</th>';
         tableHTML += '<th>Completed</th>';
         tableHTML += '<th>Source</th>';
-        tableHTML += '<th>Height w/ Shoes</th>';
-        tableHTML += '<th>Unit</th>';
-        tableHTML += '<th>Height w/o Shoes</th>';
-        tableHTML += '<th>Unit</th>';
-        tableHTML += '<th>Reach</th>';
-        tableHTML += '<th>Unit</th>';
-        tableHTML += '<th>Wingspan</th>';
-        tableHTML += '<th>Unit</th>';
-        tableHTML += '<th>Weight</th>';
-        tableHTML += '<th>Unit</th>';
-        tableHTML += '<th>Hand Length</th>';
-        tableHTML += '<th>Unit</th>';
-        tableHTML += '<th>Hand Width</th>';
-        tableHTML += '<th>Unit</th>';
-        tableHTML += '<th>Vertical</th>';
-        tableHTML += '<th>Unit</th>';
-        tableHTML += '<th>Approach</th>';
-        tableHTML += '<th>Unit</th>';
-        tableHTML += '<th>Broad</th>';
-        tableHTML += '<th>Unit</th>';
+        
+        // Measurement headers with all new columns
+        const measurementTypes = [
+            { key: 'height_shoes', label: 'Height w/ Shoes', hasDisplay: true },
+            { key: 'height_no_shoes', label: 'Height w/o Shoes', hasDisplay: true },
+            { key: 'reach', label: 'Reach', hasDisplay: true },
+            { key: 'wingspan', label: 'Wingspan', hasDisplay: true },
+            { key: 'weight', label: 'Weight', hasDisplay: false },
+            { key: 'hand_length', label: 'Hand Length', hasDisplay: false },
+            { key: 'hand_width', label: 'Hand Width', hasDisplay: false },
+            { key: 'vertical', label: 'Vertical', hasDisplay: false },
+            { key: 'approach', label: 'Approach', hasDisplay: false },
+            { key: 'broad', label: 'Broad', hasDisplay: false }
+        ];
+
+        measurementTypes.forEach(type => {
+            tableHTML += `<th>${type.label}</th>`;
+            tableHTML += `<th>Unit</th>`;
+            tableHTML += `<th>Adjustment</th>`;
+            tableHTML += `<th>Override</th>`;
+            tableHTML += `<th>Adjusted ${type.label}</th>`;
+            if (type.hasDisplay) {
+                tableHTML += `<th>${type.label} (ft/in)</th>`;
+            }
+        });
+
+        // Reporting columns
+        tableHTML += '<th>Vertical for Reporting</th>';
+        tableHTML += '<th>Approach for Reporting</th>';
         tableHTML += '<th>Comments</th>';
         tableHTML += '</tr></thead><tbody>';
 
@@ -127,33 +158,72 @@ class ManualEntryApp {
             tableHTML += `<td class="completed-indicator ${person.completed ? 'completed' : 'incomplete'}">${person.completed ? '✓' : '○'}</td>`;
             tableHTML += `<td class="source-indicator">${person.source === 'added' ? 'Added' : 'Roster'}</td>`;
             
-            // Measurements
-            const measurements = ['height_shoes', 'height_no_shoes', 'reach', 'wingspan', 'weight', 'hand_length', 'hand_width', 'vertical', 'approach', 'broad'];
-            measurements.forEach(measurementType => {
-                const data = measurement[measurementType];
+            // Measurement columns
+            measurementTypes.forEach(type => {
+                const data = measurement[type.key];
+                const adjustmentValue = this.adjustments[type.key] ? this.adjustments[type.key][person.gender] || 0 : 0;
+                const overrideValue = measurement[`${type.key}_override`] || 0;
+                
+                // Raw measurement value
                 if (this.editMode) {
                     tableHTML += `<td class="measurement-cell">
                         <input type="number" step="0.01" class="measurement-input" 
                                data-person="${this.escapeHtml(personId)}" 
-                               data-measurement="${measurementType}"
+                               data-measurement="${type.key}"
                                value="${data ? data.value : ''}" 
                                placeholder="Enter">
                     </td>`;
-                    tableHTML += `<td class="measurement-cell">
-                        <select class="measurement-input" 
-                                data-person="${this.escapeHtml(personId)}" 
-                                data-measurement="${measurementType}_unit">
-                            <option value="inches" ${data && data.unit === 'inches' ? 'selected' : ''}>inches</option>
-                            <option value="cm" ${data && data.unit === 'cm' ? 'selected' : ''}>cm</option>
-                            <option value="lbs" ${data && data.unit === 'lbs' ? 'selected' : ''}>lbs</option>
-                            <option value="kg" ${data && data.unit === 'kg' ? 'selected' : ''}>kg</option>
-                        </select>
-                    </td>`;
                 } else {
                     tableHTML += `<td class="measurement-display">${data ? data.value : ''}</td>`;
-                    tableHTML += `<td class="measurement-display">${data ? data.unit : ''}</td>`;
+                }
+                
+                // Unit
+                const unit = this.getMeasurementUnit(type.key);
+                tableHTML += `<td class="measurement-display">${unit}</td>`;
+                
+                // Adjustment
+                tableHTML += `<td class="measurement-display">${adjustmentValue}</td>`;
+                
+                // Override
+                if (this.editMode) {
+                    tableHTML += `<td class="measurement-cell">
+                        <input type="number" step="0.01" class="measurement-input" 
+                               data-person="${this.escapeHtml(personId)}" 
+                               data-measurement="${type.key}_override"
+                               value="${overrideValue}" 
+                               placeholder="0">
+                    </td>`;
+                } else {
+                    tableHTML += `<td class="measurement-display">${overrideValue}</td>`;
+                }
+                
+                // Adjusted value
+                let adjustedValue = '';
+                if (data && data.value) {
+                    const rawValueInInches = this.convertToInches(data.value, data.unit || unit);
+                    adjustedValue = overrideValue !== 0 ? 
+                        (rawValueInInches + overrideValue).toFixed(2) : 
+                        (rawValueInInches + adjustmentValue).toFixed(2);
+                }
+                tableHTML += `<td class="measurement-display">${adjustedValue}</td>`;
+                
+                // Display version (feet/inches for height, wingspan, reach)
+                if (type.hasDisplay) {
+                    const displayValue = adjustedValue ? this.inchesToFeetAndInches(parseFloat(adjustedValue)) : '';
+                    tableHTML += `<td class="measurement-display">${displayValue}</td>`;
                 }
             });
+
+            // Reporting columns
+            const adjustedReach = this.getAdjustedMeasurementValue(measurement, 'reach', person.gender);
+            const adjustedVertical = this.getAdjustedMeasurementValue(measurement, 'vertical', person.gender);
+            const adjustedApproach = this.getAdjustedMeasurementValue(measurement, 'approach', person.gender);
+            
+            const verticalForReporting = (adjustedVertical && adjustedReach) ? (adjustedVertical - adjustedReach).toFixed(2) : '';
+            const approachForReporting = (adjustedApproach && adjustedReach) ? (adjustedApproach - adjustedReach).toFixed(2) : '';
+            
+            tableHTML += `<td class="measurement-display">${verticalForReporting}</td>`;
+            tableHTML += `<td class="measurement-display">${approachForReporting}</td>`;
             
             // Comments
             if (this.editMode) {
@@ -199,6 +269,9 @@ class ManualEntryApp {
 
         if (measurementType === 'comments') {
             measurementData.comments = value;
+        } else if (measurementType.endsWith('_override')) {
+            // Handle override values
+            measurementData[measurementType] = parseFloat(value) || 0;
         } else if (measurementType.endsWith('_unit')) {
             const baseType = measurementType.replace('_unit', '');
             if (!measurementData[baseType]) {
@@ -207,10 +280,15 @@ class ManualEntryApp {
                 measurementData[baseType].unit = value;
             }
         } else {
+            // Handle regular measurement values
+            const unit = this.getMeasurementUnit(measurementType);
             if (!measurementData[measurementType]) {
-                measurementData[measurementType] = { value: parseFloat(value) || '', unit: 'inches' };
+                measurementData[measurementType] = { value: parseFloat(value) || '', unit: unit };
             } else {
                 measurementData[measurementType].value = parseFloat(value) || '';
+                if (!measurementData[measurementType].unit) {
+                    measurementData[measurementType].unit = unit;
+                }
             }
         }
 
@@ -243,6 +321,10 @@ class ManualEntryApp {
         document.getElementById('operator-name').addEventListener('input', this.validateStartup.bind(this));
         document.getElementById('event-name').addEventListener('input', this.validateStartup.bind(this));
         document.getElementById('roster-upload').addEventListener('change', this.handleRosterUpload.bind(this));
+        document.getElementById('setup-measurements').addEventListener('click', this.showSetupScreen.bind(this));
+        
+        // Setup screen events
+        document.getElementById('back-to-startup').addEventListener('click', this.showStartupScreen.bind(this));
         document.getElementById('start-event').addEventListener('click', this.startEvent.bind(this));
 
         // Main screen events
@@ -339,7 +421,7 @@ class ManualEntryApp {
 
         const input1 = document.getElementById(`${measurement}-1`);
         const input2 = document.getElementById(`${measurement}-2`);
-        const unit = document.getElementById(`${measurement}-unit`).value;
+        const overrideInput = document.getElementById(`${measurement}-override`);
         
         if (!input1.value || !input2.value) {
             this.showToast(`Please enter both ${measurement.replace('-', ' ')} values`, 'warning');
@@ -354,6 +436,10 @@ class ManualEntryApp {
             return;
         }
 
+        // Get unit from setup settings
+        const unit = this.getMeasurementUnit(measurement);
+        const adjustmentOverride = parseFloat(overrideInput.value) || 0;
+
         // Get or create measurement data
         let measurementData = this.measurements.get(personId) || {
             timestamp: new Date().toISOString(),
@@ -362,11 +448,19 @@ class ManualEntryApp {
             comments: document.getElementById('comments').value || ''
         };
 
-        // Update the specific measurement
+        // Calculate adjustments
         const key = measurement.replace('-', '_');
+        const baseAdjustment = this.adjustments[key] ? this.adjustments[key][person.gender] || 0 : 0;
+        const finalAdjustment = adjustmentOverride !== 0 ? adjustmentOverride : baseAdjustment;
+        const adjustedValue = value1 + finalAdjustment;
+
+        // Update the specific measurement
         measurementData[key] = {
             value: value1,
-            unit: unit
+            unit: unit,
+            adjustment: baseAdjustment,
+            adjustmentOverride: adjustmentOverride,
+            adjustedValue: adjustedValue
         };
 
         // Update measurements and person status
@@ -382,7 +476,10 @@ class ManualEntryApp {
             person: person.name, 
             measurement: measurement,
             value: value1,
-            unit: unit
+            unit: unit,
+            adjustment: baseAdjustment,
+            adjustmentOverride: adjustmentOverride,
+            adjustedValue: adjustedValue
         });
         
         // Automatically save to CSV file
@@ -392,13 +489,52 @@ class ManualEntryApp {
         this.showToast(`${measurement.replace('-', ' ')} saved successfully! (Auto-saved to ${savedFilename})`, 'success');
     }
 
+    getMeasurementUnit(measurement) {
+        // Map measurement names to unit settings
+        const unitMap = {
+            'height-shoes': 'height',
+            'height-no-shoes': 'height',
+            'reach': 'reach',
+            'wingspan': 'wingspan',
+            'weight': 'lbs', // Fixed unit
+            'hand-length': 'inches', // Fixed unit
+            'hand-width': 'inches', // Fixed unit
+            'vertical': 'vertical',
+            'approach': 'approach',
+            'broad': 'broad'
+        };
+        
+        const unitKey = unitMap[measurement];
+        if (unitKey === 'lbs' || unitKey === 'inches') {
+            return unitKey;
+        }
+        return this.measurementUnits[unitKey] || 'inches';
+    }
+
+    convertToInches(value, unit) {
+        if (unit === 'cm') {
+            return value / 2.54;
+        }
+        return value; // Already in inches
+    }
+
+    inchesToFeetAndInches(inches) {
+        const feet = Math.floor(inches / 12);
+        const remainingInches = Math.round((inches % 12) * 100) / 100;
+        return `${feet}'${remainingInches}"`;
+    }
+
     validateStartup() {
         const operatorName = document.getElementById('operator-name').value.trim();
         const eventName = document.getElementById('event-name').value.trim();
         const rosterFile = document.getElementById('roster-upload').files[0];
         
-        const startButton = document.getElementById('start-event');
-        startButton.disabled = !(operatorName && eventName && rosterFile);
+        const setupButton = document.getElementById('setup-measurements');
+        if (setupButton) {
+            setupButton.disabled = !(operatorName && eventName && rosterFile);
+        }
+        
+        return operatorName && eventName && rosterFile;
     }
 
     handleRosterUpload(event) {
@@ -464,6 +600,9 @@ class ManualEntryApp {
     }
 
     startEvent() {
+        // Save setup settings first
+        this.saveSetupSettings();
+        
         this.currentOperator = document.getElementById('operator-name').value.trim();
         this.currentEvent = document.getElementById('event-name').value.trim();
         
@@ -479,12 +618,20 @@ class ManualEntryApp {
         }
         
         document.getElementById('event-title').textContent = this.currentEvent;
-        document.getElementById('startup-screen').classList.remove('active');
+        
+        // Hide all screens and show main screen
+        document.querySelectorAll('.screen').forEach(screen => screen.classList.remove('active'));
         document.getElementById('main-screen').classList.add('active');
         
         this.renderRoster();
+        this.updateMeasurementUnitDisplays();
         this.saveState();
-        this.logActivity('EVENT_STARTED', { eventName: this.currentEvent, operator: this.currentOperator });
+        this.logActivity('EVENT_STARTED', { 
+            eventName: this.currentEvent, 
+            operator: this.currentOperator,
+            units: this.measurementUnits,
+            adjustments: this.adjustments
+        });
         this.showToast(`Event "${this.currentEvent}" started successfully!`, 'success');
     }
 
@@ -837,28 +984,43 @@ class ManualEntryApp {
             activityLog: this.activityLog
         };
 
+        // Generate all three reports
         const csvContent = this.generateCSV(data);
         const logContent = this.generateLogCSV(data);
+        const perMeasurementContent = this.generatePerMeasurementCSV(data);
+        
         const timestamp = new Date().toISOString().replace(/[:.]/g, '-').split('T')[0];
         const filename = `${this.currentEvent.replace(/[^a-zA-Z0-9]/g, '_')}_${timestamp}_${Date.now()}.csv`;
         const logFilename = `${this.currentEvent.replace(/[^a-zA-Z0-9]/g, '_')}_${timestamp}_${Date.now()}_LOG.csv`;
+        const perMeasurementFilename = `${this.currentEvent.replace(/[^a-zA-Z0-9]/g, '_')}_${timestamp}_${Date.now()}_PER_MEASUREMENT.csv`;
         
-        // Email with attachments (this will handle downloading and local storage)
-        this.emailDataWithAttachment(csvContent, filename, logContent, logFilename);
+        // Email with all three attachments
+        this.emailDataWithAttachments(csvContent, filename, logContent, logFilename, perMeasurementContent, perMeasurementFilename);
         
         this.logActivity('DATA_EXPORTED', { 
             filename: filename, 
             logFilename: logFilename,
+            perMeasurementFilename: perMeasurementFilename,
             totalRecords: this.roster.length 
         });
     }
 
     generateCSV(data) {
+        // Header with all new columns
         let csv = 'ID,Name,Gender,Present,Completed,Source,Timestamp,Operator,Device,Comments,';
-        csv += 'Height_Shoes_Value,Height_Shoes_Unit,Height_No_Shoes_Value,Height_No_Shoes_Unit,';
-        csv += 'Reach_Value,Reach_Unit,Wingspan_Value,Wingspan_Unit,Weight_Value,Weight_Unit,';
-        csv += 'Hand_Length_Value,Hand_Length_Unit,Hand_Width_Value,Hand_Width_Unit,';
-        csv += 'Vertical_Value,Vertical_Unit,Approach_Value,Approach_Unit,Broad_Value,Broad_Unit\n';
+        
+        // All measurement columns with adjustments, overrides, and reporting
+        csv += 'Height_Shoes_Value,Height_Shoes_Unit,Height_Shoes_Adjustment,Height_Shoes_Override,Height_Shoes_Adjusted,Height_Shoes_Display,';
+        csv += 'Height_No_Shoes_Value,Height_No_Shoes_Unit,Height_No_Shoes_Adjustment,Height_No_Shoes_Override,Height_No_Shoes_Adjusted,Height_No_Shoes_Display,';
+        csv += 'Reach_Value,Reach_Unit,Reach_Adjustment,Reach_Override,Reach_Adjusted,Reach_Display,';
+        csv += 'Wingspan_Value,Wingspan_Unit,Wingspan_Adjustment,Wingspan_Override,Wingspan_Adjusted,Wingspan_Display,';
+        csv += 'Weight_Value,Weight_Unit,Weight_Adjustment,Weight_Override,Weight_Adjusted,';
+        csv += 'Hand_Length_Value,Hand_Length_Unit,Hand_Length_Adjustment,Hand_Length_Override,Hand_Length_Adjusted,';
+        csv += 'Hand_Width_Value,Hand_Width_Unit,Hand_Width_Adjustment,Hand_Width_Override,Hand_Width_Adjusted,';
+        csv += 'Vertical_Value,Vertical_Unit,Vertical_Adjustment,Vertical_Override,Vertical_Adjusted,';
+        csv += 'Approach_Value,Approach_Unit,Approach_Adjustment,Approach_Override,Approach_Adjusted,';
+        csv += 'Broad_Value,Broad_Unit,Broad_Adjustment,Broad_Override,Broad_Adjusted,';
+        csv += 'Vertical_For_Reporting,Approach_For_Reporting\n';
 
         data.roster.forEach(person => {
             const personId = person.id || person.name;
@@ -868,46 +1030,191 @@ class ManualEntryApp {
             csv += `"${measurements.timestamp || ''}","${measurements.operator || ''}","${measurements.device || ''}",`;
             csv += `"${(measurements.comments || '').replace(/"/g, '""')}",`;
             
-            const measurementFields = ['height_shoes', 'height_no_shoes', 'reach', 'wingspan', 'weight', 'hand_length', 'hand_width', 'vertical', 'approach', 'broad'];
-            measurementFields.forEach(field => {
-                const measurement = measurements[field];
+            const measurementTypes = [
+                { key: 'height_shoes', hasDisplay: true },
+                { key: 'height_no_shoes', hasDisplay: true },
+                { key: 'reach', hasDisplay: true },
+                { key: 'wingspan', hasDisplay: true },
+                { key: 'weight', hasDisplay: false },
+                { key: 'hand_length', hasDisplay: false },
+                { key: 'hand_width', hasDisplay: false },
+                { key: 'vertical', hasDisplay: false },
+                { key: 'approach', hasDisplay: false },
+                { key: 'broad', hasDisplay: false }
+            ];
+
+            measurementTypes.forEach(type => {
+                const measurement = measurements[type.key];
+                const adjustmentValue = this.adjustments[type.key] ? this.adjustments[type.key][person.gender] || 0 : 0;
+                const overrideValue = measurements[`${type.key}_override`] || 0;
+                
+                // Original value and unit
                 if (measurement) {
                     csv += `${measurement.value},"${measurement.unit}",`;
                 } else {
                     csv += ',"",';
                 }
+                
+                // Adjustment and override
+                csv += `${adjustmentValue},${overrideValue},`;
+                
+                // Adjusted value
+                let adjustedValue = '';
+                if (measurement && measurement.value) {
+                    const unit = this.getMeasurementUnit(type.key);
+                    const rawValueInInches = this.convertToInches(measurement.value, measurement.unit || unit);
+                    adjustedValue = overrideValue !== 0 ? 
+                        (rawValueInInches + overrideValue).toFixed(2) : 
+                        (rawValueInInches + adjustmentValue).toFixed(2);
+                }
+                csv += `${adjustedValue},`;
+                
+                // Display version (feet/inches)
+                if (type.hasDisplay) {
+                    const displayValue = adjustedValue ? this.inchesToFeetAndInches(parseFloat(adjustedValue)) : '';
+                    csv += `"${displayValue}",`;
+                }
             });
+
+            // Reporting columns
+            const adjustedReach = this.getAdjustedMeasurementValue(measurements, 'reach', person.gender);
+            const adjustedVertical = this.getAdjustedMeasurementValue(measurements, 'vertical', person.gender);
+            const adjustedApproach = this.getAdjustedMeasurementValue(measurements, 'approach', person.gender);
             
-            csv += '\n';
+            const verticalForReporting = (adjustedVertical && adjustedReach) ? (adjustedVertical - adjustedReach).toFixed(2) : '';
+            const approachForReporting = (adjustedApproach && adjustedReach) ? (adjustedApproach - adjustedReach).toFixed(2) : '';
+            
+            csv += `${verticalForReporting},${approachForReporting}\n`;
         });
 
         return csv;
     }
 
     generateIndividualMeasurementCSV(personData, measurementData) {
-        // Create CSV header if this is the first record
+        // Create CSV header with all new columns
         let csv = 'Event,Operator,Device,Save_Timestamp,ID,Name,Gender,Present,Completed,Source,Measurement_Timestamp,Comments,';
-        csv += 'Height_Shoes_Value,Height_Shoes_Unit,Height_No_Shoes_Value,Height_No_Shoes_Unit,';
-        csv += 'Reach_Value,Reach_Unit,Wingspan_Value,Wingspan_Unit,Weight_Value,Weight_Unit,';
-        csv += 'Hand_Length_Value,Hand_Length_Unit,Hand_Width_Value,Hand_Width_Unit,';
-        csv += 'Vertical_Value,Vertical_Unit,Approach_Value,Approach_Unit,Broad_Value,Broad_Unit\n';
+        
+        // Original measurement columns
+        csv += 'Height_Shoes_Value,Height_Shoes_Unit,Height_Shoes_Adjustment,Height_Shoes_Override,Height_Shoes_Adjusted,Height_Shoes_Display,';
+        csv += 'Height_No_Shoes_Value,Height_No_Shoes_Unit,Height_No_Shoes_Adjustment,Height_No_Shoes_Override,Height_No_Shoes_Adjusted,Height_No_Shoes_Display,';
+        csv += 'Reach_Value,Reach_Unit,Reach_Adjustment,Reach_Override,Reach_Adjusted,Reach_Display,';
+        csv += 'Wingspan_Value,Wingspan_Unit,Wingspan_Adjustment,Wingspan_Override,Wingspan_Adjusted,Wingspan_Display,';
+        csv += 'Weight_Value,Weight_Unit,Weight_Adjustment,Weight_Override,Weight_Adjusted,';
+        csv += 'Hand_Length_Value,Hand_Length_Unit,Hand_Length_Adjustment,Hand_Length_Override,Hand_Length_Adjusted,';
+        csv += 'Hand_Width_Value,Hand_Width_Unit,Hand_Width_Adjustment,Hand_Width_Override,Hand_Width_Adjusted,';
+        csv += 'Vertical_Value,Vertical_Unit,Vertical_Adjustment,Vertical_Override,Vertical_Adjusted,';
+        csv += 'Approach_Value,Approach_Unit,Approach_Adjustment,Approach_Override,Approach_Adjusted,';
+        csv += 'Broad_Value,Broad_Unit,Broad_Adjustment,Broad_Override,Broad_Adjusted,';
+        csv += 'Vertical_For_Reporting,Approach_For_Reporting\n';
 
         // Add the person's data row
         csv += `"${this.currentEvent}","${this.currentOperator}","${this.deviceId}","${new Date().toISOString()}",`;
         csv += `"${personData.id || ''}","${personData.name.replace(/"/g, '""')}","${personData.gender}",${personData.present},${personData.completed},"${personData.source || 'roster'}",`;
         csv += `"${measurementData.timestamp || ''}","${(measurementData.comments || '').replace(/"/g, '""')}",`;
         
-        const measurementFields = ['height_shoes', 'height_no_shoes', 'reach', 'wingspan', 'weight', 'hand_length', 'hand_width', 'vertical', 'approach', 'broad'];
-        measurementFields.forEach(field => {
-            const measurement = measurementData[field];
+        const measurementTypes = [
+            { key: 'height_shoes', hasDisplay: true },
+            { key: 'height_no_shoes', hasDisplay: true },
+            { key: 'reach', hasDisplay: true },
+            { key: 'wingspan', hasDisplay: true },
+            { key: 'weight', hasDisplay: false },
+            { key: 'hand_length', hasDisplay: false },
+            { key: 'hand_width', hasDisplay: false },
+            { key: 'vertical', hasDisplay: false },
+            { key: 'approach', hasDisplay: false },
+            { key: 'broad', hasDisplay: false }
+        ];
+
+        measurementTypes.forEach(type => {
+            const measurement = measurementData[type.key];
+            const adjustmentValue = this.adjustments[type.key] ? this.adjustments[type.key][personData.gender] || 0 : 0;
+            const overrideValue = measurementData[`${type.key}_override`] || 0;
+            
+            // Original value and unit
             if (measurement) {
                 csv += `${measurement.value},"${measurement.unit}",`;
             } else {
                 csv += ',"",';
             }
+            
+            // Adjustment and override
+            csv += `${adjustmentValue},${overrideValue},`;
+            
+            // Adjusted value
+            let adjustedValue = '';
+            if (measurement && measurement.value) {
+                const unit = this.getMeasurementUnit(type.key);
+                const rawValueInInches = this.convertToInches(measurement.value, measurement.unit || unit);
+                adjustedValue = overrideValue !== 0 ? 
+                    (rawValueInInches + overrideValue).toFixed(2) : 
+                    (rawValueInInches + adjustmentValue).toFixed(2);
+            }
+            csv += `${adjustedValue},`;
+            
+            // Display version (feet/inches)
+            if (type.hasDisplay) {
+                const displayValue = adjustedValue ? this.inchesToFeetAndInches(parseFloat(adjustedValue)) : '';
+                csv += `"${displayValue}",`;
+            }
         });
+
+        // Reporting columns
+        const adjustedReach = this.getAdjustedMeasurementValue(measurementData, 'reach', personData.gender);
+        const adjustedVertical = this.getAdjustedMeasurementValue(measurementData, 'vertical', personData.gender);
+        const adjustedApproach = this.getAdjustedMeasurementValue(measurementData, 'approach', personData.gender);
         
-        csv += '\n';
+        const verticalForReporting = (adjustedVertical && adjustedReach) ? (adjustedVertical - adjustedReach).toFixed(2) : '';
+        const approachForReporting = (adjustedApproach && adjustedReach) ? (adjustedApproach - adjustedReach).toFixed(2) : '';
+        
+        csv += `${verticalForReporting},${approachForReporting}\n`;
+        return csv;
+    }
+
+    generatePerMeasurementCSV(data) {
+        // Header for per-measurement report
+        let csv = 'Event,Operator,Device,Export_Time,ID,Name,Gender,Present,Completed,Source,';
+        csv += 'Measurement_Type,Raw_Value,Unit,Adjustment,Override,Adjusted_Value,Display_Value\n';
+
+        const measurementTypes = [
+            { key: 'height_shoes', label: 'Height w/ Shoes', hasDisplay: true },
+            { key: 'height_no_shoes', label: 'Height w/o Shoes', hasDisplay: true },
+            { key: 'reach', label: 'Reach', hasDisplay: true },
+            { key: 'wingspan', label: 'Wingspan', hasDisplay: true },
+            { key: 'weight', label: 'Weight', hasDisplay: false },
+            { key: 'hand_length', label: 'Hand Length', hasDisplay: false },
+            { key: 'hand_width', label: 'Hand Width', hasDisplay: false },
+            { key: 'vertical', label: 'Vertical', hasDisplay: false },
+            { key: 'approach', label: 'Approach', hasDisplay: false },
+            { key: 'broad', label: 'Broad', hasDisplay: false }
+        ];
+
+        data.roster.forEach(person => {
+            const personId = person.id || person.name;
+            const measurements = data.measurements[personId] || {};
+            
+            measurementTypes.forEach(type => {
+                const measurement = measurements[type.key];
+                if (measurement && measurement.value) {
+                    const adjustmentValue = this.adjustments[type.key] ? this.adjustments[type.key][person.gender] || 0 : 0;
+                    const overrideValue = measurements[`${type.key}_override`] || 0;
+                    
+                    // Calculate adjusted value
+                    const unit = this.getMeasurementUnit(type.key);
+                    const rawValueInInches = this.convertToInches(measurement.value, measurement.unit || unit);
+                    const adjustedValue = overrideValue !== 0 ? 
+                        (rawValueInInches + overrideValue).toFixed(2) : 
+                        (rawValueInInches + adjustmentValue).toFixed(2);
+                    
+                    // Display version
+                    const displayValue = type.hasDisplay ? this.inchesToFeetAndInches(parseFloat(adjustedValue)) : adjustedValue;
+                    
+                    csv += `"${data.event}","${data.operator}","${data.device}","${data.exportTime}",`;
+                    csv += `"${person.id || ''}","${person.name.replace(/"/g, '""')}","${person.gender}",${person.present},${person.completed},"${person.source || 'roster'}",`;
+                    csv += `"${type.label}","${measurement.value}","${measurement.unit || unit}",${adjustmentValue},${overrideValue},"${adjustedValue}","${displayValue}"\n`;
+                }
+            });
+        });
+
         return csv;
     }
 
@@ -968,33 +1275,44 @@ class ManualEntryApp {
         URL.revokeObjectURL(url);
     }
 
-    emailDataWithAttachment(csvContent, filename, logContent = '', logFilename = '') {
+    emailDataWithAttachments(csvContent, filename, logContent = '', logFilename = '', perMeasurementContent = '', perMeasurementFilename = '') {
         const subject = encodeURIComponent(`Results for ${this.currentEvent} and ${this.currentOperator}`);
         
         // Create blobs for the files
-        const csvBlob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const csvBlob = new Blob([csvContent], { type: 'text/csv;charset=utf-8' });
         let logBlob = null;
+        let perMeasurementBlob = null;
+        
         if (logContent) {
-            logBlob = new Blob([logContent], { type: 'text/csv;charset=utf-8;' });
+            logBlob = new Blob([logContent], { type: 'text/csv;charset=utf-8' });
+        }
+        if (perMeasurementContent) {
+            perMeasurementBlob = new Blob([perMeasurementContent], { type: 'text/csv;charset=utf-8' });
         }
         
-        // First, always save files to Downloads folder on iPad
+        // Save all files to Downloads folder on iPad
         this.saveToDownloadsFolder(csvContent, filename);
         if (logContent) {
             this.saveToDownloadsFolder(logContent, logFilename);
         }
+        if (perMeasurementContent) {
+            this.saveToDownloadsFolder(perMeasurementContent, perMeasurementFilename);
+        }
         
-        // Enhanced email body for iPad
-        const attachmentInfo = logContent ? 
-            `Two CSV files have been saved to your iPad's Downloads folder and will be attached:
+        // Enhanced email body for iPad with three reports
+        let attachmentInfo = `Three CSV reports have been saved to your iPad's Downloads folder and will be attached:
 
-📄 "${filename}" - Main data export with all measurements
-📄 "${logFilename}" - Activity log with timestamp sequence
+📄 "${filename}" - Main data export with all measurements and adjustments
+📄 "${logFilename}" - Activity log with timestamp sequence`;
 
-Files are saved to Downloads folder and accessible via the Files app.` :
-            `📄 The CSV file "${filename}" has been saved to your iPad's Downloads folder and will be attached.
+        if (perMeasurementContent) {
+            attachmentInfo += `
+📄 "${perMeasurementFilename}" - Per-measurement report (one row per measurement by athlete)`;
+        }
 
-File is saved to Downloads folder and accessible via the Files app.`;
+        attachmentInfo += `
+
+Files are saved to Downloads folder and accessible via the Files app.`;
 
         const body = encodeURIComponent(`Manual Entry Data Collection Results
 
@@ -1016,7 +1334,48 @@ This email was generated automatically by the Manual Entry iPad app.`);
         
         // iPad-optimized email approach with Web Share API for file attachment
         if (navigator.share && navigator.canShare) {
-            // Check if we can share files
+            // Create files array for sharing
+            const files = [
+                new File([csvBlob], filename, { type: 'text/csv' })
+            ];
+            
+            if (logBlob) {
+                files.push(new File([logBlob], logFilename, { type: 'text/csv' }));
+            }
+            
+            if (perMeasurementBlob) {
+                files.push(new File([perMeasurementBlob], perMeasurementFilename, { type: 'text/csv' }));
+            }
+
+            const shareData = {
+                title: `Results for ${this.currentEvent}`,
+                text: `Manual Entry results for ${this.currentEvent} by ${this.currentOperator}`,
+                files: files
+            };
+
+            if (navigator.canShare(shareData)) {
+                navigator.share(shareData)
+                    .then(() => {
+                        this.showToast(`Files shared successfully!`, 'success');
+                    })
+                    .catch((error) => {
+                        console.log('Share failed:', error);
+                        this.fallbackEmailMethod(subject, body);
+                    });
+                return;
+            }
+        }
+        
+        // Fallback to traditional email method
+        this.fallbackEmailMethod(subject, body);
+    }
+
+    // Keep the original method for compatibility
+    emailDataWithAttachment(csvContent, filename, logContent = '', logFilename = '') {
+        return this.emailDataWithAttachments(csvContent, filename, logContent, logFilename);
+    }
+
+    fallbackEmailMethod(subject, body) {
             const testShareData = {
                 files: [new File([csvBlob], filename, { type: 'text/csv' })]
             };
@@ -1037,14 +1396,32 @@ This email was generated automatically by the Manual Entry iPad app.`);
                     })
                     .catch((error) => {
                         console.log('Web Share API failed, using mail link:', error);
-                        this.openMailWithDownloadedFiles(subject, body, filename, logFilename);
+                        this.fallbackEmailMethod(subject, body);
                     });
                 return;
             }
         }
         
-        // Fallback to mailto with downloaded files
-        this.openMailWithDownloadedFiles(subject, body, filename, logFilename);
+        // Fallback to traditional email method
+        this.fallbackEmailMethod(subject, body);
+    }
+
+    // Keep the original method for compatibility
+    emailDataWithAttachment(csvContent, filename, logContent = '', logFilename = '') {
+        return this.emailDataWithAttachments(csvContent, filename, logContent, logFilename);
+    }
+
+    fallbackEmailMethod(subject, body) {
+        // Open the email app
+        const mailtoUrl = `mailto:?subject=${subject}&body=${body}`;
+        
+        try {
+            window.location.href = mailtoUrl;
+            this.showToast('Email opened. Files saved to Downloads folder - attach from there.', 'success');
+        } catch (error) {
+            console.error('Error opening email:', error);
+            this.showToast('Error opening email. Files saved to Downloads folder.', 'error');
+        }
     }
 
     saveToDownloadsFolder(content, filename) {
@@ -1143,7 +1520,7 @@ This email was generated automatically by the Manual Entry iPad app.`);
             console.log(`File backup saved to app storage: ${filename}`);
             
         } catch (error) {
-            console.warn('Could not save backup to app storage due to storage limitations:', error);
+            console.warn('Could not save backup to app storage due to storage limitations');
             this.showToast('Warning: Could not save backup copy due to storage limits', 'warning');
         }
     }
@@ -1200,6 +1577,8 @@ This email was generated automatically by the Manual Entry iPad app.`);
             measurements: Object.fromEntries(this.measurements),
             currentPersonId: this.currentPersonId,
             activityLog: this.activityLog,
+            measurementUnits: this.measurementUnits,
+            adjustments: this.adjustments,
             timestamp: new Date().toISOString()
         };
         
@@ -1217,6 +1596,14 @@ This email was generated automatically by the Manual Entry iPad app.`);
                 this.measurements = new Map(Object.entries(state.measurements || {}));
                 this.currentPersonId = state.currentPersonId;
                 this.activityLog = state.activityLog || [];
+                
+                // Load setup data
+                if (state.measurementUnits) {
+                    this.measurementUnits = { ...this.measurementUnits, ...state.measurementUnits };
+                }
+                if (state.adjustments) {
+                    this.adjustments = { ...this.adjustments, ...state.adjustments };
+                }
             } catch (error) {
                 console.error('Error loading saved state:', error);
             }
@@ -1352,6 +1739,103 @@ This email was generated automatically by the Manual Entry iPad app.`);
             });
             this.showToast(`Updated gender for ${person.name}`, 'success');
         }
+    }
+
+    showSetupScreen() {
+        if (!this.validateStartup()) {
+            this.showToast('Please fill in all required fields first', 'warning');
+            return;
+        }
+        
+        document.querySelectorAll('.screen').forEach(screen => screen.classList.remove('active'));
+        document.getElementById('setup-screen').classList.add('active');
+        
+        // Load saved settings if they exist
+        this.loadSetupSettings();
+        this.logActivity('SETUP_SCREEN_OPENED');
+    }
+
+    loadSetupSettings() {
+        // Load measurement units
+        Object.keys(this.measurementUnits).forEach(measurement => {
+            const element = document.getElementById(`${measurement}-unit`);
+            if (element) {
+                element.value = this.measurementUnits[measurement];
+            }
+        });
+
+        // Load adjustments
+        Object.keys(this.adjustments).forEach(measurement => {
+            ['M', 'F'].forEach(gender => {
+                const element = document.getElementById(`adj-${measurement.replace('_', '-')}-${gender}`);
+                if (element) {
+                    element.value = this.adjustments[measurement][gender];
+                }
+            });
+        });
+
+        // Update unit displays in measurement form
+        this.updateMeasurementUnitDisplays();
+    }
+
+    saveSetupSettings() {
+        // Save measurement units
+        Object.keys(this.measurementUnits).forEach(measurement => {
+            const element = document.getElementById(`${measurement}-unit`);
+            if (element) {
+                this.measurementUnits[measurement] = element.value;
+            }
+        });
+
+        // Save adjustments
+        Object.keys(this.adjustments).forEach(measurement => {
+            ['M', 'F'].forEach(gender => {
+                const element = document.getElementById(`adj-${measurement.replace('_', '-')}-${gender}`);
+                if (element) {
+                    this.adjustments[measurement][gender] = parseFloat(element.value) || 0;
+                }
+            });
+        });
+
+        this.saveState();
+        this.logActivity('SETUP_SETTINGS_SAVED', { 
+            units: this.measurementUnits, 
+            adjustments: this.adjustments 
+        });
+    }
+
+    updateMeasurementUnitDisplays() {
+        // Update unit displays in measurement form
+        const unitMappings = {
+            'height-unit-display': this.measurementUnits.height,
+            'height-unit-display-2': this.measurementUnits.height,
+            'reach-unit-display': this.measurementUnits.reach,
+            'wingspan-unit-display': this.measurementUnits.wingspan,
+            'vertical-unit-display': this.measurementUnits.vertical,
+            'approach-unit-display': this.measurementUnits.approach,
+            'broad-unit-display': this.measurementUnits.broad
+        };
+
+        Object.entries(unitMappings).forEach(([elementId, unit]) => {
+            const element = document.getElementById(elementId);
+            if (element) {
+                element.textContent = `(${unit})`;
+            }
+        });
+    }
+
+    getAdjustedMeasurementValue(measurement, measurementType, gender) {
+        const data = measurement[measurementType];
+        if (!data || !data.value) return null;
+        
+        const unit = this.getMeasurementUnit(measurementType);
+        const valueInInches = this.convertToInches(data.value, data.unit || unit);
+        const adjustmentValue = this.adjustments[measurementType] ? this.adjustments[measurementType][gender] || 0 : 0;
+        const overrideValue = measurement[`${measurementType}_override`] || 0;
+        
+        return overrideValue !== 0 ? 
+            valueInInches + overrideValue : 
+            valueInInches + adjustmentValue;
     }
 }
 

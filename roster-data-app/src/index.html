@@ -14,7 +14,7 @@
     <div id="app">
         <!-- Startup Screen -->
         <div id="startup-screen" class="screen active">
-            <h1>Manual Entry</h1>
+            <h1>Manual Entry <span id="version-number">v2.5.0</span></h1>
             <div class="form-group">
                 <label for="operator-name">Enter Your Name:</label>
                 <input type="text" id="operator-name" required>
@@ -27,7 +27,136 @@
                 <label for="roster-upload">Import Roster (CSV):</label>
                 <input type="file" id="roster-upload" accept=".csv" required>
             </div>
-            <button id="start-event" disabled>Start Event</button>
+            <button id="setup-measurements">Next: Setup Measurements</button>
+        </div>
+
+        <!-- Measurement Setup Screen -->
+        <div id="setup-screen" class="screen">
+            <h1>Measurement Setup</h1>
+            
+            <!-- Units Setup -->
+            <div class="setup-section">
+                <h3>📏 Units of Measurement</h3>
+                <div class="units-grid">
+                    <div class="unit-option">
+                        <label for="height-unit">Height (with/without shoes):</label>
+                        <select id="height-unit">
+                            <option value="inches">Inches</option>
+                            <option value="cm">Centimeters</option>
+                        </select>
+                    </div>
+                    <div class="unit-option">
+                        <label for="reach-unit">Reach:</label>
+                        <select id="reach-unit">
+                            <option value="inches">Inches</option>
+                            <option value="cm">Centimeters</option>
+                        </select>
+                    </div>
+                    <div class="unit-option">
+                        <label for="wingspan-unit">Wingspan:</label>
+                        <select id="wingspan-unit">
+                            <option value="inches">Inches</option>
+                            <option value="cm">Centimeters</option>
+                        </select>
+                    </div>
+                    <div class="unit-option">
+                        <label for="vertical-unit">Vertical Jump:</label>
+                        <select id="vertical-unit">
+                            <option value="inches">Inches</option>
+                            <option value="cm">Centimeters</option>
+                        </select>
+                    </div>
+                    <div class="unit-option">
+                        <label for="approach-unit">Approach Jump:</label>
+                        <select id="approach-unit">
+                            <option value="inches">Inches</option>
+                            <option value="cm">Centimeters</option>
+                        </select>
+                    </div>
+                    <div class="unit-option">
+                        <label for="broad-unit">Broad Jump:</label>
+                        <select id="broad-unit">
+                            <option value="inches">Inches</option>
+                            <option value="cm">Centimeters</option>
+                        </select>
+                    </div>
+                </div>
+                <p class="setup-note">Note: Weight is always in pounds, Hand measurements are always in inches</p>
+            </div>
+
+            <!-- Adjustments Setup -->
+            <div class="setup-section">
+                <h3>⚙️ Measurement Adjustments</h3>
+                <p class="setup-note">Set standard adjustments that will be applied to all measurements. Default is 0.</p>
+                <div class="adjustments-table">
+                    <table id="adjustments-table">
+                        <thead>
+                            <tr>
+                                <th>Measurement</th>
+                                <th>Male Adjustment</th>
+                                <th>Female Adjustment</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Height with Shoes</td>
+                                <td><input type="number" step="0.1" id="adj-height-shoes-M" value="0"></td>
+                                <td><input type="number" step="0.1" id="adj-height-shoes-F" value="0"></td>
+                            </tr>
+                            <tr>
+                                <td>Height without Shoes</td>
+                                <td><input type="number" step="0.1" id="adj-height-no-shoes-M" value="0"></td>
+                                <td><input type="number" step="0.1" id="adj-height-no-shoes-F" value="0"></td>
+                            </tr>
+                            <tr>
+                                <td>Reach</td>
+                                <td><input type="number" step="0.1" id="adj-reach-M" value="0"></td>
+                                <td><input type="number" step="0.1" id="adj-reach-F" value="0"></td>
+                            </tr>
+                            <tr>
+                                <td>Wingspan</td>
+                                <td><input type="number" step="0.1" id="adj-wingspan-M" value="0"></td>
+                                <td><input type="number" step="0.1" id="adj-wingspan-F" value="0"></td>
+                            </tr>
+                            <tr>
+                                <td>Weight</td>
+                                <td><input type="number" step="0.1" id="adj-weight-M" value="0"></td>
+                                <td><input type="number" step="0.1" id="adj-weight-F" value="0"></td>
+                            </tr>
+                            <tr>
+                                <td>Hand Length</td>
+                                <td><input type="number" step="0.1" id="adj-hand-length-M" value="0"></td>
+                                <td><input type="number" step="0.1" id="adj-hand-length-F" value="0"></td>
+                            </tr>
+                            <tr>
+                                <td>Hand Width</td>
+                                <td><input type="number" step="0.1" id="adj-hand-width-M" value="0"></td>
+                                <td><input type="number" step="0.1" id="adj-hand-width-F" value="0"></td>
+                            </tr>
+                            <tr>
+                                <td>Vertical Jump</td>
+                                <td><input type="number" step="0.1" id="adj-vertical-M" value="0"></td>
+                                <td><input type="number" step="0.1" id="adj-vertical-F" value="0"></td>
+                            </tr>
+                            <tr>
+                                <td>Approach Jump</td>
+                                <td><input type="number" step="0.1" id="adj-approach-M" value="0"></td>
+                                <td><input type="number" step="0.1" id="adj-approach-F" value="0"></td>
+                            </tr>
+                            <tr>
+                                <td>Broad Jump</td>
+                                <td><input type="number" step="0.1" id="adj-broad-M" value="0"></td>
+                                <td><input type="number" step="0.1" id="adj-broad-F" value="0"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="setup-controls">
+                <button id="back-to-startup">← Back</button>
+                <button id="start-event">Start Event</button>
+            </div>
         </div>
 
         <!-- Main Screen -->
@@ -70,132 +199,82 @@
 
                 <div class="measurements-grid">
                     <div class="measurement-item">
-                        <label>Height with shoes</label>
-                        <div class="unit-selector">
-                            <select id="height-shoes-unit">
-                                <option value="inches">inches</option>
-                                <option value="cm">cm</option>
-                            </select>
-                        </div>
+                        <label>Height with shoes <span class="unit-display" id="height-unit-display"></span></label>
                         <input type="number" step="0.01" id="height-shoes-1" placeholder="Enter value">
                         <input type="number" step="0.01" id="height-shoes-2" placeholder="Confirm value">
+                        <input type="number" step="0.1" id="height-shoes-override" placeholder="Adj Override (0)" class="adjustment-override">
                         <button class="measurement-save-btn" data-measurement="height-shoes">💾</button>
                     </div>
 
                     <div class="measurement-item">
-                        <label>Height without shoes</label>
-                        <div class="unit-selector">
-                            <select id="height-no-shoes-unit">
-                                <option value="inches">inches</option>
-                                <option value="cm">cm</option>
-                            </select>
-                        </div>
+                        <label>Height without shoes <span class="unit-display" id="height-unit-display-2"></span></label>
                         <input type="number" step="0.01" id="height-no-shoes-1" placeholder="Enter value">
                         <input type="number" step="0.01" id="height-no-shoes-2" placeholder="Confirm value">
+                        <input type="number" step="0.1" id="height-no-shoes-override" placeholder="Adj Override (0)" class="adjustment-override">
                         <button class="measurement-save-btn" data-measurement="height-no-shoes">💾</button>
                     </div>
 
                     <div class="measurement-item">
-                        <label>Reach</label>
-                        <div class="unit-selector">
-                            <select id="reach-unit">
-                                <option value="inches">inches</option>
-                                <option value="cm">cm</option>
-                            </select>
-                        </div>
+                        <label>Reach <span class="unit-display" id="reach-unit-display"></span></label>
                         <input type="number" step="0.01" id="reach-1" placeholder="Enter value">
                         <input type="number" step="0.01" id="reach-2" placeholder="Confirm value">
+                        <input type="number" step="0.1" id="reach-override" placeholder="Adj Override (0)" class="adjustment-override">
                         <button class="measurement-save-btn" data-measurement="reach">💾</button>
                     </div>
 
                     <div class="measurement-item">
-                        <label>Wingspan</label>
-                        <div class="unit-selector">
-                            <select id="wingspan-unit">
-                                <option value="inches">inches</option>
-                                <option value="cm">cm</option>
-                            </select>
-                        </div>
+                        <label>Wingspan <span class="unit-display" id="wingspan-unit-display"></span></label>
                         <input type="number" step="0.01" id="wingspan-1" placeholder="Enter value">
                         <input type="number" step="0.01" id="wingspan-2" placeholder="Confirm value">
+                        <input type="number" step="0.1" id="wingspan-override" placeholder="Adj Override (0)" class="adjustment-override">
                         <button class="measurement-save-btn" data-measurement="wingspan">💾</button>
                     </div>
 
                     <div class="measurement-item">
-                        <label>Weight</label>
-                        <div class="unit-selector">
-                            <select id="weight-unit">
-                                <option value="lbs">lbs</option>
-                                <option value="kg">kg</option>
-                            </select>
-                        </div>
+                        <label>Weight (lbs)</label>
                         <input type="number" step="0.01" id="weight-1" placeholder="Enter value">
                         <input type="number" step="0.01" id="weight-2" placeholder="Confirm value">
+                        <input type="number" step="0.1" id="weight-override" placeholder="Adj Override (0)" class="adjustment-override">
                         <button class="measurement-save-btn" data-measurement="weight">💾</button>
                     </div>
 
                     <div class="measurement-item">
-                        <label>Hand length</label>
-                        <div class="unit-selector">
-                            <select id="hand-length-unit">
-                                <option value="inches">inches</option>
-                                <option value="cm">cm</option>
-                            </select>
-                        </div>
+                        <label>Hand length (inches)</label>
                         <input type="number" step="0.01" id="hand-length-1" placeholder="Enter value">
                         <input type="number" step="0.01" id="hand-length-2" placeholder="Confirm value">
+                        <input type="number" step="0.1" id="hand-length-override" placeholder="Adj Override (0)" class="adjustment-override">
                         <button class="measurement-save-btn" data-measurement="hand-length">💾</button>
                     </div>
 
                     <div class="measurement-item">
-                        <label>Hand width</label>
-                        <div class="unit-selector">
-                            <select id="hand-width-unit">
-                                <option value="inches">inches</option>
-                                <option value="cm">cm</option>
-                            </select>
-                        </div>
+                        <label>Hand width (inches)</label>
                         <input type="number" step="0.01" id="hand-width-1" placeholder="Enter value">
                         <input type="number" step="0.01" id="hand-width-2" placeholder="Confirm value">
+                        <input type="number" step="0.1" id="hand-width-override" placeholder="Adj Override (0)" class="adjustment-override">
                         <button class="measurement-save-btn" data-measurement="hand-width">💾</button>
                     </div>
 
                     <div class="measurement-item">
-                        <label>Vertical</label>
-                        <div class="unit-selector">
-                            <select id="vertical-unit">
-                                <option value="inches">inches</option>
-                                <option value="cm">cm</option>
-                            </select>
-                        </div>
+                        <label>Vertical <span class="unit-display" id="vertical-unit-display"></span></label>
                         <input type="number" step="0.01" id="vertical-1" placeholder="Enter value">
                         <input type="number" step="0.01" id="vertical-2" placeholder="Confirm value">
+                        <input type="number" step="0.1" id="vertical-override" placeholder="Adj Override (0)" class="adjustment-override">
                         <button class="measurement-save-btn" data-measurement="vertical">💾</button>
                     </div>
 
                     <div class="measurement-item">
-                        <label>Approach</label>
-                        <div class="unit-selector">
-                            <select id="approach-unit">
-                                <option value="inches">inches</option>
-                                <option value="cm">cm</option>
-                            </select>
-                        </div>
+                        <label>Approach <span class="unit-display" id="approach-unit-display"></span></label>
                         <input type="number" step="0.01" id="approach-1" placeholder="Enter value">
                         <input type="number" step="0.01" id="approach-2" placeholder="Confirm value">
+                        <input type="number" step="0.1" id="approach-override" placeholder="Adj Override (0)" class="adjustment-override">
                         <button class="measurement-save-btn" data-measurement="approach">💾</button>
                     </div>
 
                     <div class="measurement-item">
-                        <label>Broad</label>
-                        <div class="unit-selector">
-                            <select id="broad-unit">
-                                <option value="inches">inches</option>
-                                <option value="cm">cm</option>
-                            </select>
-                        </div>
+                        <label>Broad <span class="unit-display" id="broad-unit-display"></span></label>
                         <input type="number" step="0.01" id="broad-1" placeholder="Enter value">
                         <input type="number" step="0.01" id="broad-2" placeholder="Confirm value">
+                        <input type="number" step="0.1" id="broad-override" placeholder="Adj Override (0)" class="adjustment-override">
                         <button class="measurement-save-btn" data-measurement="broad">💾</button>
                     </div>
                 </div>
