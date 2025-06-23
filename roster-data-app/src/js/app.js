@@ -529,12 +529,23 @@ class ManualEntryApp {
         const eventName = document.getElementById('event-name').value.trim();
         const rosterFile = document.getElementById('roster-upload').files[0];
         
+        // Debug logging
+        console.log('Validation check:', {
+            operatorName: operatorName,
+            eventName: eventName,
+            rosterFile: rosterFile ? rosterFile.name : 'No file',
+            rosterLoaded: this.roster.length
+        });
+        
         const setupButton = document.getElementById('setup-measurements');
+        const isValid = operatorName && eventName && (rosterFile || this.roster.length > 0);
+        
         if (setupButton) {
-            setupButton.disabled = !(operatorName && eventName && rosterFile);
+            setupButton.disabled = !isValid;
+            setupButton.style.opacity = isValid ? '1' : '0.5';
         }
         
-        return operatorName && eventName && rosterFile;
+        return isValid;
     }
 
     handleRosterUpload(event) {
@@ -1742,11 +1753,30 @@ This email was generated automatically by the Manual Entry iPad app.`);
     }
 
     showSetupScreen() {
-        if (!this.validateStartup()) {
-            this.showToast('Please fill in all required fields first', 'warning');
+        const operatorName = document.getElementById('operator-name').value.trim();
+        const eventName = document.getElementById('event-name').value.trim();
+        const hasRoster = this.roster.length > 0;
+        
+        // Detailed validation with specific error messages
+        if (!operatorName) {
+            this.showToast('Please enter the operator name first', 'warning');
+            document.getElementById('operator-name').focus();
             return;
         }
         
+        if (!eventName) {
+            this.showToast('Please enter the event name first', 'warning');
+            document.getElementById('event-name').focus();
+            return;
+        }
+        
+        if (!hasRoster) {
+            this.showToast('Please upload a roster CSV file first', 'warning');
+            document.getElementById('roster-upload').focus();
+            return;
+        }
+        
+        // All validations passed, proceed to setup screen
         document.querySelectorAll('.screen').forEach(screen => screen.classList.remove('active'));
         document.getElementById('setup-screen').classList.add('active');
         
