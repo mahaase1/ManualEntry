@@ -697,7 +697,7 @@ class ManualEntryApp {
         const files = this.getLocalDirectoryFiles();
         
         if (files.length === 0) {
-            fileList.innerHTML = '<p style="text-align: center; color: #666; font-style: italic;">No saved files found in Manual entry directory.</p>';
+            fileList.innerHTML = '<p style="text-align: center; color: #666; font-style: italic;">No backup files found in app storage.<br><br>📂 Main CSV files are saved to your iPad\'s Downloads folder.<br>This list shows backup copies only.</p>';
             return;
         }
         
@@ -940,15 +940,15 @@ class ManualEntryApp {
         
         // Enhanced email body for iPad
         const attachmentInfo = logContent ? 
-            `Two CSV files have been prepared for attachment:
+            `Two CSV files have been saved to your iPad's Downloads folder and will be attached:
 
 📄 "${filename}" - Main data export with all measurements
 📄 "${logFilename}" - Activity log with timestamp sequence
 
-Files are automatically saved to your iPad's Downloads folder and will be attached to this email.` :
-            `📄 The CSV file "${filename}" has been prepared for attachment.
+Files are saved to Downloads folder and accessible via the Files app.` :
+            `📄 The CSV file "${filename}" has been saved to your iPad's Downloads folder and will be attached.
 
-File is automatically saved to your iPad's Downloads folder and will be attached to this email.`;
+File is saved to Downloads folder and accessible via the Files app.`;
 
         const body = encodeURIComponent(`Manual Entry Data Collection Results
 
@@ -965,6 +965,7 @@ Export Time: ${new Date().toLocaleString()}
 
 ${attachmentInfo}
 
+CSV files are saved to your iPad's Downloads folder for attachment or sharing.
 This email was generated automatically by the Manual Entry iPad app.`);
         
         // iPad-optimized email approach with Web Share API for file attachment
@@ -986,7 +987,7 @@ This email was generated automatically by the Manual Entry iPad app.`);
                 
                 navigator.share(shareData)
                     .then(() => {
-                        this.showToast(`Files shared successfully! CSV files are also in Downloads folder.`, 'success');
+                        this.showToast(`Files attached to email and saved to Downloads folder!`, 'success');
                     })
                     .catch((error) => {
                         console.log('Web Share API failed, using mail link:', error);
@@ -1025,6 +1026,8 @@ This email was generated automatically by the Manual Entry iPad app.`);
             // Also save to our localStorage directory for backup
             this.saveToLocalDirectory(content, filename);
             
+            // Show immediate feedback to user
+            this.showToast(`💾 ${filename} saved to Downloads folder`, 'success');
             console.log(`File saved to Downloads folder: ${filename}`);
             
         } catch (error) {
@@ -1045,22 +1048,22 @@ This email was generated automatically by the Manual Entry iPad app.`);
             // Show success message with instructions
             setTimeout(() => {
                 const fileList = logFilename ? 
-                    `Files downloaded to your iPad:\n• ${filename}\n• ${logFilename}` :
-                    `File downloaded to your iPad:\n• ${filename}`;
+                    `Files saved to Downloads folder:\n• ${filename}\n• ${logFilename}` :
+                    `File saved to Downloads folder:\n• ${filename}`;
                     
-                this.showToast(`📧 Mail app opened! ${fileList}\n\nAttach files from Downloads folder if needed.`, 'success');
+                this.showToast(`📧 Mail app opened! ${fileList}\n\nFiles are in Downloads folder. Use 📎 attachment button in Mail to attach them.`, 'success');
             }, 500);
             
         } catch (error) {
             // Ultimate fallback
             window.open(mailtoLink, '_blank');
-            this.showToast('Email opened. Files are in Downloads folder for attachment.', 'success');
+            this.showToast('Email opened. Files saved to Downloads folder - attach from there.', 'success');
         }
     }
 
     saveToLocalDirectory(content, filename) {
         try {
-            // Create a backup storage directory in localStorage (for app file management)
+            // Create a backup storage directory in localStorage (for app file management only)
             const directoryKey = 'ManualEntry_Directory';
             const fileKey = `ManualEntry_${filename}_${Date.now()}`;
             
@@ -1091,11 +1094,11 @@ This email was generated automatically by the Manual Entry iPad app.`);
             // Update directory index
             localStorage.setItem(directoryKey, JSON.stringify(directoryIndex));
             
-            console.log(`File saved to Manual entry directory: ${filename}`);
+            console.log(`File backup saved to app storage: ${filename}`);
             
         } catch (error) {
-            console.warn('Could not save to local directory due to storage limitations:', error);
-            this.showToast('Warning: Could not save to local directory due to storage limits', 'warning');
+            console.warn('Could not save backup to app storage due to storage limitations:', error);
+            this.showToast('Warning: Could not save backup copy due to storage limits', 'warning');
         }
     }
 
