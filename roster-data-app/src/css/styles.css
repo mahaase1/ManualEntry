@@ -1228,6 +1228,17 @@ header {
     color: white;
 }
 
+/* No Data Message in Spreadsheet View */
+.no-data {
+    text-align: center;
+    padding: 40px;
+    color: #666;
+    font-size: 18px;
+    background: white;
+    border-radius: 8px;
+    margin: 20px 0;
+}
+
 /* Responsive Design for Station View */
 @media (max-width: 768px) {
     .station-layout {

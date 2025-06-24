@@ -74,25 +74,33 @@ class ManualEntryApp {
     }
 
     showSpreadsheetView() {
-        console.log('showSpreadsheetView called');
-        
-        // Check if elements exist
-        const rosterSection = document.getElementById('roster-section');
-        const measurementForm = document.getElementById('measurement-form');
-        const spreadsheetView = document.getElementById('spreadsheet-view');
-        
-        console.log('Elements:', { rosterSection, measurementForm, spreadsheetView });
-        
-        if (!spreadsheetView) {
-            console.error('Spreadsheet view element not found!');
+        // Ensure we have necessary data
+        if (!this.currentOperator || !this.currentEvent) {
+            this.showToast('Please complete the startup process first', 'warning');
             return;
         }
         
-        document.getElementById('roster-section').classList.add('hidden');
-        document.getElementById('measurement-form').classList.add('hidden');
-        document.getElementById('spreadsheet-view').classList.remove('hidden');
-        this.renderSpreadsheet();
-        this.logActivity('SPREADSHEET_VIEW_OPENED');
+        if (this.roster.length === 0) {
+            this.showToast('Please upload a roster first', 'warning');
+            return;
+        }
+        
+        // Hide other sections
+        const sections = ['roster-section', 'measurement-form', 'checkin-section', 'setup-screen', 'startup-screen'];
+        sections.forEach(sectionId => {
+            const element = document.getElementById(sectionId);
+            if (element) element.classList.add('hidden');
+        });
+        
+        // Show spreadsheet view
+        const spreadsheetView = document.getElementById('spreadsheet-view');
+        if (spreadsheetView) {
+            spreadsheetView.classList.remove('hidden');
+            this.renderSpreadsheet();
+            this.logActivity('SPREADSHEET_VIEW_OPENED');
+        } else {
+            this.showToast('Spreadsheet view not available', 'error');
+        }
     }
 
     showMainView() {
@@ -118,11 +126,15 @@ class ManualEntryApp {
     }
 
     renderSpreadsheet() {
-        console.log('renderSpreadsheet called');
         const container = document.getElementById('spreadsheet-container');
-        console.log('Container:', container);
         if (!container) {
-            console.error('Spreadsheet container not found!');
+            console.error('Spreadsheet container not found');
+            this.showToast('Unable to load spreadsheet view', 'error');
+            return;
+        }
+        
+        if (this.roster.length === 0) {
+            container.innerHTML = '<p class="no-data">No roster data available. Please upload a roster first.</p>';
             return;
         }
 
