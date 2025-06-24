@@ -760,14 +760,17 @@ class ManualEntryApp {
         const personId = this.currentPersonId;
         const person = this.roster.find(p => (p.id || p.name) === personId);
         
-        if (!person) return;
+        if (!person) {
+            this.showToast('No person selected', 'error');
+            return;
+        }
 
         const measurements = ['height-shoes', 'height-no-shoes', 'reach', 'wingspan', 'weight', 'hand-length', 'hand-width', 'vertical', 'approach', 'broad'];
-        const measurementData = {
+        let measurementData = this.measurements.get(personId) || {
             timestamp: new Date().toISOString(),
             operator: this.currentOperator,
             device: this.deviceId,
-            comments: document.getElementById('comments').value
+            comments: document.getElementById('comments').value || ''
         };
 
         let hasValidMeasurements = false;
@@ -776,17 +779,28 @@ class ManualEntryApp {
         measurements.forEach(measurement => {
             const input1 = document.getElementById(`${measurement}-1`);
             const input2 = document.getElementById(`${measurement}-2`);
-            const unit = document.getElementById(`${measurement}-unit`).value;
+            const overrideInput = document.getElementById(`${measurement}-override`);
             
-            if (input1.value && input2.value) {
+            if (input1 && input1.value && input2 && input2.value) {
                 const value1 = parseFloat(input1.value);
                 const value2 = parseFloat(input2.value);
                 
                 if (Math.abs(value1 - value2) < 0.01) {
                     const key = measurement.replace('-', '_');
+                    const unit = this.getMeasurementUnit(measurement);
+                    const override = overrideInput ? (parseFloat(overrideInput.value) || 0) : 0;
+                    
+                    // Calculate adjustments
+                    const baseAdjustment = this.adjustments[key] ? this.adjustments[key][person.gender] || 0 : 0;
+                    const finalAdjustment = override !== 0 ? override : baseAdjustment;
+                    const adjustedValue = value1 + finalAdjustment;
+                    
                     measurementData[key] = {
                         value: value1,
-                        unit: unit
+                        unit: unit,
+                        adjustment: baseAdjustment,
+                        adjustmentOverride: override,
+                        adjustedValue: adjustedValue
                     };
                     hasValidMeasurements = true;
                 } else {
@@ -802,21 +816,23 @@ class ManualEntryApp {
         }
 
         if (hasValidMeasurements) {
+            // Update comments if changed
+            measurementData.comments = document.getElementById('comments').value || '';
+            
             this.measurements.set(personId, measurementData);
             person.completed = hasValidMeasurements;
             this.saveState();
             this.createBackup();
             this.logActivity('MEASUREMENTS_SAVED', { 
                 person: person.name, 
-                measurementsCount: Object.keys(measurementData).filter(k => k !== 'timestamp' && k !== 'operator' && k !== 'device' && k !== 'comments').length,
+                measurementsCount: Object.keys(measurementData).filter(k => !['timestamp', 'operator', 'device', 'comments'].includes(k)).length,
                 completed: person.completed
             });
             
-            // Automatically save to CSV file
-            const csvContent = this.generateIndividualMeasurementCSV(person, measurementData);
-            const savedFilename = this.appendToCSVFile(csvContent, false);
+            // Update roster display
+            this.renderRoster();
             
-            this.showToast(`Measurements saved successfully! (Auto-saved to ${savedFilename})`, 'success');
+            this.showToast(`Measurements saved successfully!`, 'success');
             this.showRosterView();
         } else {
             this.showToast('Please enter at least one measurement', 'warning');
@@ -2292,7 +2308,7 @@ The measurement data is attached as CSV files.`;
             this.updateStationDisplay();
             this.renderStationRoster();
         } else {
-            this.updateRosterDisplay();
+            this.renderRoster();
         }
         
         // Save state and log activity
