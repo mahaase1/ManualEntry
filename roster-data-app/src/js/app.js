@@ -74,6 +74,20 @@ class ManualEntryApp {
     }
 
     showSpreadsheetView() {
+        console.log('showSpreadsheetView called');
+        
+        // Check if elements exist
+        const rosterSection = document.getElementById('roster-section');
+        const measurementForm = document.getElementById('measurement-form');
+        const spreadsheetView = document.getElementById('spreadsheet-view');
+        
+        console.log('Elements:', { rosterSection, measurementForm, spreadsheetView });
+        
+        if (!spreadsheetView) {
+            console.error('Spreadsheet view element not found!');
+            return;
+        }
+        
         document.getElementById('roster-section').classList.add('hidden');
         document.getElementById('measurement-form').classList.add('hidden');
         document.getElementById('spreadsheet-view').classList.remove('hidden');
@@ -104,8 +118,13 @@ class ManualEntryApp {
     }
 
     renderSpreadsheet() {
+        console.log('renderSpreadsheet called');
         const container = document.getElementById('spreadsheet-container');
-        if (!container) return;
+        console.log('Container:', container);
+        if (!container) {
+            console.error('Spreadsheet container not found!');
+            return;
+        }
 
         // Create table HTML with all required columns
         let tableHTML = '<table class="spreadsheet-table"><thead><tr>';
