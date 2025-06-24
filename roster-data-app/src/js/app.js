@@ -32,6 +32,11 @@ class ManualEntryApp {
             broad: { M: 0, F: 0 }
         };
         
+        // Station View properties
+        this.currentView = 'athlete'; // 'athlete' or 'station'
+        this.currentStation = '';
+        this.selectedPersonInStation = null;
+        
         this.init();
     }
 
@@ -344,6 +349,20 @@ class ManualEntryApp {
         document.getElementById('back-to-roster-from-checkin').addEventListener('click', this.showRosterView.bind(this));
         document.getElementById('toggle-checkin-edit').addEventListener('click', this.toggleCheckinEditMode.bind(this));
         document.getElementById('save-measurements').addEventListener('click', this.saveMeasurements.bind(this));
+
+        // View mode events
+        document.getElementById('view-mode').addEventListener('change', this.switchView.bind(this));
+        
+        // Station view events
+        document.getElementById('station-select').addEventListener('change', this.selectStation.bind(this));
+        document.getElementById('back-to-athlete-view').addEventListener('click', this.showAthleteView.bind(this));
+        document.getElementById('station-name-filter').addEventListener('input', this.filterStationRoster.bind(this));
+        document.getElementById('station-save-btn').addEventListener('click', this.saveStationMeasurement.bind(this));
+        
+        // Station measurement input events
+        document.getElementById('station-value-1').addEventListener('input', this.updateStationDisplay.bind(this));
+        document.getElementById('station-value-2').addEventListener('input', this.updateStationDisplay.bind(this));
+        document.getElementById('station-override').addEventListener('input', this.updateStationDisplay.bind(this));
 
         // Spreadsheet view events
         document.getElementById('toggle-edit-mode').addEventListener('click', this.toggleEditMode.bind(this));
@@ -1919,6 +1938,357 @@ The measurement data is attached as CSV files.`;
         return overrideValue !== 0 ? 
             valueInInches + overrideValue : 
             valueInInches + adjustmentValue;
+    }
+
+    // Station View Methods
+    switchView() {
+        const viewMode = document.getElementById('view-mode').value;
+        this.currentView = viewMode;
+        
+        if (viewMode === 'station') {
+            this.showStationView();
+        } else {
+            this.showAthleteView();
+        }
+        
+        this.saveState();
+    }
+
+    showStationView() {
+        document.getElementById('roster-section').classList.add('hidden');
+        document.getElementById('measurement-form').classList.add('hidden');
+        document.getElementById('station-view').classList.remove('hidden');
+        
+        // Initialize station if not set
+        if (!this.currentStation) {
+            this.currentStation = 'height-shoes';
+            document.getElementById('station-select').value = this.currentStation;
+        }
+        
+        this.selectStation();
+        this.renderStationRoster();
+        this.logActivity('STATION_VIEW_OPENED', { station: this.currentStation });
+    }
+
+    showAthleteView() {
+        document.getElementById('station-view').classList.add('hidden');
+        document.getElementById('roster-section').classList.remove('hidden');
+        document.getElementById('view-mode').value = 'athlete';
+        this.currentView = 'athlete';
+        this.selectedPersonInStation = null;
+        this.logActivity('ATHLETE_VIEW_OPENED');
+    }
+
+    selectStation() {
+        this.currentStation = document.getElementById('station-select').value;
+        this.selectedPersonInStation = null;
+        
+        // Update station measurement form
+        this.updateStationMeasurementForm();
+        this.renderStationRoster();
+        
+        this.logActivity('STATION_SELECTED', { station: this.currentStation });
+    }
+
+    updateStationMeasurementForm() {
+        const stationLabels = {
+            'height-shoes': `Height with Shoes (${this.getMeasurementUnit('height')})`,
+            'height-no-shoes': `Height without Shoes (${this.getMeasurementUnit('height')})`,
+            'reach': `Reach (${this.getMeasurementUnit('reach')})`,
+            'wingspan': `Wingspan (${this.getMeasurementUnit('wingspan')})`,
+            'weight': 'Weight (lbs)',
+            'hand-length': 'Hand Length (inches)',
+            'hand-width': 'Hand Width (inches)',
+            'vertical': `Vertical Jump (${this.getMeasurementUnit('vertical')})`,
+            'approach': `Approach Jump (${this.getMeasurementUnit('approach')})`,
+            'broad': `Broad Jump (${this.getMeasurementUnit('broad')})`
+        };
+
+        document.getElementById('station-measurement-label').textContent = stationLabels[this.currentStation] || '';
+        
+        // Clear inputs
+        document.getElementById('station-value-1').value = '';
+        document.getElementById('station-value-2').value = '';
+        document.getElementById('station-override').value = '';
+        document.getElementById('station-display-value').textContent = '';
+        
+        // Hide inputs until person is selected
+        document.getElementById('station-measurement-inputs').classList.add('hidden');
+        document.getElementById('station-person-name').textContent = 'Select a person';
+    }
+
+    renderStationRoster() {
+        const container = document.getElementById('station-roster-grid');
+        container.innerHTML = '';
+        
+        // Apply search filter
+        const searchTerm = document.getElementById('station-name-filter').value.toLowerCase();
+        const filteredRoster = this.roster.filter(person => 
+            person.name.toLowerCase().includes(searchTerm)
+        );
+
+        // Sort roster: incomplete measurements first, then alphabetically
+        filteredRoster.sort((a, b) => {
+            const aHasMeasurement = this.hasMeasurement(a.id || a.name, this.currentStation);
+            const bHasMeasurement = this.hasMeasurement(b.id || b.name, this.currentStation);
+            
+            if (aHasMeasurement !== bHasMeasurement) {
+                return aHasMeasurement ? 1 : -1;
+            }
+            return a.name.localeCompare(b.name);
+        });
+
+        filteredRoster.forEach(person => {
+            const personId = person.id || person.name;
+            const hasMeasurement = this.hasMeasurement(personId, this.currentStation);
+            
+            const item = document.createElement('div');
+            item.className = 'station-roster-item';
+            if (hasMeasurement) item.classList.add('completed');
+            if (this.selectedPersonInStation === personId) item.classList.add('selected');
+            
+            const statusClass = person.present ? 'present' : 'absent';
+            const statusText = person.present ? 'Present' : 'Absent';
+            
+            item.innerHTML = `
+                <span>${person.name}</span>
+                <span class="roster-status ${statusClass}">${statusText}</span>
+            `;
+            
+            item.addEventListener('click', () => this.selectPersonInStation(personId, person.name));
+            container.appendChild(item);
+        });
+    }
+
+    hasMeasurement(personId, measurementType) {
+        const measurements = this.measurements.get(personId);
+        if (!measurements) return false;
+        
+        const value1 = measurements[`${measurementType}_1`];
+        const value2 = measurements[`${measurementType}_2`];
+        
+        return value1 !== undefined && value1 !== '' && value2 !== undefined && value2 !== '';
+    }
+
+    selectPersonInStation(personId, personName) {
+        this.selectedPersonInStation = personId;
+        
+        // Update UI
+        document.getElementById('station-person-name').textContent = personName;
+        document.getElementById('station-measurement-inputs').classList.remove('hidden');
+        
+        // Load existing measurement if any
+        this.loadStationMeasurement();
+        
+        // Re-render roster to show selection
+        this.renderStationRoster();
+        
+        this.logActivity('STATION_PERSON_SELECTED', { 
+            person: personName, 
+            station: this.currentStation 
+        });
+    }
+
+    loadStationMeasurement() {
+        if (!this.selectedPersonInStation) return;
+        
+        const measurements = this.measurements.get(this.selectedPersonInStation) || {};
+        const measurementType = this.currentStation;
+        
+        // Load values
+        document.getElementById('station-value-1').value = measurements[`${measurementType}_1`] || '';
+        document.getElementById('station-value-2').value = measurements[`${measurementType}_2`] || '';
+        document.getElementById('station-override').value = measurements[`${measurementType}_override`] || '';
+        
+        // Update display
+        this.updateStationDisplay();
+    }
+
+    updateStationDisplay() {
+        const value1 = parseFloat(document.getElementById('station-value-1').value);
+        const value2 = parseFloat(document.getElementById('station-value-2').value);
+        const override = parseFloat(document.getElementById('station-override').value) || 0;
+        
+        if (isNaN(value1) || isNaN(value2)) {
+            document.getElementById('station-display-value').textContent = '';
+            return;
+        }
+        
+        if (Math.abs(value1 - value2) > 0.5) {
+            document.getElementById('station-display-value').textContent = 'Values differ by more than 0.5';
+            document.getElementById('station-display-value').style.color = 'red';
+            return;
+        }
+        
+        const person = this.roster.find(p => (p.id || p.name) === this.selectedPersonInStation);
+        const gender = person ? person.gender : 'M';
+        const measurementType = this.currentStation;
+        
+        // Calculate adjusted value
+        const avgValue = (value1 + value2) / 2;
+        const adjustmentValue = this.adjustments[measurementType] ? this.adjustments[measurementType][gender] || 0 : 0;
+        const finalAdjustment = override !== 0 ? override : adjustmentValue;
+        const adjustedValue = avgValue + finalAdjustment;
+        
+        // Display format
+        let displayText = `Avg: ${avgValue.toFixed(2)}`;
+        if (finalAdjustment !== 0) {
+            displayText += ` + ${finalAdjustment.toFixed(1)} = ${adjustedValue.toFixed(2)}`;
+        }
+        
+        // Add feet/inches display for applicable measurements
+        if (['height-shoes', 'height-no-shoes', 'reach', 'wingspan'].includes(measurementType)) {
+            const inInches = this.convertToInches(adjustedValue, this.getMeasurementUnit(measurementType.replace('-', '_')));
+            displayText += `\n(${this.inchesToFeetAndInches(inInches)})`;
+        }
+        
+        document.getElementById('station-display-value').textContent = displayText;
+        document.getElementById('station-display-value').style.color = '#333';
+    }
+
+    saveStationMeasurement() {
+        if (!this.selectedPersonInStation) return;
+        
+        const value1 = parseFloat(document.getElementById('station-value-1').value);
+        const value2 = parseFloat(document.getElementById('station-value-2').value);
+        const override = parseFloat(document.getElementById('station-override').value) || 0;
+        
+        if (isNaN(value1) || isNaN(value2)) {
+            this.showToast('Please enter both measurement values', 'error');
+            return;
+        }
+        
+        if (Math.abs(value1 - value2) > 0.5) {
+            this.showToast('Values differ by more than 0.5 - please verify', 'warning');
+            return;
+        }
+        
+        // Save the measurement using existing logic
+        this.saveIndividualMeasurement(this.currentStation);
+        
+        // Clear form and move to next person
+        this.clearStationForm();
+        this.moveToNextPerson();
+        
+        this.showToast('Measurement saved successfully!', 'success');
+    }
+
+    clearStationForm() {
+        document.getElementById('station-value-1').value = '';
+        document.getElementById('station-value-2').value = '';
+        document.getElementById('station-override').value = '';
+        document.getElementById('station-display-value').textContent = '';
+    }
+
+    moveToNextPerson() {
+        // Find next person without this measurement
+        const currentIndex = this.roster.findIndex(p => (p.id || p.name) === this.selectedPersonInStation);
+        
+        for (let i = 1; i < this.roster.length; i++) {
+            const nextIndex = (currentIndex + i) % this.roster.length;
+            const nextPerson = this.roster[nextIndex];
+            const nextPersonId = nextPerson.id || nextPerson.name;
+            
+            if (!this.hasMeasurement(nextPersonId, this.currentStation)) {
+                this.selectPersonInStation(nextPersonId, nextPerson.name);
+                return;
+            }
+        }
+        
+        // If all have measurements, just select the next person
+        if (this.roster.length > 1) {
+            const nextIndex = (currentIndex + 1) % this.roster.length;
+            const nextPerson = this.roster[nextIndex];
+            this.selectPersonInStation(nextPerson.id || nextPerson.name, nextPerson.name);
+        }
+    }
+
+    filterStationRoster() {
+        this.renderStationRoster();
+    }
+
+    // Override saveIndividualMeasurement to work with station inputs
+    saveIndividualMeasurement(measurementType) {
+        let personId, value1, value2, override;
+        
+        if (this.currentView === 'station' && this.selectedPersonInStation) {
+            // Station view inputs
+            personId = this.selectedPersonInStation;
+            value1 = parseFloat(document.getElementById('station-value-1').value);
+            value2 = parseFloat(document.getElementById('station-value-2').value);
+            override = parseFloat(document.getElementById('station-override').value) || 0;
+        } else {
+            // Athlete view inputs
+            personId = this.currentPersonId;
+            value1 = parseFloat(document.getElementById(`${measurementType}-1`).value);
+            value2 = parseFloat(document.getElementById(`${measurementType}-2`).value);
+            override = parseFloat(document.getElementById(`${measurementType}-override`).value) || 0;
+        }
+        
+        if (!personId) return;
+        
+        // Validation
+        if (isNaN(value1) || isNaN(value2)) {
+            this.showToast('Please enter both measurement values', 'error');
+            return;
+        }
+        
+        if (Math.abs(value1 - value2) > 0.5) {
+            this.showToast('Values differ by more than 0.5 - please verify', 'warning');
+            return;
+        }
+        
+        // Get or create measurements object for this person
+        let measurements = this.measurements.get(personId) || {};
+        
+        // Find person for gender info
+        const person = this.roster.find(p => (p.id || p.name) === personId);
+        const gender = person ? person.gender : 'M';
+        
+        // Save the measurement values
+        measurements[`${measurementType}_1`] = value1;
+        measurements[`${measurementType}_2`] = value2;
+        measurements[`${measurementType}_override`] = override;
+        measurements.timestamp = new Date().toISOString();
+        measurements.operator = this.currentOperator;
+        measurements.device = this.deviceId;
+        
+        // Calculate average and adjusted values
+        const avgValue = (value1 + value2) / 2;
+        const adjustmentValue = this.adjustments[measurementType] ? this.adjustments[measurementType][gender] || 0 : 0;
+        const finalAdjustment = override !== 0 ? override : adjustmentValue;
+        const adjustedValue = avgValue + finalAdjustment;
+        
+        // Store adjusted value
+        measurements[`${measurementType}_adjusted`] = adjustedValue;
+        
+        // Update the measurements map
+        this.measurements.set(personId, measurements);
+        
+        // Update person's completion status if this was their last needed measurement
+        this.updatePersonCompletionStatus(personId);
+        
+        // Update display
+        if (this.currentView === 'station') {
+            this.updateStationDisplay();
+            this.renderStationRoster();
+        } else {
+            this.updateMeasurementDisplay(measurementType);
+        }
+        
+        // Save state and log activity
+        this.saveState();
+        this.logActivity('MEASUREMENT_SAVED', {
+            person: person ? person.name : personId,
+            measurement: measurementType,
+            value1: value1,
+            value2: value2,
+            override: override,
+            adjusted: adjustedValue,
+            view: this.currentView
+        });
+        
+        this.showToast(`${measurementType.replace('-', ' ')} saved!`, 'success');
     }
 }
 

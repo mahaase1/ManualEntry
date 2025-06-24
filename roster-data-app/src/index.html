@@ -14,7 +14,7 @@
     <div id="app">
         <!-- Startup Screen -->
         <div id="startup-screen" class="screen active">
-            <h1>Manual Entry <span id="version-number">v2.5.4</span></h1>
+            <h1>Manual Entry <span id="version-number">v2.6.0</span></h1>
             <div class="form-group">
                 <label for="operator-name">Enter Your Name:</label>
                 <input type="text" id="operator-name" required>
@@ -188,94 +188,164 @@
                     <input type="text" id="name-filter" placeholder="Search names...">
                     <button id="add-person-btn">+ Add Person</button>
                     <button id="checkin-btn">👥 Check-in</button>
+                    <div class="view-mode-controls">
+                        <label for="view-mode">View Mode:</label>
+                        <select id="view-mode">
+                            <option value="athlete">Athlete View</option>
+                            <option value="station">Station View</option>
+                        </select>
+                    </div>
                 </div>
                 <div id="roster-grid"></div>
             </div>
 
-            <!-- Measurement Form -->
+            <!-- Station View -->
+            <div id="station-view" class="hidden">
+                <div class="station-header">
+                    <h3>Station View</h3>
+                    <div class="station-controls">
+                        <label for="station-select">Station:</label>
+                        <select id="station-select">
+                            <optgroup label="Anthros">
+                                <option value="height-shoes">Height with Shoes</option>
+                                <option value="height-no-shoes">Height without Shoes</option>
+                                <option value="reach">Reach</option>
+                                <option value="wingspan">Wingspan</option>
+                                <option value="weight">Weight</option>
+                                <option value="hand-length">Hand Length</option>
+                                <option value="hand-width">Hand Width</option>
+                            </optgroup>
+                            <optgroup label="Measures">
+                                <option value="vertical">Vertical Jump</option>
+                                <option value="approach">Approach Jump</option>
+                                <option value="broad">Broad Jump</option>
+                            </optgroup>
+                        </select>
+                        <button id="back-to-athlete-view">← Back to Athlete View</button>
+                    </div>
+                </div>
+                
+                <div class="station-content">
+                    <div class="station-search">
+                        <input type="text" id="station-name-filter" placeholder="Search names...">
+                    </div>
+                    
+                    <div class="station-layout">
+                        <div class="station-roster">
+                            <div id="station-roster-grid"></div>
+                        </div>
+                        
+                        <div class="station-measurement">
+                            <div id="station-measurement-form">
+                                <h4 id="station-person-name">Select a person</h4>
+                                <div id="station-measurement-inputs" class="hidden">
+                                    <label id="station-measurement-label"></label>
+                                    <input type="number" step="0.01" id="station-value-1" placeholder="Enter value">
+                                    <input type="number" step="0.01" id="station-value-2" placeholder="Confirm value">
+                                    <input type="number" step="0.1" id="station-override" placeholder="Adj Override (0)" class="adjustment-override">
+                                    <button id="station-save-btn">💾 Save</button>
+                                    <div id="station-display-value" class="display-value"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Measurement Form (Athlete View) -->
             <div id="measurement-form" class="hidden">
                 <h3 id="person-name"></h3>
                 <button id="back-to-roster">← Back to Roster</button>
 
-                <div class="measurements-grid">
-                    <div class="measurement-item">
-                        <label>Height with shoes <span class="unit-display" id="height-unit-display"></span></label>
-                        <input type="number" step="0.01" id="height-shoes-1" placeholder="Enter value">
-                        <input type="number" step="0.01" id="height-shoes-2" placeholder="Confirm value">
-                        <input type="number" step="0.1" id="height-shoes-override" placeholder="Adj Override (0)" class="adjustment-override">
-                        <button class="measurement-save-btn" data-measurement="height-shoes">💾</button>
-                    </div>
+                <!-- Anthros Section -->
+                <div class="measurement-section">
+                    <h4>📏 Anthros</h4>
+                    <div class="measurements-grid">
+                        <div class="measurement-item">
+                            <label>Height with shoes <span class="unit-display" id="height-unit-display"></span></label>
+                            <input type="number" step="0.01" id="height-shoes-1" placeholder="Enter value">
+                            <input type="number" step="0.01" id="height-shoes-2" placeholder="Confirm value">
+                            <input type="number" step="0.1" id="height-shoes-override" placeholder="Adj Override (0)" class="adjustment-override">
+                            <button class="measurement-save-btn" data-measurement="height-shoes">💾</button>
+                        </div>
 
-                    <div class="measurement-item">
-                        <label>Height without shoes <span class="unit-display" id="height-unit-display-2"></span></label>
-                        <input type="number" step="0.01" id="height-no-shoes-1" placeholder="Enter value">
-                        <input type="number" step="0.01" id="height-no-shoes-2" placeholder="Confirm value">
-                        <input type="number" step="0.1" id="height-no-shoes-override" placeholder="Adj Override (0)" class="adjustment-override">
-                        <button class="measurement-save-btn" data-measurement="height-no-shoes">💾</button>
-                    </div>
+                        <div class="measurement-item">
+                            <label>Height without shoes <span class="unit-display" id="height-unit-display-2"></span></label>
+                            <input type="number" step="0.01" id="height-no-shoes-1" placeholder="Enter value">
+                            <input type="number" step="0.01" id="height-no-shoes-2" placeholder="Confirm value">
+                            <input type="number" step="0.1" id="height-no-shoes-override" placeholder="Adj Override (0)" class="adjustment-override">
+                            <button class="measurement-save-btn" data-measurement="height-no-shoes">💾</button>
+                        </div>
 
-                    <div class="measurement-item">
-                        <label>Reach <span class="unit-display" id="reach-unit-display"></span></label>
-                        <input type="number" step="0.01" id="reach-1" placeholder="Enter value">
-                        <input type="number" step="0.01" id="reach-2" placeholder="Confirm value">
-                        <input type="number" step="0.1" id="reach-override" placeholder="Adj Override (0)" class="adjustment-override">
-                        <button class="measurement-save-btn" data-measurement="reach">💾</button>
-                    </div>
+                        <div class="measurement-item">
+                            <label>Reach <span class="unit-display" id="reach-unit-display"></span></label>
+                            <input type="number" step="0.01" id="reach-1" placeholder="Enter value">
+                            <input type="number" step="0.01" id="reach-2" placeholder="Confirm value">
+                            <input type="number" step="0.1" id="reach-override" placeholder="Adj Override (0)" class="adjustment-override">
+                            <button class="measurement-save-btn" data-measurement="reach">💾</button>
+                        </div>
 
-                    <div class="measurement-item">
-                        <label>Wingspan <span class="unit-display" id="wingspan-unit-display"></span></label>
-                        <input type="number" step="0.01" id="wingspan-1" placeholder="Enter value">
-                        <input type="number" step="0.01" id="wingspan-2" placeholder="Confirm value">
-                        <input type="number" step="0.1" id="wingspan-override" placeholder="Adj Override (0)" class="adjustment-override">
-                        <button class="measurement-save-btn" data-measurement="wingspan">💾</button>
-                    </div>
+                        <div class="measurement-item">
+                            <label>Wingspan <span class="unit-display" id="wingspan-unit-display"></span></label>
+                            <input type="number" step="0.01" id="wingspan-1" placeholder="Enter value">
+                            <input type="number" step="0.01" id="wingspan-2" placeholder="Confirm value">
+                            <input type="number" step="0.1" id="wingspan-override" placeholder="Adj Override (0)" class="adjustment-override">
+                            <button class="measurement-save-btn" data-measurement="wingspan">💾</button>
+                        </div>
 
-                    <div class="measurement-item">
-                        <label>Weight (lbs)</label>
-                        <input type="number" step="0.01" id="weight-1" placeholder="Enter value">
-                        <input type="number" step="0.01" id="weight-2" placeholder="Confirm value">
-                        <input type="number" step="0.1" id="weight-override" placeholder="Adj Override (0)" class="adjustment-override">
-                        <button class="measurement-save-btn" data-measurement="weight">💾</button>
-                    </div>
+                        <div class="measurement-item">
+                            <label>Weight (lbs)</label>
+                            <input type="number" step="0.01" id="weight-1" placeholder="Enter value">
+                            <input type="number" step="0.01" id="weight-2" placeholder="Confirm value">
+                            <input type="number" step="0.1" id="weight-override" placeholder="Adj Override (0)" class="adjustment-override">
+                            <button class="measurement-save-btn" data-measurement="weight">💾</button>
+                        </div>
 
-                    <div class="measurement-item">
-                        <label>Hand length (inches)</label>
-                        <input type="number" step="0.01" id="hand-length-1" placeholder="Enter value">
-                        <input type="number" step="0.01" id="hand-length-2" placeholder="Confirm value">
-                        <input type="number" step="0.1" id="hand-length-override" placeholder="Adj Override (0)" class="adjustment-override">
-                        <button class="measurement-save-btn" data-measurement="hand-length">💾</button>
-                    </div>
+                        <div class="measurement-item">
+                            <label>Hand length (inches)</label>
+                            <input type="number" step="0.01" id="hand-length-1" placeholder="Enter value">
+                            <input type="number" step="0.01" id="hand-length-2" placeholder="Confirm value">
+                            <input type="number" step="0.1" id="hand-length-override" placeholder="Adj Override (0)" class="adjustment-override">
+                            <button class="measurement-save-btn" data-measurement="hand-length">💾</button>
+                        </div>
 
-                    <div class="measurement-item">
-                        <label>Hand width (inches)</label>
-                        <input type="number" step="0.01" id="hand-width-1" placeholder="Enter value">
-                        <input type="number" step="0.01" id="hand-width-2" placeholder="Confirm value">
-                        <input type="number" step="0.1" id="hand-width-override" placeholder="Adj Override (0)" class="adjustment-override">
-                        <button class="measurement-save-btn" data-measurement="hand-width">💾</button>
+                        <div class="measurement-item">
+                            <label>Hand width (inches)</label>
+                            <input type="number" step="0.01" id="hand-width-1" placeholder="Enter value">
+                            <input type="number" step="0.01" id="hand-width-2" placeholder="Confirm value">
+                            <input type="number" step="0.1" id="hand-width-override" placeholder="Adj Override (0)" class="adjustment-override">
+                            <button class="measurement-save-btn" data-measurement="hand-width">💾</button>
+                        </div>
                     </div>
+                </div>
 
-                    <div class="measurement-item">
-                        <label>Vertical <span class="unit-display" id="vertical-unit-display"></span></label>
-                        <input type="number" step="0.01" id="vertical-1" placeholder="Enter value">
-                        <input type="number" step="0.01" id="vertical-2" placeholder="Confirm value">
-                        <input type="number" step="0.1" id="vertical-override" placeholder="Adj Override (0)" class="adjustment-override">
-                        <button class="measurement-save-btn" data-measurement="vertical">💾</button>
-                    </div>
+                <!-- Measures Section -->
+                <div class="measurement-section">
+                    <h4>⚡ Measures</h4>
+                    <div class="measurements-grid">
+                        <div class="measurement-item">
+                            <label>Vertical <span class="unit-display" id="vertical-unit-display"></span></label>
+                            <input type="number" step="0.01" id="vertical-1" placeholder="Enter value">
+                            <input type="number" step="0.01" id="vertical-2" placeholder="Confirm value">
+                            <input type="number" step="0.1" id="vertical-override" placeholder="Adj Override (0)" class="adjustment-override">
+                            <button class="measurement-save-btn" data-measurement="vertical">💾</button>
+                        </div>
 
-                    <div class="measurement-item">
-                        <label>Approach <span class="unit-display" id="approach-unit-display"></span></label>
-                        <input type="number" step="0.01" id="approach-1" placeholder="Enter value">
-                        <input type="number" step="0.01" id="approach-2" placeholder="Confirm value">
-                        <input type="number" step="0.1" id="approach-override" placeholder="Adj Override (0)" class="adjustment-override">
-                        <button class="measurement-save-btn" data-measurement="approach">💾</button>
-                    </div>
+                        <div class="measurement-item">
+                            <label>Approach <span class="unit-display" id="approach-unit-display"></span></label>
+                            <input type="number" step="0.01" id="approach-1" placeholder="Enter value">
+                            <input type="number" step="0.01" id="approach-2" placeholder="Confirm value">
+                            <input type="number" step="0.1" id="approach-override" placeholder="Adj Override (0)" class="adjustment-override">
+                            <button class="measurement-save-btn" data-measurement="approach">💾</button>
+                        </div>
 
-                    <div class="measurement-item">
-                        <label>Broad <span class="unit-display" id="broad-unit-display"></span></label>
-                        <input type="number" step="0.01" id="broad-1" placeholder="Enter value">
-                        <input type="number" step="0.01" id="broad-2" placeholder="Confirm value">
-                        <input type="number" step="0.1" id="broad-override" placeholder="Adj Override (0)" class="adjustment-override">
-                        <button class="measurement-save-btn" data-measurement="broad">💾</button>
+                        <div class="measurement-item">
+                            <label>Broad <span class="unit-display" id="broad-unit-display"></span></label>
+                            <input type="number" step="0.01" id="broad-1" placeholder="Enter value">
+                            <input type="number" step="0.01" id="broad-2" placeholder="Confirm value">
+                            <input type="number" step="0.1" id="broad-override" placeholder="Adj Override (0)" class="adjustment-override">
+                            <button class="measurement-save-btn" data-measurement="broad">💾</button>
+                        </div>
                     </div>
                 </div>
 

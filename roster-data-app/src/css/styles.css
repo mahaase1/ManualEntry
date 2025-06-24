@@ -970,26 +970,282 @@ header {
     font-size: 14px;
 }
 
-/* iPad-specific button enhancements */
-#setup-measurements {
+/* View Mode Controls */
+.view-mode-controls {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.view-mode-controls label {
+    font-weight: 600;
+    color: #333;
+}
+
+.view-mode-controls select {
+    padding: 8px 12px;
+    border: 2px solid #ddd;
+    border-radius: 6px;
+    font-size: 16px;
+    background: white;
+}
+
+/* Measurement Sections */
+.measurement-section {
+    margin-bottom: 30px;
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 12px;
+    border: 2px solid #e9ecef;
+}
+
+.measurement-section h4 {
+    font-size: 20px;
+    margin-bottom: 15px;
+    color: #333;
+    text-align: center;
+    padding: 10px;
+    background: white;
+    border-radius: 8px;
+    border: 2px solid #ddd;
+}
+
+/* Station View Styles */
+#station-view {
+    max-width: 1200px;
+    margin: 0 auto;
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+}
+
+.station-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #eee;
+}
+
+.station-header h3 {
+    font-size: 24px;
+    color: #333;
+}
+
+.station-controls {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.station-controls label {
+    font-weight: 600;
+    color: #333;
+}
+
+.station-controls select {
+    padding: 10px 15px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    font-size: 16px;
+    background: white;
+    min-width: 200px;
+}
+
+.station-search {
+    margin-bottom: 20px;
+}
+
+.station-search input {
     width: 100%;
-    margin-top: 20px;
-    touch-action: manipulation;
-    -webkit-touch-callout: none;
-    -webkit-user-select: none;
-    user-select: none;
-    position: relative;
-    z-index: 1;
+    padding: 12px 15px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    font-size: 16px;
+    background: white;
 }
 
-#setup-measurements:active {
-    transform: scale(0.98);
-    background: #004AA3 !important;
+.station-layout {
+    display: grid;
+    grid-template-columns: 1fr 350px;
+    gap: 20px;
+    min-height: 500px;
 }
 
-/* iOS Safari specific fixes */
-@supports (-webkit-touch-callout: none) {
-    #setup-measurements {
-        -webkit-tap-highlight-color: rgba(0, 122, 255, 0.3);
+.station-roster {
+    background: #f8f9fa;
+    border: 2px solid #e9ecef;
+    border-radius: 12px;
+    padding: 15px;
+    overflow-y: auto;
+    max-height: 600px;
+}
+
+#station-roster-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.station-roster-item {
+    padding: 12px 15px;
+    background: white;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.station-roster-item:hover {
+    border-color: #007AFF;
+    box-shadow: 0 2px 8px rgba(0,122,255,0.1);
+}
+
+.station-roster-item.selected {
+    background: #007AFF;
+    color: white;
+    border-color: #0056b3;
+}
+
+.station-roster-item.completed {
+    background: #d4edda;
+    border-color: #28a745;
+}
+
+.station-roster-item.completed.selected {
+    background: #28a745;
+    color: white;
+}
+
+.station-measurement {
+    background: #f8f9fa;
+    border: 2px solid #e9ecef;
+    border-radius: 12px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+}
+
+#station-measurement-form h4 {
+    font-size: 20px;
+    margin-bottom: 20px;
+    color: #333;
+    text-align: center;
+    padding: 15px;
+    background: white;
+    border-radius: 8px;
+    border: 2px solid #ddd;
+}
+
+#station-measurement-inputs {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+#station-measurement-inputs label {
+    font-weight: 600;
+    color: #333;
+    font-size: 18px;
+    text-align: center;
+    padding: 10px;
+    background: #e9ecef;
+    border-radius: 6px;
+}
+
+#station-measurement-inputs input {
+    padding: 12px 15px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    font-size: 16px;
+    text-align: center;
+}
+
+#station-measurement-inputs input:focus {
+    border-color: #007AFF;
+    outline: none;
+}
+
+#station-save-btn {
+    padding: 15px 20px;
+    background: #28a745;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+#station-save-btn:hover {
+    background: #218838;
+}
+
+#station-save-btn:disabled {
+    background: #6c757d;
+    cursor: not-allowed;
+}
+
+.display-value {
+    padding: 10px;
+    background: #e9ecef;
+    border-radius: 6px;
+    text-align: center;
+    font-weight: 600;
+    color: #333;
+    min-height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.roster-status {
+    font-size: 12px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 600;
+}
+
+.roster-status.completed {
+    background: #28a745;
+    color: white;
+}
+
+.roster-status.present {
+    background: #007AFF;
+    color: white;
+}
+
+.roster-status.absent {
+    background: #6c757d;
+    color: white;
+}
+
+/* Responsive Design for Station View */
+@media (max-width: 768px) {
+    .station-layout {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+    
+    .station-measurement {
+        order: -1;
+    }
+    
+    .station-header {
+        flex-direction: column;
+        gap: 15px;
+        align-items: stretch;
+    }
+    
+    .station-controls {
+        justify-content: center;
     }
 }
