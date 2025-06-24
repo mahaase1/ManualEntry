@@ -2064,10 +2064,8 @@ The measurement data is attached as CSV files.`;
         const measurements = this.measurements.get(personId);
         if (!measurements) return false;
         
-        const value1 = measurements[`${measurementType}_1`];
-        const value2 = measurements[`${measurementType}_2`];
-        
-        return value1 !== undefined && value1 !== '' && value2 !== undefined && value2 !== '';
+        const key = measurementType.replace('-', '_');
+        return measurements[key] && measurements[key].value !== undefined && measurements[key].value !== '';
     }
 
     selectPersonInStation(personId, personName) {
@@ -2093,12 +2091,20 @@ The measurement data is attached as CSV files.`;
         if (!this.selectedPersonInStation) return;
         
         const measurements = this.measurements.get(this.selectedPersonInStation) || {};
-        const measurementType = this.currentStation;
+        const key = this.currentStation.replace('-', '_');
+        const measurementData = measurements[key];
         
-        // Load values
-        document.getElementById('station-value-1').value = measurements[`${measurementType}_1`] || '';
-        document.getElementById('station-value-2').value = measurements[`${measurementType}_2`] || '';
-        document.getElementById('station-override').value = measurements[`${measurementType}_override`] || '';
+        if (measurementData) {
+            // Load values - since they must match in our system, use the same value for both
+            document.getElementById('station-value-1').value = measurementData.value || '';
+            document.getElementById('station-value-2').value = measurementData.value || '';
+            document.getElementById('station-override').value = measurementData.adjustmentOverride || '';
+        } else {
+            // Clear values if no measurement exists
+            document.getElementById('station-value-1').value = '';
+            document.getElementById('station-value-2').value = '';
+            document.getElementById('station-override').value = '';
+        }
         
         // Update display
         this.updateStationDisplay();
@@ -2225,7 +2231,16 @@ The measurement data is attached as CSV files.`;
             override = parseFloat(document.getElementById(`${measurementType}-override`).value) || 0;
         }
         
-        if (!personId) return;
+        if (!personId) {
+            this.showToast('No person selected', 'error');
+            return;
+        }
+        
+        const person = this.roster.find(p => (p.id || p.name) === personId);
+        if (!person) {
+            this.showToast('Person not found', 'error');
+            return;
+        }
         
         // Validation
         if (isNaN(value1) || isNaN(value2)) {
@@ -2233,56 +2248,60 @@ The measurement data is attached as CSV files.`;
             return;
         }
         
-        if (Math.abs(value1 - value2) > 0.5) {
-            this.showToast('Values differ by more than 0.5 - please verify', 'warning');
+        if (Math.abs(value1 - value2) >= 0.01) {
+            this.showToast(`${measurementType.replace('-', ' ')} values do not match`, 'error');
             return;
         }
         
-        // Get or create measurements object for this person
-        let measurements = this.measurements.get(personId) || {};
+        // Get unit from setup settings
+        const unit = this.getMeasurementUnit(measurementType);
         
-        // Find person for gender info
-        const person = this.roster.find(p => (p.id || p.name) === personId);
-        const gender = person ? person.gender : 'M';
+        // Get or create measurement data using same format as original method
+        let measurementData = this.measurements.get(personId) || {
+            timestamp: new Date().toISOString(),
+            operator: this.currentOperator,
+            device: this.deviceId,
+            comments: this.currentView === 'station' ? '' : (document.getElementById('comments').value || '')
+        };
+
+        // Calculate adjustments
+        const key = measurementType.replace('-', '_');
+        const baseAdjustment = this.adjustments[key] ? this.adjustments[key][person.gender] || 0 : 0;
+        const finalAdjustment = override !== 0 ? override : baseAdjustment;
+        const adjustedValue = value1 + finalAdjustment;
+
+        // Update the specific measurement using same format as original
+        measurementData[key] = {
+            value: value1,
+            unit: unit,
+            adjustment: baseAdjustment,
+            adjustmentOverride: override,
+            adjustedValue: adjustedValue
+        };
+
+        // Update measurements and person status
+        this.measurements.set(personId, measurementData);
         
-        // Save the measurement values
-        measurements[`${measurementType}_1`] = value1;
-        measurements[`${measurementType}_2`] = value2;
-        measurements[`${measurementType}_override`] = override;
-        measurements.timestamp = new Date().toISOString();
-        measurements.operator = this.currentOperator;
-        measurements.device = this.deviceId;
-        
-        // Calculate average and adjusted values
-        const avgValue = (value1 + value2) / 2;
-        const adjustmentValue = this.adjustments[measurementType] ? this.adjustments[measurementType][gender] || 0 : 0;
-        const finalAdjustment = override !== 0 ? override : adjustmentValue;
-        const adjustedValue = avgValue + finalAdjustment;
-        
-        // Store adjusted value
-        measurements[`${measurementType}_adjusted`] = adjustedValue;
-        
-        // Update the measurements map
-        this.measurements.set(personId, measurements);
-        
-        // Update person's completion status if this was their last needed measurement
-        this.updatePersonCompletionStatus(personId);
-        
+        // Check if person has any valid measurements
+        const hasValidMeasurements = ['height_shoes', 'height_no_shoes', 'reach', 'wingspan', 'weight', 'hand_length', 'hand_width', 'vertical', 'approach', 'broad']
+            .some(type => measurementData[type] && measurementData[type].value);
+        person.completed = hasValidMeasurements;
+
         // Update display
         if (this.currentView === 'station') {
             this.updateStationDisplay();
             this.renderStationRoster();
         } else {
-            this.updateMeasurementDisplay(measurementType);
+            this.updateRosterDisplay();
         }
         
         // Save state and log activity
         this.saveState();
         this.logActivity('MEASUREMENT_SAVED', {
-            person: person ? person.name : personId,
+            person: person.name,
             measurement: measurementType,
             value1: value1,
-            value2: value2,
+            value2: value1, // Since they must match
             override: override,
             adjusted: adjustedValue,
             view: this.currentView
