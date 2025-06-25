@@ -146,7 +146,8 @@ class ManualEntryApp {
         tableHTML += '<th>ID</th>';
         tableHTML += '<th>Gender</th>';
         tableHTML += '<th>Present</th>';
-        tableHTML += '<th>Completed</th>';
+        tableHTML += '<th>Anthros Complete</th>';
+        tableHTML += '<th>Measures Complete</th>';
         tableHTML += '<th>Source</th>';
         
         // Measurement headers with all new columns
@@ -190,7 +191,8 @@ class ManualEntryApp {
             tableHTML += `<td>${this.escapeHtml(person.id || '')}</td>`;
             tableHTML += `<td>${this.escapeHtml(person.gender)}</td>`;
             tableHTML += `<td class="present-indicator ${person.present ? 'present' : 'absent'}">${person.present ? '✓' : '✗'}</td>`;
-            tableHTML += `<td class="completed-indicator ${person.completed ? 'completed' : 'incomplete'}">${person.completed ? '✓' : '○'}</td>`;
+            tableHTML += `<td class="completion-indicator">${this.getAnthrosCompletedStatus(personId)}</td>`;
+            tableHTML += `<td class="completion-indicator">${this.getMeasuresCompletedStatus(personId)}</td>`;
             tableHTML += `<td class="source-indicator">${person.source === 'added' ? 'Added' : 'Roster'}</td>`;
             
             // Measurement columns
@@ -331,9 +333,7 @@ class ManualEntryApp {
         this.measurements.set(personId, measurementData);
         const person = this.roster.find(p => (p.id || p.name) === personId);
         if (person) {
-            const hasValidMeasurements = ['height_shoes', 'height_no_shoes', 'reach', 'wingspan', 'weight', 'hand_length', 'hand_width', 'vertical', 'approach', 'broad']
-                .some(type => measurementData[type] && measurementData[type].value);
-            person.completed = hasValidMeasurements;
+            // No longer setting person.completed - allowing re-entry
         }
 
         this.saveState();
@@ -403,6 +403,7 @@ class ManualEntryApp {
         document.getElementById('cancel-add-person').addEventListener('click', this.hideAddPersonModal.bind(this));
         document.getElementById('confirm-add-person').addEventListener('click', this.addNewPerson.bind(this));
         document.getElementById('close-settings').addEventListener('click', this.hideSettings.bind(this));
+        document.getElementById('measurement-setup-btn').addEventListener('click', this.showMeasurementSetup.bind(this));
         document.getElementById('view-files-btn').addEventListener('click', this.showFileManagement.bind(this));
         document.getElementById('close-file-management').addEventListener('click', this.hideFileManagement.bind(this));
         document.getElementById('reset-data').addEventListener('click', this.showResetModal.bind(this));
@@ -909,6 +910,13 @@ class ManualEntryApp {
 
     hideSettings() {
         document.getElementById('settings-modal').classList.add('hidden');
+    }
+
+    showMeasurementSetup() {
+        document.getElementById('settings-modal').classList.add('hidden');
+        document.getElementById('setup-screen').classList.remove('hidden');
+        document.getElementById('main-screen').classList.add('hidden');
+        this.logActivity('MEASUREMENT_SETUP_OPENED_FROM_SETTINGS');
     }
 
     showFileManagement() {
@@ -1457,7 +1465,7 @@ The measurement data is attached as CSV files.`;
         
         // Add attachments
         attachments.forEach((attachment, index) => {
-            const fileInput = document.createElement('input');
+            const fileInput = document
             fileInput.type = 'hidden';
             fileInput.name = `attachment_${index}`;
             fileInput.value = attachment.data;
@@ -1985,6 +1993,20 @@ The measurement data is attached as CSV files.`;
         return overrideValue !== 0 ? 
             valueInInches + overrideValue : 
             valueInInches + adjustmentValue;
+    }
+
+    getAnthrosCompletedStatus(personId) {
+        const measurement = this.measurements.get(personId) || {};
+        const anthroTypes = ['height_shoes', 'height_no_shoes', 'reach', 'wingspan', 'weight', 'hand_length', 'hand_width'];
+        const completed = anthroTypes.filter(type => measurement[type] && measurement[type].value).length;
+        return `${completed}/${anthroTypes.length}`;
+    }
+
+    getMeasuresCompletedStatus(personId) {
+        const measurement = this.measurements.get(personId) || {};
+        const measureTypes = ['vertical', 'approach', 'broad'];
+        const completed = measureTypes.filter(type => measurement[type] && measurement[type].value).length;
+        return `${completed}/${measureTypes.length}`;
     }
 
     // Station View Methods
