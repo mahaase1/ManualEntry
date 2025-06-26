@@ -1042,6 +1042,10 @@ class ManualEntryApp {
         document.getElementById('settings-modal').classList.add('hidden');
         document.getElementById('setup-screen').classList.remove('hidden');
         document.getElementById('main-screen').classList.add('hidden');
+        
+        // Load current settings to populate the form
+        this.loadSetupSettings();
+        
         this.logActivity('MEASUREMENT_SETUP_OPENED_FROM_SETTINGS');
     }
 
