@@ -422,6 +422,16 @@ header {
     background: #c82333;
 }
 
+#measurement-setup-btn {
+    background: #28a745;
+    width: 100%;
+    margin-bottom: 16px;
+}
+
+#measurement-setup-btn:hover {
+    background: #218838;
+}
+
 #view-files-btn {
     background: #007AFF;
     width: 100%;
