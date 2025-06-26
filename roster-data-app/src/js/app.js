@@ -867,9 +867,15 @@ class ManualEntryApp {
         measurements.forEach(measurement => {
             const key = measurement.replace('-', '_');
             if (data[key]) {
-                document.getElementById(`${measurement}-1`).value = data[key].value;
-                document.getElementById(`${measurement}-2`).value = data[key].value;
-                document.getElementById(`${measurement}-unit`).value = data[key].unit;
+                document.getElementById(`${measurement}-1`).value = data[key].value || '';
+                document.getElementById(`${measurement}-2`).value = data[key].value || '';
+                
+                // Load override values if they exist
+                const overrideElement = document.getElementById(`${measurement}-override`);
+                if (overrideElement && data[key].adjustmentOverride) {
+                    overrideElement.value = data[key].adjustmentOverride;
+                }
+                
                 this.validateMeasurement(measurement);
             }
         });
@@ -885,6 +891,12 @@ class ManualEntryApp {
             document.getElementById(`${measurement}-2`).value = '';
             document.getElementById(`${measurement}-1`).className = '';
             document.getElementById(`${measurement}-2`).className = '';
+            
+            // Clear override values
+            const overrideElement = document.getElementById(`${measurement}-override`);
+            if (overrideElement) {
+                overrideElement.value = '';
+            }
         });
         
         document.getElementById('comments').value = '';
