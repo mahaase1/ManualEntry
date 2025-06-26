@@ -187,9 +187,31 @@ class ManualEntryApp {
             const measurement = this.measurements.get(personId) || {};
             
             tableHTML += '<tr>';
-            tableHTML += `<td class="name-column">${this.escapeHtml(person.name)}</td>`;
+            // Name column - editable in edit mode
+            if (this.editMode) {
+                tableHTML += `<td class="name-column">
+                    <input type="text" class="name-edit-input" 
+                           data-person="${this.escapeHtml(personId)}"
+                           value="${this.escapeHtml(person.name)}" 
+                           placeholder="Name">
+                </td>`;
+            } else {
+                tableHTML += `<td class="name-column">${this.escapeHtml(person.name)}</td>`;
+            }
+            
             tableHTML += `<td>${this.escapeHtml(person.id || '')}</td>`;
-            tableHTML += `<td>${this.escapeHtml(person.gender)}</td>`;
+            
+            // Gender column - editable in edit mode
+            if (this.editMode) {
+                tableHTML += `<td class="measurement-cell">
+                    <select class="gender-edit-select" data-person="${this.escapeHtml(personId)}">
+                        <option value="M" ${person.gender === 'M' ? 'selected' : ''}>M</option>
+                        <option value="F" ${person.gender === 'F' ? 'selected' : ''}>F</option>
+                    </select>
+                </td>`;
+            } else {
+                tableHTML += `<td>${this.escapeHtml(person.gender)}</td>`;
+            }
             tableHTML += `<td class="present-indicator ${person.present ? 'present' : 'absent'}">${person.present ? '✓' : '✗'}</td>`;
             tableHTML += `<td class="completion-indicator">${this.getAnthrosCompletedStatus(personId)}</td>`;
             tableHTML += `<td class="completion-indicator">${this.getMeasuresCompletedStatus(personId)}</td>`;
@@ -238,9 +260,10 @@ class ManualEntryApp {
                 let adjustedValue = '';
                 if (data && data.value) {
                     const rawValueInInches = this.convertToInches(data.value, data.unit || unit);
-                    adjustedValue = overrideValue !== 0 ? 
-                        (rawValueInInches + overrideValue).toFixed(2) : 
-                        (rawValueInInches + adjustmentValue).toFixed(2);
+                    const rawAdjusted = overrideValue !== 0 ? 
+                        rawValueInInches + overrideValue : 
+                        rawValueInInches + adjustmentValue;
+                    adjustedValue = this.roundMeasurement(rawAdjusted, type.key).toFixed(2);
                 }
                 tableHTML += `<td class="measurement-display">${adjustedValue}</td>`;
                 
@@ -286,6 +309,16 @@ class ManualEntryApp {
             container.querySelectorAll('.measurement-input').forEach(input => {
                 input.addEventListener('change', this.handleSpreadsheetInput.bind(this));
                 input.addEventListener('blur', this.handleSpreadsheetInput.bind(this));
+            });
+            
+            // Add event listeners for name and gender editing
+            container.querySelectorAll('.name-edit-input').forEach(input => {
+                input.addEventListener('change', this.handleNameChange.bind(this));
+                input.addEventListener('blur', this.handleNameChange.bind(this));
+            });
+            
+            container.querySelectorAll('.gender-edit-select').forEach(select => {
+                select.addEventListener('change', this.handleGenderChange.bind(this));
             });
         }
     }
@@ -348,6 +381,49 @@ class ManualEntryApp {
         if (personData && measurementData) {
             const csvContent = this.generateIndividualMeasurementCSV(personData, measurementData);
             this.appendToCSVFile(csvContent, true);
+        }
+    }
+
+    handleNameChange(event) {
+        const input = event.target;
+        const personId = input.getAttribute('data-person');
+        const newName = input.value.trim();
+        
+        if (newName) {
+            const person = this.roster.find(p => (p.id || p.name) === personId);
+            if (person) {
+                const oldName = person.name;
+                person.name = newName;
+                this.saveState();
+                this.logActivity('PERSON_NAME_UPDATED', { 
+                    personId: personId,
+                    oldName: oldName,
+                    newName: newName
+                });
+                this.showToast('Name updated successfully', 'success');
+            }
+        }
+    }
+
+    handleGenderChange(event) {
+        const select = event.target;
+        const personId = select.getAttribute('data-person');
+        const newGender = select.value;
+        
+        const person = this.roster.find(p => (p.id || p.name) === personId);
+        if (person) {
+            const oldGender = person.gender;
+            person.gender = newGender;
+            this.saveState();
+            this.logActivity('PERSON_GENDER_UPDATED', { 
+                personId: personId,
+                oldGender: oldGender,
+                newGender: newGender
+            });
+            this.showToast('Gender updated successfully', 'success');
+            
+            // Re-render to update adjustment displays if needed
+            this.renderSpreadsheet();
         }
     }
 
@@ -511,7 +587,8 @@ class ManualEntryApp {
         const valueInInches = this.convertToInches(value1, unit);
         const baseAdjustment = this.adjustments[key] ? this.adjustments[key][person.gender] || 0 : 0;
         const finalAdjustment = adjustmentOverride !== 0 ? adjustmentOverride : baseAdjustment;
-        const adjustedValue = valueInInches + finalAdjustment;
+        const rawAdjustedValue = valueInInches + finalAdjustment;
+        const adjustedValue = this.roundMeasurement(rawAdjustedValue, key);
 
         // Update the specific measurement
         measurementData[key] = {
@@ -741,6 +818,9 @@ class ManualEntryApp {
         if (person) {
             document.getElementById('person-name').textContent = person.name;
             
+            // Update adjustment displays for this person's gender
+            this.updateAdjustmentDisplays(person.gender);
+            
             const existing = this.measurements.get(personId);
             if (existing) {
                 this.loadMeasurementData(existing);
@@ -751,6 +831,34 @@ class ManualEntryApp {
             this.showMeasurementForm();
             this.logActivity('PERSON_SELECTED', { person: person.name, id: person.id });
         }
+    }
+
+    updateAdjustmentDisplays(gender) {
+        const measurements = ['height-shoes', 'height-no-shoes', 'reach', 'wingspan', 'weight', 'hand-length', 'hand-width', 'vertical', 'approach', 'broad'];
+        
+        measurements.forEach(measurement => {
+            const key = measurement.replace('-', '_');
+            const adjustment = this.adjustments[key] ? this.adjustments[key][gender] || 0 : 0;
+            
+            // Find or create adjustment display element
+            let displayElement = document.getElementById(`${measurement}-adjustment-display`);
+            if (!displayElement) {
+                // Create and insert the display element
+                const measurementItem = document.getElementById(`${measurement}-1`).closest('.measurement-item');
+                if (measurementItem) {
+                    const label = measurementItem.querySelector('label');
+                    if (label) {
+                        const adjustmentSpan = document.createElement('span');
+                        adjustmentSpan.id = `${measurement}-adjustment-display`;
+                        adjustmentSpan.className = 'adjustment-display';
+                        adjustmentSpan.textContent = adjustment !== 0 ? ` (Adj: ${adjustment > 0 ? '+' : ''}${adjustment}")` : '';
+                        label.appendChild(adjustmentSpan);
+                    }
+                }
+            } else {
+                displayElement.textContent = adjustment !== 0 ? ` (Adj: ${adjustment > 0 ? '+' : ''}${adjustment}")` : '';
+            }
+        });
     }
 
     loadMeasurementData(data) {
@@ -1996,9 +2104,27 @@ The measurement data is attached as CSV files.`;
         const adjustmentValue = this.adjustments[measurementType] ? this.adjustments[measurementType][gender] || 0 : 0;
         const overrideValue = measurement[`${measurementType}_override`] || 0;
         
-        return overrideValue !== 0 ? 
+        const rawAdjusted = overrideValue !== 0 ? 
             valueInInches + overrideValue : 
             valueInInches + adjustmentValue;
+            
+        // Apply rounding based on measurement type
+        return this.roundMeasurement(rawAdjusted, measurementType);
+    }
+
+    roundMeasurement(value, measurementType) {
+        // Anthro measurements (height, reach, wingspan, weight, hand sizes) - round to 0.25 inch
+        const anthroTypes = ['height_shoes', 'height_no_shoes', 'reach', 'wingspan', 'weight', 'hand_length', 'hand_width'];
+        // Vertical and approach - round to 0.5 inch
+        const jumpTypes = ['vertical', 'approach'];
+        
+        if (anthroTypes.includes(measurementType)) {
+            return Math.round(value * 4) / 4; // Round to nearest 0.25
+        } else if (jumpTypes.includes(measurementType)) {
+            return Math.round(value * 2) / 2; // Round to nearest 0.5
+        } else {
+            return Math.round(value * 100) / 100; // Default: round to 0.01 (broad jump)
+        }
     }
 
     getAnthrosCompletedStatus(personId) {
