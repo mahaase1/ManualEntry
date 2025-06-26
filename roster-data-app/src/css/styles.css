@@ -1271,4 +1271,32 @@ header {
     .station-controls {
         justify-content: center;
     }
+    
+    /* Fix view mode controls on iPad mini portrait */
+    .roster-controls {
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+    
+    .view-mode-controls {
+        margin-left: 0;
+        order: -1;
+        width: 100%;
+        justify-content: center;
+        margin-bottom: 10px;
+    }
+}
+
+/* iPad mini portrait specific fixes */
+@media (max-width: 820px) and (orientation: portrait) {
+    .view-mode-controls {
+        margin-left: 0;
+        margin-right: 0;
+        flex: 1;
+        min-width: 180px;
+    }
+    
+    .view-mode-controls select {
+        min-width: 120px;
+    }
 }

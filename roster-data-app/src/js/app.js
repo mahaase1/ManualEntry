@@ -2181,7 +2181,18 @@ The measurement data is attached as CSV files.`;
     }
 
     selectStation() {
-        this.currentStation = document.getElementById('station-select').value;
+        const newStation = document.getElementById('station-select').value;
+        
+        // Check if there's unsaved data in current station
+        if (this.currentStation && this.selectedPersonInStation && this.hasUnsavedStationData()) {
+            if (!confirm(`You have unsaved data for ${this.currentStation}. Do you want to change to ${newStation} and lose this data?`)) {
+                // Revert the dropdown selection
+                document.getElementById('station-select').value = this.currentStation;
+                return;
+            }
+        }
+        
+        this.currentStation = newStation;
         this.selectedPersonInStation = null;
         
         // Update station measurement form
@@ -2189,6 +2200,14 @@ The measurement data is attached as CSV files.`;
         this.renderStationRoster();
         
         this.logActivity('STATION_SELECTED', { station: this.currentStation });
+    }
+
+    hasUnsavedStationData() {
+        const value1 = document.getElementById('station-value-1').value.trim();
+        const value2 = document.getElementById('station-value-2').value.trim();
+        const override = document.getElementById('station-override').value.trim();
+        
+        return value1 !== '' || value2 !== '' || override !== '';
     }
 
     updateStationMeasurementForm() {
@@ -2251,8 +2270,11 @@ The measurement data is attached as CSV files.`;
             const statusClass = person.present ? 'present' : 'absent';
             const statusText = person.present ? 'Present' : 'Absent';
             
+            // Include ID after name to prevent confusion with identical names
+            const displayName = person.id ? `${person.name} (ID: ${person.id})` : person.name;
+            
             item.innerHTML = `
-                <span>${person.name}</span>
+                <span>${displayName}</span>
                 <span class="roster-status ${statusClass}">${statusText}</span>
             `;
             
