@@ -506,16 +506,18 @@ class ManualEntryApp {
             comments: document.getElementById('comments').value || ''
         };
 
-        // Calculate adjustments
+        // Calculate adjustments - convert to inches first
         const key = measurement.replace('-', '_');
+        const valueInInches = this.convertToInches(value1, unit);
         const baseAdjustment = this.adjustments[key] ? this.adjustments[key][person.gender] || 0 : 0;
         const finalAdjustment = adjustmentOverride !== 0 ? adjustmentOverride : baseAdjustment;
-        const adjustedValue = value1 + finalAdjustment;
+        const adjustedValue = valueInInches + finalAdjustment;
 
         // Update the specific measurement
         measurementData[key] = {
-            value: value1,
-            unit: unit,
+            value: value1,  // Original value as entered
+            unit: unit,     // Original unit
+            valueInInches: valueInInches,  // Converted to inches for calculations
             adjustment: baseAdjustment,
             adjustmentOverride: adjustmentOverride,
             adjustedValue: adjustedValue
@@ -524,10 +526,7 @@ class ManualEntryApp {
         // Update measurements and person status
         this.measurements.set(personId, measurementData);
         
-        // Check if person has any valid measurements
-        const hasValidMeasurements = ['height_shoes', 'height_no_shoes', 'reach', 'wingspan', 'weight', 'hand_length', 'hand_width', 'vertical', 'approach', 'broad']
-            .some(type => measurementData[type] && measurementData[type].value);
-        person.completed = hasValidMeasurements;
+        // No longer setting person.completed - allowing re-entry
 
         this.saveState();
         this.logActivity('INDIVIDUAL_MEASUREMENT_SAVED', { 
@@ -704,17 +703,25 @@ class ManualEntryApp {
             person.name.toLowerCase().includes(filter)
         );
         
-        grid.innerHTML = filteredRoster.map(person => `
-            <div class="roster-item ${person.completed ? 'completed' : person.present ? 'present' : ''}" 
-                 onclick="app.selectPerson('${this.escapeHtml(person.id || person.name)}')">
+        grid.innerHTML = filteredRoster.map(person => {
+            const personId = person.id || person.name;
+            const anthrosStatus = this.getAnthrosCompletedStatus(personId);
+            const measuresStatus = this.getMeasuresCompletedStatus(personId);
+            
+            return `
+            <div class="roster-item ${person.present ? 'present' : ''}" 
+                 onclick="app.selectPerson('${this.escapeHtml(personId)}')">
                 <h4>${this.escapeHtml(person.name)}</h4>
                 <p>ID: ${person.id || 'N/A'}</p>
                 <p>Gender: ${person.gender}</p>
-                <div class="status ${person.completed ? 'completed' : person.present ? 'present' : ''}">
-                    ${person.completed ? '✓ Completed' : person.present ? '⏱ Present' : '○ Not checked in'}
+                <div class="status ${person.present ? 'present' : ''}">
+                    ${person.present ? '⏱ Present' : '○ Not checked in'}
                 </div>
-            </div>
-        `).join('');
+                <div class="completion-status">
+                    <small>Anthros: ${anthrosStatus} | Measures: ${measuresStatus}</small>
+                </div>
+            </div>`;
+        }).join('');
     }
 
     escapeHtml(text) {
@@ -852,13 +859,12 @@ class ManualEntryApp {
             measurementData.comments = document.getElementById('comments').value || '';
             
             this.measurements.set(personId, measurementData);
-            person.completed = hasValidMeasurements;
+            // No longer setting person.completed - allowing re-entry
             this.saveState();
             this.createBackup();
             this.logActivity('MEASUREMENTS_SAVED', { 
                 person: person.name, 
-                measurementsCount: Object.keys(measurementData).filter(k => !['timestamp', 'operator', 'device', 'comments'].includes(k)).length,
-                completed: person.completed
+                measurementsCount: Object.keys(measurementData).filter(k => !['timestamp', 'operator', 'device', 'comments'].includes(k)).length
             });
             
             // Update roster display
@@ -2351,10 +2357,7 @@ The measurement data is attached as CSV files.`;
         // Update measurements and person status
         this.measurements.set(personId, measurementData);
         
-        // Check if person has any valid measurements
-        const hasValidMeasurements = ['height_shoes', 'height_no_shoes', 'reach', 'wingspan', 'weight', 'hand_length', 'hand_width', 'vertical', 'approach', 'broad']
-            .some(type => measurementData[type] && measurementData[type].value);
-        person.completed = hasValidMeasurements;
+        // No longer setting person.completed - allowing re-entry
 
         // Update display
         if (this.currentView === 'station') {

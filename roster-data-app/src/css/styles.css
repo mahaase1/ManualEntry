@@ -240,6 +240,12 @@ header {
     color: #ffc107;
 }
 
+.roster-item .completion-status {
+    margin-top: 4px;
+    font-size: 12px;
+    color: #666;
+}
+
 /* Measurement Form */
 #measurement-form {
     background: white;
