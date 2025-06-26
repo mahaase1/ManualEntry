@@ -1040,8 +1040,10 @@ class ManualEntryApp {
 
     showMeasurementSetup() {
         document.getElementById('settings-modal').classList.add('hidden');
-        document.getElementById('setup-screen').classList.remove('hidden');
-        document.getElementById('main-screen').classList.add('hidden');
+        
+        // Use the same screen transition pattern as other methods
+        document.querySelectorAll('.screen').forEach(screen => screen.classList.remove('active'));
+        document.getElementById('setup-screen').classList.add('active');
         
         // Load current settings to populate the form
         this.loadSetupSettings();
