@@ -497,2074 +497,499 @@ class ManualEntryApp {
             saveTimeout = setTimeout(() => this.saveState(), 1000);
         });
         
+        // Bind 10-key trigger buttons
+        this.bind10KeyTriggers();
     }
 
-    bindIndividualSaveButtons() {
-        // Add event listeners for individual measurement save buttons
-        document.addEventListener('click', (event) => {
-            if (event.target.classList.contains('measurement-save-btn')) {
-                const measurement = event.target.getAttribute('data-measurement');
-                this.saveIndividualMeasurement(measurement);
+    bind10KeyTriggers() {
+        // Bind 10-key triggers for athlete view
+        document.querySelectorAll('.tenkey-trigger-btn[data-measurement]').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const measurement = e.target.getAttribute('data-measurement');
+                this.open10Key(measurement, 'athlete');
+            });
+        });
+
+        // Bind 10-key trigger for station view
+        document.getElementById('station-tenkey-btn').addEventListener('click', () => {
+            const currentMeasurement = this.currentStationMeasurement;
+            if (currentMeasurement) {
+                this.open10Key(currentMeasurement, 'station');
+            }
+        });
+
+        // Bind 10-key modal controls
+        this.bind10KeyControls();
+    }
+
+    bind10KeyControls() {
+        const modal = document.getElementById('tenkey-modal');
+        const displayInput = document.getElementById('tenkey-display-input');
+        const statusSpan = document.getElementById('tenkey-entry-status');
+        const fieldLabel = document.getElementById('tenkey-field-label');
+        const confirmLabel = document.getElementById('tenkey-confirm-label');
+        const saveBtn = document.getElementById('tenkey-save');
+        
+        // Number buttons
+        document.querySelectorAll('.tenkey-number').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const number = e.target.getAttribute('data-number');
+                this.handle10KeyInput(number);
+            });
+        });
+
+        // Action buttons
+        document.querySelectorAll('.tenkey-btn[data-action]').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const action = e.target.getAttribute('data-action');
+                this.handle10KeyAction(action);
+            });
+        });
+
+        // Control buttons
+        document.getElementById('tenkey-close').addEventListener('click', () => this.close10Key());
+        document.getElementById('tenkey-cancel').addEventListener('click', () => this.close10Key());
+        document.getElementById('tenkey-save').addEventListener('click', () => this.save10KeyMeasurement());
+
+        // Keyboard support
+        document.addEventListener('keydown', (e) => {
+            if (!modal.classList.contains('hidden')) {
+                this.handle10KeyKeyboard(e);
             }
         });
     }
 
-    bindMeasurementValidation() {
-        const measurements = ['height-shoes', 'height-no-shoes', 'reach', 'wingspan', 'weight', 'hand-length', 'hand-width', 'vertical', 'approach', 'broad'];
-        
-        measurements.forEach(measurement => {
-            const input1 = document.getElementById(`${measurement}-1`);
-            const input2 = document.getElementById(`${measurement}-2`);
-            
-            if (input1 && input2) {
-                input1.addEventListener('input', () => this.validateMeasurement(measurement));
-                input2.addEventListener('input', () => this.validateMeasurement(measurement));
-            }
-        });
-    }
-
-    validateMeasurement(measurement) {
-        const input1 = document.getElementById(`${measurement}-1`);
-        const input2 = document.getElementById(`${measurement}-2`);
-        
-        if (input1.value && input2.value) {
-            const value1 = parseFloat(input1.value);
-            const value2 = parseFloat(input2.value);
-            
-            if (Math.abs(value1 - value2) < 0.01) {
-                input1.className = 'valid';
-                input2.className = 'valid';
-            } else {
-                input1.className = 'error';
-                input2.className = 'error';
-            }
-        } else {
-            input1.className = '';
-            input2.className = '';
-        }
-    }
-
-    saveIndividualMeasurement(measurement) {
-        const personId = this.currentPersonId;
-        const person = this.roster.find(p => (p.id || p.name) === personId);
-        
-        if (!person) {
-            this.showToast('No person selected', 'error');
-            return;
-        }
-
-        const input1 = document.getElementById(`${measurement}-1`);
-        const input2 = document.getElementById(`${measurement}-2`);
-        const overrideInput = document.getElementById(`${measurement}-override`);
-        
-        if (!input1.value || !input2.value) {
-            this.showToast(`Please enter both ${measurement.replace('-', ' ')} values`, 'warning');
-            return;
-        }
-
-        const value1 = parseFloat(input1.value);
-        const value2 = parseFloat(input2.value);
-        
-        if (Math.abs(value1 - value2) >= 0.01) {
-            this.showToast(`${measurement.replace('-', ' ')} values do not match`, 'error');
-            return;
-        }
-
-        // Get unit from setup settings
-        const unit = this.getMeasurementUnit(measurement);
-        const adjustmentOverride = parseFloat(overrideInput.value) || 0;
-
-        // Get or create measurement data
-        let measurementData = this.measurements.get(personId) || {
-            timestamp: new Date().toISOString(),
-            operator: this.currentOperator,
-            device: this.deviceId,
-            comments: document.getElementById('comments').value || ''
-        };
-
-        // Calculate adjustments - convert to inches first
-        const key = measurement.replace('-', '_');
-        const valueInInches = this.convertToInches(value1, unit);
-        const baseAdjustment = this.adjustments[key] ? this.adjustments[key][person.gender] || 0 : 0;
-        const finalAdjustment = adjustmentOverride !== 0 ? adjustmentOverride : baseAdjustment;
-        const rawAdjustedValue = valueInInches + finalAdjustment;
-        const adjustedValue = this.roundMeasurement(rawAdjustedValue, key);
-
-        // Update the specific measurement
-        measurementData[key] = {
-            value: value1,  // Original value as entered
-            unit: unit,     // Original unit
-            valueInInches: valueInInches,  // Converted to inches for calculations
-            adjustment: baseAdjustment,
-            adjustmentOverride: adjustmentOverride,
-            adjustedValue: adjustedValue
-        };
-
-        // Update measurements and person status
-        this.measurements.set(personId, measurementData);
-        
-        // No longer setting person.completed - allowing re-entry
-
-        this.saveState();
-        this.logActivity('INDIVIDUAL_MEASUREMENT_SAVED', { 
-            person: person.name, 
+    open10Key(measurement, mode) {
+        this.tenKeyState = {
             measurement: measurement,
-            value: value1,
-            unit: unit,
-            adjustment: baseAdjustment,
-            adjustmentOverride: adjustmentOverride,
-            adjustedValue: adjustedValue
-        });
-        
-        // Automatically save to CSV file
-        const csvContent = this.generateIndividualMeasurementCSV(person, measurementData);
-        const savedFilename = this.appendToCSVFile(csvContent, true);
-        
-        this.showToast(`${measurement.replace('-', ' ')} saved successfully! (Auto-saved to ${savedFilename})`, 'success');
-    }
-
-    getMeasurementUnit(measurement) {
-        // Map measurement names to unit settings
-        const unitMap = {
-            'height-shoes': 'height',
-            'height-no-shoes': 'height',
-            'reach': 'reach',
-            'wingspan': 'wingspan',
-            'weight': 'lbs', // Fixed unit
-            'hand-length': 'inches', // Fixed unit
-            'hand-width': 'inches', // Fixed unit
-            'vertical': 'vertical',
-            'approach': 'approach',
-            'broad': 'broad'
-        };
-        
-        const unitKey = unitMap[measurement];
-        if (unitKey === 'lbs' || unitKey === 'inches') {
-            return unitKey;
-        }
-        return this.measurementUnits[unitKey] || 'inches';
-    }
-
-    convertToInches(value, unit) {
-        if (unit === 'cm') {
-            return value / 2.54;
-        }
-        return value; // Already in inches
-    }
-
-    inchesToFeetAndInches(inches) {
-        const feet = Math.floor(inches / 12);
-        const remainingInches = Math.round((inches % 12) * 100) / 100;
-        return `${feet}'${remainingInches}"`;
-    }
-
-    validateStartup() {
-        const operatorName = document.getElementById('operator-name').value.trim();
-        const eventName = document.getElementById('event-name').value.trim();
-        const rosterFile = document.getElementById('roster-upload').files[0];
-        
-        const setupButton = document.getElementById('setup-measurements');
-        const isValid = operatorName && eventName && (rosterFile || this.roster.length > 0);
-        
-        if (setupButton) {
-            setupButton.disabled = !isValid;
-            setupButton.style.opacity = isValid ? '1' : '0.5';
-        }
-        
-        return isValid;
-    }
-
-    handleRosterUpload(event) {
-        const file = event.target.files[0];
-        if (file && file.name.toLowerCase().endsWith('.csv')) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                this.parseRoster(e.target.result);
-                this.validateStartup();
-            };
-            reader.readAsText(file);
-        }
-    }
-
-    parseRoster(csvContent) {
-        const lines = csvContent.split('\n').filter(line => line.trim());
-        this.roster = [];
-        
-        // Skip header row
-        for (let i = 1; i < lines.length; i++) {
-            const line = lines[i].trim();
-            if (line) {
-                const values = this.parseCSVLine(line);
-                if (values.length >= 2) {
-                    this.roster.push({
-                        id: values[0] || '',
-                        name: values[1] || '',
-                        gender: values[2] || '',
-                        present: false,
-                        completed: false,
-                        source: 'roster' // Mark as imported from roster
-                    });
-                }
-            }
-        }
-        
-        this.logActivity('ROSTER_IMPORTED', { 
-            totalPeople: this.roster.length,
-            filename: document.getElementById('roster-upload').files[0] ? document.getElementById('roster-upload').files[0].name : 'unknown'
-        });
-    }
-
-    parseCSVLine(line) {
-        const result = [];
-        let current = '';
-        let inQuotes = false;
-        
-        for (let i = 0; i < line.length; i++) {
-            const char = line[i];
-            
-            if (char === '"') {
-                inQuotes = !inQuotes;
-            } else if (char === ',' && !inQuotes) {
-                result.push(current.trim().replace(/^"|"$/g, ''));
-                current = '';
-            } else {
-                current += char;
-            }
-        }
-        
-        result.push(current.trim().replace(/^"|"$/g, ''));
-        return result;
-    }
-
-    startEvent() {
-        // Save setup settings first
-        this.saveSetupSettings();
-        
-        this.currentOperator = document.getElementById('operator-name').value.trim();
-        this.currentEvent = document.getElementById('event-name').value.trim();
-        
-        // Check for duplicate event names and append timestamp if needed
-        const existingEvents = this.getLocalDirectoryFiles()
-            .filter(file => file.event === this.currentEvent)
-            .map(file => file.filename);
-        
-        if (existingEvents.length > 0) {
-            const timestamp = new Date().toISOString().slice(0, 16).replace('T', '_').replace(':', '-');
-            this.currentEvent = `${this.currentEvent}_${timestamp}`;
-            this.showToast(`Event name was duplicated. Renamed to: ${this.currentEvent}`, 'warning');
-        }
-        
-        document.getElementById('event-title').textContent = this.currentEvent;
-        
-        // Hide all screens and show main screen
-        document.querySelectorAll('.screen').forEach(screen => screen.classList.remove('active'));
-        document.getElementById('main-screen').classList.add('active');
-        
-        this.renderRoster();
-        this.updateMeasurementUnitDisplays();
-        this.saveState();
-        this.logActivity('EVENT_STARTED', { 
-            eventName: this.currentEvent, 
-            operator: this.currentOperator,
-            units: this.measurementUnits,
-            adjustments: this.adjustments
-        });
-        this.showToast(`Event "${this.currentEvent}" started successfully!`, 'success');
-    }
-
-    renderRoster() {
-        const grid = document.getElementById('roster-grid');
-        const filter = document.getElementById('name-filter').value.toLowerCase();
-        
-        const filteredRoster = this.roster.filter(person => 
-            person.name.toLowerCase().includes(filter)
-        );
-        
-        grid.innerHTML = filteredRoster.map(person => {
-            const personId = person.id || person.name;
-            const anthrosStatus = this.getAnthrosCompletedStatus(personId);
-            const measuresStatus = this.getMeasuresCompletedStatus(personId);
-            
-            return `
-            <div class="roster-item ${person.present ? 'present' : ''}" 
-                 onclick="app.selectPerson('${this.escapeHtml(personId)}')">
-                <h4>${this.escapeHtml(person.name)}</h4>
-                <p>ID: ${person.id || 'N/A'}</p>
-                <p>Gender: ${person.gender}</p>
-                <div class="status ${person.present ? 'present' : ''}">
-                    ${person.present ? '⏱ Present' : '○ Not checked in'}
-                </div>
-                <div class="completion-status">
-                    <small>Anthros: ${anthrosStatus} | Measures: ${measuresStatus}</small>
-                </div>
-            </div>`;
-        }).join('');
-    }
-
-    escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-    }
-
-    filterRoster() {
-        this.renderRoster();
-    }
-
-    selectPerson(personId) {
-        this.currentPersonId = personId;
-        const person = this.roster.find(p => (p.id || p.name) === personId);
-        
-        if (person) {
-            document.getElementById('person-name').textContent = person.name;
-            
-            // Update adjustment displays for this person's gender
-            this.updateAdjustmentDisplays(person.gender);
-            
-            const existing = this.measurements.get(personId);
-            if (existing) {
-                this.loadMeasurementData(existing);
-            } else {
-                this.clearMeasurementForm();
-            }
-            
-            this.showMeasurementForm();
-            this.logActivity('PERSON_SELECTED', { person: person.name, id: person.id });
-        }
-    }
-
-    updateAdjustmentDisplays(gender) {
-        const measurements = ['height-shoes', 'height-no-shoes', 'reach', 'wingspan', 'weight', 'hand-length', 'hand-width', 'vertical', 'approach', 'broad'];
-        
-        measurements.forEach(measurement => {
-            const key = measurement.replace('-', '_');
-            const adjustment = this.adjustments[key] ? this.adjustments[key][gender] || 0 : 0;
-            
-            // Find or create adjustment display element
-            let displayElement = document.getElementById(`${measurement}-adjustment-display`);
-            if (!displayElement) {
-                // Create and insert the display element
-                const measurementItem = document.getElementById(`${measurement}-1`).closest('.measurement-item');
-                if (measurementItem) {
-                    const label = measurementItem.querySelector('label');
-                    if (label) {
-                        const adjustmentSpan = document.createElement('span');
-                        adjustmentSpan.id = `${measurement}-adjustment-display`;
-                        adjustmentSpan.className = 'adjustment-display';
-                        adjustmentSpan.textContent = adjustment !== 0 ? ` (Adj: ${adjustment > 0 ? '+' : ''}${adjustment}")` : '';
-                        label.appendChild(adjustmentSpan);
-                    }
-                }
-            } else {
-                displayElement.textContent = adjustment !== 0 ? ` (Adj: ${adjustment > 0 ? '+' : ''}${adjustment}")` : '';
-            }
-        });
-    }
-
-    loadMeasurementData(data) {
-        const measurements = ['height-shoes', 'height-no-shoes', 'reach', 'wingspan', 'weight', 'hand-length', 'hand-width', 'vertical', 'approach', 'broad'];
-        
-        measurements.forEach(measurement => {
-            const key = measurement.replace('-', '_');
-            if (data[key]) {
-                document.getElementById(`${measurement}-1`).value = data[key].value || '';
-                document.getElementById(`${measurement}-2`).value = data[key].value || '';
-                
-                // Load override values if they exist
-                const overrideElement = document.getElementById(`${measurement}-override`);
-                if (overrideElement && data[key].adjustmentOverride) {
-                    overrideElement.value = data[key].adjustmentOverride;
-                }
-                
-                this.validateMeasurement(measurement);
-            }
-        });
-        
-        document.getElementById('comments').value = data.comments || '';
-    }
-
-    clearMeasurementForm() {
-        const measurements = ['height-shoes', 'height-no-shoes', 'reach', 'wingspan', 'weight', 'hand-length', 'hand-width', 'vertical', 'approach', 'broad'];
-        
-        measurements.forEach(measurement => {
-            document.getElementById(`${measurement}-1`).value = '';
-            document.getElementById(`${measurement}-2`).value = '';
-            document.getElementById(`${measurement}-1`).className = '';
-            document.getElementById(`${measurement}-2`).className = '';
-            
-            // Clear override values
-            const overrideElement = document.getElementById(`${measurement}-override`);
-            if (overrideElement) {
-                overrideElement.value = '';
-            }
-        });
-        
-        document.getElementById('comments').value = '';
-    }
-
-    showMeasurementForm() {
-        document.getElementById('roster-section').classList.add('hidden');
-        document.getElementById('measurement-form').classList.remove('hidden');
-    }
-
-    showRosterView() {
-        document.getElementById('measurement-form').classList.add('hidden');
-        document.getElementById('checkin-section').classList.add('hidden');
-        document.getElementById('spreadsheet-view').classList.add('hidden');
-        document.getElementById('roster-section').classList.remove('hidden');
-        this.renderRoster();
-    }
-
-    saveMeasurements() {
-        const personId = this.currentPersonId;
-        const person = this.roster.find(p => (p.id || p.name) === personId);
-        
-        if (!person) {
-            this.showToast('No person selected', 'error');
-            return;
-        }
-
-        const measurements = ['height-shoes', 'height-no-shoes', 'reach', 'wingspan', 'weight', 'hand-length', 'hand-width', 'vertical', 'approach', 'broad'];
-        let measurementData = this.measurements.get(personId) || {
-            timestamp: new Date().toISOString(),
-            operator: this.currentOperator,
-            device: this.deviceId,
-            comments: document.getElementById('comments').value || ''
+            mode: mode,
+            currentValue: '',
+            firstEntry: '',
+            secondEntry: '',
+            stage: 'first', // 'first', 'second', 'complete'
+            isActive: true
         };
 
-        let hasValidMeasurements = false;
-        let hasErrors = false;
+        // Set title and labels
+        const measurementLabels = {
+            'height-shoes': 'Height with Shoes',
+            'height-no-shoes': 'Height without Shoes',
+            'reach': 'Reach',
+            'wingspan': 'Wingspan',
+            'weight': 'Weight',
+            'hand-length': 'Hand Length',
+            'hand-width': 'Hand Width',
+            'vertical': 'Vertical Jump',
+            'approach': 'Approach Jump',
+            'broad': 'Broad Jump'
+        };
 
-        measurements.forEach(measurement => {
-            const input1 = document.getElementById(`${measurement}-1`);
-            const input2 = document.getElementById(`${measurement}-2`);
-            const overrideInput = document.getElementById(`${measurement}-override`);
-            
-            if (input1 && input1.value && input2 && input2.value) {
-                const value1 = parseFloat(input1.value);
-                const value2 = parseFloat(input2.value);
-                
-                if (Math.abs(value1 - value2) < 0.01) {
-                    const key = measurement.replace('-', '_');
-                    const unit = this.getMeasurementUnit(measurement);
-                    const override = overrideInput ? (parseFloat(overrideInput.value) || 0) : 0;
-                    
-                    // Calculate adjustments
-                    const baseAdjustment = this.adjustments[key] ? this.adjustments[key][person.gender] || 0 : 0;
-                    const finalAdjustment = override !== 0 ? override : baseAdjustment;
-                    const adjustedValue = value1 + finalAdjustment;
-                    
-                    measurementData[key] = {
-                        value: value1,
-                        unit: unit,
-                        adjustment: baseAdjustment,
-                        adjustmentOverride: override,
-                        adjustedValue: adjustedValue
-                    };
-                    hasValidMeasurements = true;
-                } else {
-                    hasErrors = true;
-                    this.showToast(`Validation error: ${measurement.replace('-', ' ')} values do not match`, 'error');
-                    return;
+        document.getElementById('tenkey-title').textContent = measurementLabels[measurement] || 'Enter Measurement';
+        document.getElementById('tenkey-display-input').value = '';
+        document.getElementById('tenkey-entry-status').textContent = 'Enter first value';
+        document.getElementById('tenkey-field-label').classList.remove('hidden');
+        document.getElementById('tenkey-confirm-label').classList.add('hidden');
+        document.getElementById('tenkey-save').classList.add('hidden');
+
+        // Show modal
+        document.getElementById('tenkey-modal').classList.remove('hidden');
+    }
+
+    close10Key() {
+        document.getElementById('tenkey-modal').classList.add('hidden');
+        this.tenKeyState = null;
+    }
+
+    handle10KeyInput(digit) {
+        if (!this.tenKeyState || !this.tenKeyState.isActive) return;
+
+        const currentValue = this.tenKeyState.currentValue + digit;
+        this.tenKeyState.currentValue = currentValue;
+        document.getElementById('tenkey-display-input').value = currentValue;
+    }
+
+    handle10KeyAction(action) {
+        if (!this.tenKeyState || !this.tenKeyState.isActive) return;
+
+        const displayInput = document.getElementById('tenkey-display-input');
+        const statusSpan = document.getElementById('tenkey-entry-status');
+        const fieldLabel = document.getElementById('tenkey-field-label');
+        const confirmLabel = document.getElementById('tenkey-confirm-label');
+        const saveBtn = document.getElementById('tenkey-save');
+
+        switch (action) {
+            case 'clear':
+                this.tenKeyState.currentValue = '';
+                displayInput.value = '';
+                break;
+
+            case 'backspace':
+                this.tenKeyState.currentValue = this.tenKeyState.currentValue.slice(0, -1);
+                displayInput.value = this.tenKeyState.currentValue;
+                break;
+
+            case 'decimal':
+                if (!this.tenKeyState.currentValue.includes('.')) {
+                    this.tenKeyState.currentValue += '.';
+                    displayInput.value = this.tenKeyState.currentValue;
                 }
-            }
-        });
+                break;
 
-        if (hasErrors) {
+            case 'enter':
+                this.handle10KeyEnter();
+                break;
+        }
+    }
+
+    handle10KeyEnter() {
+        if (!this.tenKeyState || !this.tenKeyState.isActive) return;
+
+        const currentValue = this.tenKeyState.currentValue.trim();
+        if (!currentValue || isNaN(parseFloat(currentValue))) {
+            this.showToast('Please enter a valid number', 'warning');
             return;
         }
 
-        if (hasValidMeasurements) {
-            // Update comments if changed
-            measurementData.comments = document.getElementById('comments').value || '';
-            
-            this.measurements.set(personId, measurementData);
-            // No longer setting person.completed - allowing re-entry
-            this.saveState();
-            this.createBackup();
-            this.logActivity('MEASUREMENTS_SAVED', { 
-                person: person.name, 
-                measurementsCount: Object.keys(measurementData).filter(k => !['timestamp', 'operator', 'device', 'comments'].includes(k)).length
-            });
-            
-            // Update roster display
-            this.renderRoster();
-            
-            this.showToast(`Measurements saved successfully!`, 'success');
-            this.showRosterView();
-        } else {
-            this.showToast('Please enter at least one measurement', 'warning');
-        }
-    }
+        const displayInput = document.getElementById('tenkey-display-input');
+        const statusSpan = document.getElementById('tenkey-entry-status');
+        const fieldLabel = document.getElementById('tenkey-field-label');
+        const confirmLabel = document.getElementById('tenkey-confirm-label');
+        const saveBtn = document.getElementById('tenkey-save');
 
-    showAddPersonModal() {
-        document.getElementById('add-person-modal').classList.remove('hidden');
-    }
+        if (this.tenKeyState.stage === 'first') {
+            // Store first entry and prepare for second
+            this.tenKeyState.firstEntry = currentValue;
+            this.tenKeyState.currentValue = '';
+            this.tenKeyState.stage = 'second';
 
-    hideAddPersonModal() {
-        document.getElementById('add-person-modal').classList.add('hidden');
-        document.getElementById('new-person-name').value = '';
-        document.getElementById('new-person-gender').value = 'M';
-    }
+            displayInput.value = '';
+            statusSpan.textContent = 'Confirm the value';
+            fieldLabel.classList.add('hidden');
+            confirmLabel.classList.remove('hidden');
 
-    addNewPerson() {
-        const name = document.getElementById('new-person-name').value.trim();
-        const gender = document.getElementById('new-person-gender').value;
-        
-        if (name) {
-            const newPerson = {
-                id: '',
-                name: name,
-                gender: gender,
-                present: false,
-                completed: false,
-                source: 'added' // Mark as manually added
-            };
-            
-            this.roster.push(newPerson);
-            this.hideAddPersonModal();
-            this.renderRoster();
-            this.saveState();
-            this.logActivity('PERSON_ADDED', { name: name, gender: gender, source: 'added' });
-            this.showToast(`Added ${name} to roster`, 'success');
-        }
-    }
+        } else if (this.tenKeyState.stage === 'second') {
+            // Check if entries match
+            this.tenKeyState.secondEntry = currentValue;
 
-    showSettings() {
-        document.getElementById('settings-modal').classList.remove('hidden');
-    }
+            if (this.tenKeyState.firstEntry === this.tenKeyState.secondEntry) {
+                // Values match - ready to save
+                this.tenKeyState.stage = 'complete';
+                statusSpan.textContent = 'Values match! Ready to save.';
+                statusSpan.style.color = '#4caf50';
+                saveBtn.classList.remove('hidden');
+                displayInput.style.borderColor = '#4caf50';
 
-    hideSettings() {
-        document.getElementById('settings-modal').classList.add('hidden');
-    }
-
-    showMeasurementSetup() {
-        document.getElementById('settings-modal').classList.add('hidden');
-        
-        // Use the same screen transition pattern as other methods
-        document.querySelectorAll('.screen').forEach(screen => screen.classList.remove('active'));
-        document.getElementById('setup-screen').classList.add('active');
-        
-        // Load current settings to populate the form
-        this.loadSetupSettings();
-        
-        this.logActivity('MEASUREMENT_SETUP_OPENED_FROM_SETTINGS');
-    }
-
-    showFileManagement() {
-        document.getElementById('settings-modal').classList.add('hidden');
-        document.getElementById('file-management-modal').classList.remove('hidden');
-        this.renderFileList();
-    }
-
-    hideFileManagement() {
-        document.getElementById('file-management-modal').classList.add('hidden');
-        document.getElementById('settings-modal').classList.remove('hidden');
-    }
-
-    renderFileList() {
-        const fileList = document.getElementById('file-list');
-        const files = this.getLocalDirectoryFiles();
-        
-        if (files.length === 0) {
-            fileList.innerHTML = '<p style="text-align: center; color: #666; font-style: italic;">No backup files found in app storage.<br><br>📂 Main CSV files are saved to your iPad\'s Downloads folder.<br>This list shows backup copies only.</p>';
-            return;
-        }
-        
-        fileList.innerHTML = files.map(file => `
-            <div class="file-item">
-                <div class="file-info">
-                    <h4>${this.escapeHtml(file.filename)}</h4>
-                    <p>Event: ${this.escapeHtml(file.event)}</p>
-                    <p>Operator: ${this.escapeHtml(file.operator)}</p>
-                    <p>Date: ${new Date(file.timestamp).toLocaleDateString()}</p>
-                    <p>Size: ${(file.size / 1024).toFixed(1)} KB</p>
-                </div>
-                <div class="file-actions">
-                    <button onclick="app.downloadSavedFile('${file.key}', '${this.escapeHtml(file.filename)}')" 
-                            style="background: #007AFF; margin-bottom: 8px;">📤 Download</button>
-                    <button onclick="app.deleteSavedFile('${file.key}')" 
-                            style="background: #dc3545;">🗑️ Delete</button>
-                </div>
-            </div>
-        `).join('');
-    }
-
-    downloadSavedFile(fileKey, filename) {
-        try {
-            const content = localStorage.getItem(fileKey);
-            if (content) {
-                this.downloadFile(content, filename);
-                this.showToast(`Downloaded: ${filename}`, 'success');
             } else {
-                this.showToast('File not found', 'error');
+                // Values don't match - start over
+                this.showToast('Values do not match. Please try again.', 'warning');
+                this.tenKeyState.firstEntry = '';
+                this.tenKeyState.secondEntry = '';
+                this.tenKeyState.currentValue = '';
+                this.tenKeyState.stage = 'first';
+
+                displayInput.value = '';
+                displayInput.style.borderColor = '#ddd';
+                statusSpan.textContent = 'Enter first value';
+                statusSpan.style.color = '#666';
+                fieldLabel.classList.remove('hidden');
+                confirmLabel.classList.add('hidden');
+                saveBtn.classList.add('hidden');
             }
-        } catch (error) {
-            this.showToast('Error downloading file', 'error');
         }
     }
 
-    deleteSavedFile(fileKey) {
-        if (confirm('Are you sure you want to delete this file?')) {
-            if (this.deleteFromLocalDirectory(fileKey)) {
-                this.renderFileList();
-                this.showToast('File deleted successfully', 'success');
-            } else {
-                this.showToast('Error deleting file', 'error');
+    save10KeyMeasurement() {
+        if (!this.tenKeyState || this.tenKeyState.stage !== 'complete') return;
+
+        const measurement = this.tenKeyState.measurement;
+        const value = parseFloat(this.tenKeyState.firstEntry);
+        const mode = this.tenKeyState.mode;
+
+        if (mode === 'athlete') {
+            // Update athlete view inputs
+            document.getElementById(`${measurement}-1`).value = value;
+            document.getElementById(`${measurement}-2`).value = value;
+            
+            // Trigger save automatically
+            const saveBtn = document.querySelector(`[data-measurement="${measurement}"]`);
+            if (saveBtn && saveBtn.classList.contains('measurement-save-btn')) {
+                saveBtn.click();
             }
+
+        } else if (mode === 'station') {
+            // Update station view inputs
+            document.getElementById('station-value-1').value = value;
+            document.getElementById('station-value-2').value = value;
+            
+            // Trigger save automatically
+            document.getElementById('station-save-btn').click();
+        }
+
+        this.close10Key();
+        this.showToast(`${this.tenKeyState.measurement.replace('-', ' ')} saved successfully!`, 'success');
+    }
+
+    handle10KeyKeyboard(e) {
+        if (!this.tenKeyState || !this.tenKeyState.isActive) return;
+
+        // Prevent default for keys we handle
+        const handledKeys = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.', 'Enter', 'Backspace', 'Delete', 'Escape'];
+        if (handledKeys.includes(e.key)) {
+            e.preventDefault();
+        }
+
+        // Handle number keys
+        if (e.key >= '0' && e.key <= '9') {
+            this.handle10KeyInput(e.key);
+        } 
+        // Handle decimal
+        else if (e.key === '.') {
+            this.handle10KeyAction('decimal');
+        }
+        // Handle enter
+        else if (e.key === 'Enter') {
+            this.handle10KeyEnter();
+        }
+        // Handle backspace/delete
+        else if (e.key === 'Backspace' || e.key === 'Delete') {
+            this.handle10KeyAction('backspace');
+        }
+        // Handle escape
+        else if (e.key === 'Escape') {
+            this.close10Key();
         }
     }
 
-    showResetModal() {
-        document.getElementById('reset-modal').classList.remove('hidden');
-        document.getElementById('settings-modal').classList.add('hidden');
-    }
-
-    hideResetModal() {
-        document.getElementById('reset-modal').classList.add('hidden');
-        document.getElementById('reset-password').value = '';
-    }
-
-    confirmReset() {
-        const password = document.getElementById('reset-password').value;
-        if (password === '00000') {
-            // Clear localStorage data
-            localStorage.clear();
+    // Station Mode Methods
+    selectStation(event) {
+        const stationSelect = event.target;
+        this.currentStation = stationSelect.value;
+        this.currentStationMeasurement = stationSelect.value; // Set for 10-key
+        
+        if (this.currentStation) {
+            document.getElementById('station-measurement-label').textContent = 
+                stationSelect.options[stationSelect.selectedIndex].text;
             
-            // Clear app state
-            this.roster = [];
-            this.measurements.clear();
-            this.currentOperator = '';
-            this.currentEvent = '';
-            this.currentPersonId = null;
-            
-            // Clear web app cache for fresh start
-            this.clearWebAppCache();
-            
-            // Return to startup screen
-            document.getElementById('main-screen').classList.remove('active');
-            document.getElementById('startup-screen').classList.add('active');
-            this.hideResetModal();
-            
-            // Clear form inputs
-            document.getElementById('operator-name').value = '';
-            document.getElementById('event-name').value = '';
-            document.getElementById('roster-upload').value = '';
-            this.validateStartup();
-            
-            this.showToast('App reset for new event - cache cleared', 'success');
+            // Show measurement inputs if person is selected
+            if (this.selectedPersonInStation) {
+                document.getElementById('station-measurement-inputs').classList.remove('hidden');
+                this.loadStationMeasurement();
+            }
         } else {
-            this.showToast('Incorrect password', 'error');
+            document.getElementById('station-measurement-inputs').classList.add('hidden');
         }
-    }
-
-    clearWebAppCache() {
-        try {
-            // Clear Service Worker cache if available
-            if ('serviceWorker' in navigator && 'caches' in window) {
-                caches.keys().then(cacheNames => {
-                    const deletePromises = cacheNames.map(cacheName => caches.delete(cacheName));
-                    return Promise.all(deletePromises);
-                }).then(() => {
-                    console.log('Service Worker caches cleared');
-                });
-            }
-
-            // Clear browser cache by reloading without cache
-            if ('serviceWorker' in navigator) {
-                navigator.serviceWorker.getRegistrations().then(registrations => {
-                    for (let registration of registrations) {
-                        registration.unregister();
-                    }
-                    console.log('Service Workers unregistered');
-                });
-            }
-
-            // Clear application cache (deprecated but may still be used)
-            if (window.applicationCache && window.applicationCache.update) {
-                window.applicationCache.update();
-            }
-
-            console.log('Web app cache clearing completed');
-        } catch (error) {
-            console.warn('Cache clearing failed:', error);
-            // Don't show error to user as this is not critical
-        }
-    }
-
-    exportData() {
-        const data = {
-            event: this.currentEvent,
-            operator: this.currentOperator,
-            device: this.deviceId,
-            exportTime: new Date().toISOString(),
-            roster: this.roster,
-            measurements: Object.fromEntries(this.measurements),
-            activityLog: this.activityLog
-        };
-
-        // Generate all three reports
-        const csvContent = this.generateCSV(data);
-        const logContent = this.generateLogCSV(data);
-        const perMeasurementContent = this.generatePerMeasurementCSV(data);
-        
-        const timestamp = new Date().toISOString().replace(/[:.]/g, '-').split('T')[0];
-        const filename = `${this.currentEvent.replace(/[^a-zA-Z0-9]/g, '_')}_${timestamp}_${Date.now()}.csv`;
-        const logFilename = `${this.currentEvent.replace(/[^a-zA-Z0-9]/g, '_')}_${timestamp}_${Date.now()}_LOG.csv`;
-        const perMeasurementFilename = `${this.currentEvent.replace(/[^a-zA-Z0-9]/g, '_')}_${timestamp}_${Date.now()}_PER_MEASUREMENT.csv`;
-        
-        // Email with all three attachments
-        this.emailDataWithAttachments(csvContent, filename, logContent, logFilename, perMeasurementContent, perMeasurementFilename);
-        
-        this.logActivity('DATA_EXPORTED', { 
-            filename: filename, 
-            logFilename: logFilename,
-            perMeasurementFilename: perMeasurementFilename,
-            totalRecords: this.roster.length 
-        });
-    }
-
-    generateCSV(data) {
-        // Header with all new columns
-        let csv = 'ID,Name,Gender,Present,Completed,Source,Timestamp,Operator,Device,Comments,';
-        
-        // All measurement columns with adjustments, overrides, and reporting
-        csv += 'Height_Shoes_Value,Height_Shoes_Unit,Height_Shoes_Adjustment,Height_Shoes_Override,Height_Shoes_Adjusted,Height_Shoes_Display,';
-        csv += 'Height_No_Shoes_Value,Height_No_Shoes_Unit,Height_No_Shoes_Adjustment,Height_No_Shoes_Override,Height_No_Shoes_Adjusted,Height_No_Shoes_Display,';
-        csv += 'Reach_Value,Reach_Unit,Reach_Adjustment,Reach_Override,Reach_Adjusted,Reach_Display,';
-        csv += 'Wingspan_Value,Wingspan_Unit,Wingspan_Adjustment,Wingspan_Override,Wingspan_Adjusted,Wingspan_Display,';
-        csv += 'Weight_Value,Weight_Unit,Weight_Adjustment,Weight_Override,Weight_Adjusted,';
-        csv += 'Hand_Length_Value,Hand_Length_Unit,Hand_Length_Adjustment,Hand_Length_Override,Hand_Length_Adjusted,';
-        csv += 'Hand_Width_Value,Hand_Width_Unit,Hand_Width_Adjustment,Hand_Width_Override,Hand_Width_Adjusted,';
-        csv += 'Vertical_Value,Vertical_Unit,Vertical_Adjustment,Vertical_Override,Vertical_Adjusted,';
-        csv += 'Approach_Value,Approach_Unit,Approach_Adjustment,Approach_Override,Approach_Adjusted,';
-        csv += 'Broad_Value,Broad_Unit,Broad_Adjustment,Broad_Override,Broad_Adjusted,';
-        csv += 'Vertical_For_Reporting,Approach_For_Reporting\n';
-
-        data.roster.forEach(person => {
-            const personId = person.id || person.name;
-            const measurements = data.measurements[personId] || {};
-            
-            csv += `"${person.id || ''}","${person.name.replace(/"/g, '""')}","${person.gender}",${person.present},${person.completed},"${person.source || 'roster'}",`;
-            csv += `"${measurements.timestamp || ''}","${measurements.operator || ''}","${measurements.device || ''}",`;
-            csv += `"${(measurements.comments || '').replace(/"/g, '""')}",`;
-            
-            const measurementTypes = [
-                { key: 'height_shoes', hasDisplay: true },
-                { key: 'height_no_shoes', hasDisplay: true },
-                { key: 'reach', hasDisplay: true },
-                { key: 'wingspan', hasDisplay: true },
-                { key: 'weight', hasDisplay: false },
-                { key: 'hand_length', hasDisplay: false },
-                { key: 'hand_width', hasDisplay: false },
-                { key: 'vertical', hasDisplay: false },
-                { key: 'approach', hasDisplay: false },
-                { key: 'broad', hasDisplay: false }
-            ];
-
-            measurementTypes.forEach(type => {
-                const measurement = measurements[type.key];
-                const adjustmentValue = this.adjustments[type.key] ? this.adjustments[type.key][person.gender] || 0 : 0;
-                const overrideValue = measurements[`${type.key}_override`] || 0;
-                
-                // Original value and unit
-                if (measurement) {
-                    csv += `${measurement.value},"${measurement.unit}",`;
-                } else {
-                    csv += ',"",';
-                }
-                
-                // Adjustment and override
-                csv += `${adjustmentValue},${overrideValue},`;
-                
-                // Adjusted value
-                let adjustedValue = '';
-                if (measurement && measurement.value) {
-                    const unit = this.getMeasurementUnit(type.key);
-                    const rawValueInInches = this.convertToInches(measurement.value, measurement.unit || unit);
-                    adjustedValue = overrideValue !== 0 ? 
-                        (rawValueInInches + overrideValue).toFixed(2) : 
-                        (rawValueInInches + adjustmentValue).toFixed(2);
-                }
-                csv += `${adjustedValue},`;
-                
-                // Display version (feet/inches)
-                if (type.hasDisplay) {
-                    const displayValue = adjustedValue ? this.inchesToFeetAndInches(parseFloat(adjustedValue)) : '';
-                    csv += `"${displayValue}",`;
-                }
-            });
-
-            // Reporting columns
-            const adjustedReach = this.getAdjustedMeasurementValue(measurements, 'reach', person.gender);
-            const adjustedVertical = this.getAdjustedMeasurementValue(measurements, 'vertical', person.gender);
-            const adjustedApproach = this.getAdjustedMeasurementValue(measurements, 'approach', person.gender);
-            
-            const verticalForReporting = (adjustedVertical && adjustedReach) ? (adjustedVertical - adjustedReach).toFixed(2) : '';
-            const approachForReporting = (adjustedApproach && adjustedReach) ? (adjustedApproach - adjustedReach).toFixed(2) : '';
-            
-            csv += `${verticalForReporting},${approachForReporting}\n`;
-        });
-
-        return csv;
-    }
-
-    generateIndividualMeasurementCSV(personData, measurementData) {
-        // Create CSV header with all new columns
-        let csv = 'Event,Operator,Device,Save_Timestamp,ID,Name,Gender,Present,Completed,Source,Measurement_Timestamp,Comments,';
-        
-        // Original measurement columns
-        csv += 'Height_Shoes_Value,Height_Shoes_Unit,Height_Shoes_Adjustment,Height_Shoes_Override,Height_Shoes_Adjusted,Height_Shoes_Display,';
-        csv += 'Height_No_Shoes_Value,Height_No_Shoes_Unit,Height_No_Shoes_Adjustment,Height_No_Shoes_Override,Height_No_Shoes_Adjusted,Height_No_Shoes_Display,';
-        csv += 'Reach_Value,Reach_Unit,Reach_Adjustment,Reach_Override,Reach_Adjusted,Reach_Display,';
-        csv += 'Wingspan_Value,Wingspan_Unit,Wingspan_Adjustment,Wingspan_Override,Wingspan_Adjusted,Wingspan_Display,';
-        csv += 'Weight_Value,Weight_Unit,Weight_Adjustment,Weight_Override,Weight_Adjusted,';
-        csv += 'Hand_Length_Value,Hand_Length_Unit,Hand_Length_Adjustment,Hand_Length_Override,Hand_Length_Adjusted,';
-        csv += 'Hand_Width_Value,Hand_Width_Unit,Hand_Width_Adjustment,Hand_Width_Override,Hand_Width_Adjusted,';
-        csv += 'Vertical_Value,Vertical_Unit,Vertical_Adjustment,Vertical_Override,Vertical_Adjusted,';
-        csv += 'Approach_Value,Approach_Unit,Approach_Adjustment,Approach_Override,Approach_Adjusted,';
-        csv += 'Broad_Value,Broad_Unit,Broad_Adjustment,Broad_Override,Broad_Adjusted,';
-        csv += 'Vertical_For_Reporting,Approach_For_Reporting\n';
-
-        // Add the person's data row
-        csv += `"${this.currentEvent}","${this.currentOperator}","${this.deviceId}","${new Date().toISOString()}",`;
-        csv += `"${personData.id || ''}","${personData.name.replace(/"/g, '""')}","${personData.gender}",${personData.present},${personData.completed},"${personData.source || 'roster'}",`;
-        csv += `"${measurementData.timestamp || ''}","${(measurementData.comments || '').replace(/"/g, '""')}",`;
-        
-        const measurementTypes = [
-            { key: 'height_shoes', hasDisplay: true },
-            { key: 'height_no_shoes', hasDisplay: true },
-            { key: 'reach', hasDisplay: true },
-            { key: 'wingspan', hasDisplay: true },
-            { key: 'weight', hasDisplay: false },
-            { key: 'hand_length', hasDisplay: false },
-            { key: 'hand_width', hasDisplay: false },
-            { key: 'vertical', hasDisplay: false },
-            { key: 'approach', hasDisplay: false },
-            { key: 'broad', hasDisplay: false }
-        ];
-
-        measurementTypes.forEach(type => {
-            const measurement = measurementData[type.key];
-            const adjustmentValue = this.adjustments[type.key] ? this.adjustments[type.key][personData.gender] || 0 : 0;
-            const overrideValue = measurementData[`${type.key}_override`] || 0;
-            
-            // Original value and unit
-            if (measurement) {
-                csv += `${measurement.value},"${measurement.unit}",`;
-            } else {
-                csv += ',"",';
-            }
-            
-            // Adjustment and override
-            csv += `${adjustmentValue},${overrideValue},`;
-            
-            // Adjusted value
-            let adjustedValue = '';
-            if (measurement && measurement.value) {
-                const unit = this.getMeasurementUnit(type.key);
-                const rawValueInInches = this.convertToInches(measurement.value, measurement.unit || unit);
-                adjustedValue = overrideValue !== 0 ? 
-                    (rawValueInInches + overrideValue).toFixed(2) : 
-                    (rawValueInInches + adjustmentValue).toFixed(2);
-            }
-            csv += `${adjustedValue},`;
-            
-            // Display version (feet/inches)
-            if (type.hasDisplay) {
-                const displayValue = adjustedValue ? this.inchesToFeetAndInches(parseFloat(adjustedValue)) : '';
-                csv += `"${displayValue}",`;
-            }
-        });
-
-        // Reporting columns
-        const adjustedReach = this.getAdjustedMeasurementValue(measurementData, 'reach', personData.gender);
-        const adjustedVertical = this.getAdjustedMeasurementValue(measurementData, 'vertical', personData.gender);
-        const adjustedApproach = this.getAdjustedMeasurementValue(measurementData, 'approach', personData.gender);
-        
-        const verticalForReporting = (adjustedVertical && adjustedReach) ? (adjustedVertical - adjustedReach).toFixed(2) : '';
-        const approachForReporting = (adjustedApproach && adjustedReach) ? (adjustedApproach - adjustedReach).toFixed(2) : '';
-        
-        csv += `${verticalForReporting},${approachForReporting}\n`;
-        return csv;
-    }
-
-    generatePerMeasurementCSV(data) {
-        // Header for per-measurement report
-        let csv = 'Event,Operator,Device,Export_Time,ID,Name,Gender,Present,Completed,Source,';
-        csv += 'Measurement_Type,Raw_Value,Unit,Adjustment,Override,Adjusted_Value,Display_Value\n';
-
-        const measurementTypes = [
-            { key: 'height_shoes', label: 'Height w/ Shoes', hasDisplay: true },
-            { key: 'height_no_shoes', label: 'Height w/o Shoes', hasDisplay: true },
-            { key: 'reach', label: 'Reach', hasDisplay: true },
-            { key: 'wingspan', label: 'Wingspan', hasDisplay: true },
-            { key: 'weight', label: 'Weight', hasDisplay: false },
-            { key: 'hand_length', label: 'Hand Length', hasDisplay: false },
-            { key: 'hand_width', label: 'Hand Width', hasDisplay: false },
-            { key: 'vertical', label: 'Vertical', hasDisplay: false },
-            { key: 'approach', label: 'Approach', hasDisplay: false },
-            { key: 'broad', label: 'Broad', hasDisplay: false }
-        ];
-
-        data.roster.forEach(person => {
-            const personId = person.id || person.name;
-            const measurements = data.measurements[personId] || {};
-            
-            measurementTypes.forEach(type => {
-                const measurement = measurements[type.key];
-                if (measurement && measurement.value) {
-                    const adjustmentValue = this.adjustments[type.key] ? this.adjustments[type.key][person.gender] || 0 : 0;
-                    const overrideValue = measurements[`${type.key}_override`] || 0;
-                    
-                    // Calculate adjusted value
-                    const unit = this.getMeasurementUnit(type.key);
-                    const rawValueInInches = this.convertToInches(measurement.value, measurement.unit || unit);
-                    const adjustedValue = overrideValue !== 0 ? 
-                        (rawValueInInches + overrideValue).toFixed(2) : 
-                        (rawValueInInches + adjustmentValue).toFixed(2);
-                    
-                    // Display version
-                    const displayValue = type.hasDisplay ? this.inchesToFeetAndInches(parseFloat(adjustedValue)) : adjustedValue;
-                    
-                    csv += `"${data.event}","${data.operator}","${data.device}","${data.exportTime}",`;
-                    csv += `"${person.id || ''}","${person.name.replace(/"/g, '""')}","${person.gender}",${person.present},${person.completed},"${person.source || 'roster'}",`;
-                    csv += `"${type.label}","${measurement.value}","${measurement.unit || unit}",${adjustmentValue},${overrideValue},"${adjustedValue}","${displayValue}"\n`;
-                }
-            });
-        });
-
-        return csv;
-    }
-
-    appendToCSVFile(csvContent, isIndividualSave = false) {
-        const timestamp = new Date().toISOString().replace(/[:.]/g, '-').split('T')[0];
-        const timeOnly = new Date().toISOString().replace(/[:.]/g, '-').split('T')[1].split('-')[0];
-        const saveType = isIndividualSave ? 'individual' : 'full';
-        const filename = `${this.currentEvent.replace(/[^a-zA-Z0-9]/g, '_')}_${timestamp}_${saveType}_saves.csv`;
-        
-        // Check if file already exists in the directory
-        const directoryKey = 'ManualEntry_Directory';
-        let directoryIndex = JSON.parse(localStorage.getItem(directoryKey) || '[]');
-        const existingFile = directoryIndex.find(file => file.filename === filename);
-        
-        let finalContent = csvContent;
-        
-        if (existingFile) {
-            // Append to existing file (remove header from new content)
-            const existingContent = localStorage.getItem(existingFile.key) || '';
-            const csvLines = csvContent.split('\n');
-            const dataLines = csvLines.slice(1).join('\n'); // Remove header
-            finalContent = existingContent + dataLines;
-            
-            // Update existing file
-            localStorage.setItem(existingFile.key, finalContent);
-            existingFile.size = finalContent.length;
-            existingFile.timestamp = new Date().toISOString();
-            localStorage.setItem(directoryKey, JSON.stringify(directoryIndex));
-        } else {
-            // Create new file
-            this.saveToLocalDirectory(finalContent, filename);
-        }
-        
-        return filename;
-    }
-
-    generateLogCSV(data) {
-        let csv = 'Timestamp,Action,Operator,Event,Device,Details\n';
-        
-        data.activityLog.forEach(logEntry => {
-            csv += `"${logEntry.timestamp}","${logEntry.action}","${logEntry.operator || ''}","${logEntry.event || ''}","${logEntry.device || ''}",`;
-            csv += `"${JSON.stringify(logEntry.details).replace(/"/g, '""')}"\n`;
-        });
-
-        return csv;
-    }
-
-    downloadFile(content, filename) {
-        const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = filename;
-        a.style.display = 'none';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-    }
-
-    emailDataWithAttachments(csvContent, filename, logContent = '', logFilename = '', perMeasurementContent = '', perMeasurementFilename = '') {
-        // Create file objects for attachments
-        const files = [];
-        
-        // Main data file
-        files.push(new File([csvContent], filename, { type: 'text/csv' }));
-        
-        // Log file if provided
-        if (logContent) {
-            files.push(new File([logContent], logFilename, { type: 'text/csv' }));
-        }
-        
-        // Per-measurement file if provided
-        if (perMeasurementContent) {
-            files.push(new File([perMeasurementContent], perMeasurementFilename, { type: 'text/csv' }));
-        }
-        
-        // Create email subject and body
-        const subject = `Manual Entry Data - ${this.currentEvent} - ${new Date().toLocaleDateString()}`;
-        const body = `Manual Entry Data Collection Results
-
-Event: ${this.currentEvent}
-Operator: ${this.currentOperator}
-Export Time: ${new Date().toLocaleString()}
-
-📊 Data Summary:
-• Total Roster: ${this.roster.length} people
-• Completed Measurements: ${this.roster.filter(p => p.completed).length} people
-• Present at Event: ${this.roster.filter(p => p.present).length} people
-
-The measurement data is attached as CSV files.`;
-
-        // Try native sharing with file attachments first
-        if (navigator.share && navigator.canShare && navigator.canShare({ files })) {
-            const shareData = {
-                title: subject,
-                text: body,
-                files: files
-            };
-            
-            navigator.share(shareData)
-                .then(() => {
-                    this.showToast('📧 Files attached and ready to email!', 'success');
-                })
-                .catch((error) => {
-                    if (error.name !== 'AbortError') {
-                        // If native sharing fails, try alternative method
-                        this.createEmailWithAttachments(subject, body, files);
-                    }
-                });
-        } else {
-            // Alternative method for email with attachments
-            this.createEmailWithAttachments(subject, body, files);
-        }
-    }
-
-    createEmailWithAttachments(subject, body, files) {
-        // Create data URLs for the files
-        const attachments = [];
-        let processedFiles = 0;
-        
-        files.forEach((file, index) => {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                attachments[index] = {
-                    name: file.name,
-                    data: e.target.result,
-                    type: file.type
-                };
-                
-                processedFiles++;
-                if (processedFiles === files.length) {
-                    // All files processed, create email
-                    this.openEmailWithDataAttachments(subject, body, attachments);
-                }
-            };
-            reader.readAsDataURL(file);
-        });
-    }
-
-    openEmailWithDataAttachments(subject, body, attachments) {
-        // Create a temporary form to handle file attachments
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.enctype = 'multipart/form-data';
-        form.style.display = 'none';
-        
-        // Add subject
-        const subjectInput = document.createElement('input');
-        subjectInput.type = 'hidden';
-        subjectInput.name = 'subject';
-        subjectInput.value = subject;
-        form.appendChild(subjectInput);
-        
-        // Add body
-        const bodyInput = document.createElement('input');
-        bodyInput.type = 'hidden';
-        bodyInput.name = 'body';
-        bodyInput.value = body;
-        form.appendChild(bodyInput);
-        
-        // Add attachments
-        attachments.forEach((attachment, index) => {
-            const fileInput = document
-            fileInput.type = 'hidden';
-            fileInput.name = `attachment_${index}`;
-            fileInput.value = attachment.data;
-            form.appendChild(fileInput);
-            
-            const nameInput = document.createElement('input');
-            nameInput.type = 'hidden';
-            nameInput.name = `attachment_${index}_name`;
-            nameInput.value = attachment.name;
-            form.appendChild(nameInput);
-        });
-        
-        document.body.appendChild(form);
-        
-        // Try to use a service or direct email client integration
-        if (this.tryDirectEmailIntegration(subject, body, attachments)) {
-            document.body.removeChild(form);
-            return;
-        }
-        
-        // Fallback: Use mailto with embedded data (limited but works)
-        const emailBody = encodeURIComponent(body + '\n\nAttached Files:\n' + 
-            attachments.map(att => `• ${att.name}`).join('\n'));
-        const mailtoUrl = `mailto:?subject=${encodeURIComponent(subject)}&body=${emailBody}`;
-        
-        window.location.href = mailtoUrl;
-        document.body.removeChild(form);
-        
-        // Also save files for manual attachment as backup
-        attachments.forEach(att => {
-            this.downloadFileFromDataURL(att.data, att.name);
-        });
-        
-        this.showToast('📧 Email opened with file attachments!', 'success');
-    }
-
-    tryDirectEmailIntegration(subject, body, attachments) {
-        // Try iOS Mail integration if available
-        if (navigator.userAgent.includes('iPad') || navigator.userAgent.includes('iPhone')) {
-            // Create mailto URL with file references
-            try {
-                const mailtoUrl = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-                
-                // Use iOS share sheet which can handle attachments
-                if (window.webkit && window.webkit.messageHandlers) {
-                    // Try to communicate with native iOS app if available
-                    const message = {
-                        action: 'email',
-                        subject: subject,
-                        body: body,
-                        attachments: attachments
-                    };
-                    
-                    window.webkit.messageHandlers.email.postMessage(message);
-                    return true;
-                }
-                
-                // Standard iOS email approach
-                window.location.href = mailtoUrl;
-                return true;
-            } catch (error) {
-                return false;
-            }
-        }
-        
-        return false;
-    }
-
-    downloadFileFromDataURL(dataURL, filename) {
-        const link = document.createElement('a');
-        link.href = dataURL;
-        link.download = filename;
-        link.style.display = 'none';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-    }
-
-    // Keep the original method for compatibility
-    emailDataWithAttachment(csvContent, filename, logContent = '', logFilename = '') {
-        return this.emailDataWithAttachments(csvContent, filename, logContent, logFilename);
-    }
-
-    fallbackEmailMethod(subject, body) {
-        // Open the email app
-        const mailtoUrl = `mailto:?subject=${subject}&body=${body}`;
-        
-        try {
-            window.location.href = mailtoUrl;
-            this.showToast('Email opened. Files saved to Downloads folder - attach from there.', 'success');
-        } catch (error) {
-            console.error('Error opening email:', error);
-            this.showToast('Error opening email. Files saved to Downloads folder.', 'error');
-        }
-    }
-
-    saveToDownloadsFolder(content, filename) {
-        try {
-            // Create downloadable blob
-            const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
-            
-            // Create download link and trigger download
-            const downloadLink = document.createElement('a');
-            downloadLink.href = url;
-            downloadLink.download = filename;
-            downloadLink.style.display = 'none';
-            
-            // Add to DOM, click, and remove
-            document.body.appendChild(downloadLink);
-            downloadLink.click();
-            document.body.removeChild(downloadLink);
-            
-            // Clean up the blob URL
-            setTimeout(() => {
-                URL.revokeObjectURL(url);
-            }, 1000);
-            
-            // Also save to our localStorage directory for backup
-            this.saveToLocalDirectory(content, filename);
-            
-            // Show immediate feedback to user
-            this.showToast(`💾 ${filename} saved to Downloads folder`, 'success');
-            console.log(`File saved to Downloads folder: ${filename}`);
-            
-        } catch (error) {
-            console.error('Error saving to Downloads folder:', error);
-            this.showToast('Error saving file to Downloads folder', 'error');
-        }
-    }
-
-    openMailWithDownloadedFiles(subject, body, filename, logFilename = '') {
-        // Enhanced mailto for iPad Mail app with downloaded files
-        const mailtoLink = `mailto:?subject=${subject}&body=${body}`;
-        
-        // Open the email app
-        try {
-            // Use window.location for better iPad compatibility
-            window.location.href = mailtoLink;
-            
-            // Show success message with instructions
-            setTimeout(() => {
-                const fileList = logFilename ? 
-                    `Files saved to Downloads folder:\n• ${filename}\n• ${logFilename}` :
-                    `File saved to Downloads folder:\n• ${filename}`;
-                    
-                this.showToast(`📧 Mail app opened! ${fileList}\n\nFiles are in Downloads folder. Use 📎 attachment button in Mail to attach them.`, 'success');
-            }, 500);
-            
-        } catch (error) {
-            // Ultimate fallback
-            window.open(mailtoLink, '_blank');
-            this.showToast('Email opened. Files saved to Downloads folder - attach from there.', 'success');
-        }
-    }
-
-    saveToLocalDirectory(content, filename) {
-        try {
-            // Create a backup storage directory in localStorage (for app file management only)
-            const directoryKey = 'ManualEntry_Directory';
-            const fileKey = `ManualEntry_${filename}_${Date.now()}`;
-            
-            // Get existing directory index or create new one
-            let directoryIndex = JSON.parse(localStorage.getItem(directoryKey) || '[]');
-            
-            // Add file metadata to directory index
-            const fileMetadata = {
-                filename: filename,
-                timestamp: new Date().toISOString(),
-                event: this.currentEvent,
-                operator: this.currentOperator,
-                size: content.length,
-                key: fileKey
-            };
-            
-            directoryIndex.push(fileMetadata);
-            
-            // Keep only the last 10 files to manage storage
-            if (directoryIndex.length > 10) {
-                const oldFile = directoryIndex.shift();
-                localStorage.removeItem(oldFile.key);
-            }
-            
-            // Save the file content
-            localStorage.setItem(fileKey, content);
-            
-            // Update directory index
-            localStorage.setItem(directoryKey, JSON.stringify(directoryIndex));
-            
-            console.log(`File backup saved to app storage: ${filename}`);
-            
-        } catch (error) {
-            console.warn('Could not save backup to app storage due to storage limitations');
-            this.showToast('Warning: Could not save backup copy due to storage limits', 'warning');
-        }
-    }
-
-    getLocalDirectoryFiles() {
-        try {
-            const directoryKey = 'ManualEntry_Directory';
-            return JSON.parse(localStorage.getItem(directoryKey) || '[]');
-        } catch (error) {
-            console.error('Error reading local directory:', error);
-            return [];
-        }
-    }
-
-    deleteFromLocalDirectory(fileKey) {
-        try {
-            const directoryKey = 'ManualEntry_Directory';
-            let directoryIndex = JSON.parse(localStorage.getItem(directoryKey) || '[]');
-            
-            // Remove file from directory index
-            directoryIndex = directoryIndex.filter(file => file.key !== fileKey);
-            
-            // Remove file content
-            localStorage.removeItem(fileKey);
-            
-            // Update directory index
-            localStorage.setItem(directoryKey, JSON.stringify(directoryIndex));
-            
-            return true;
-        } catch (error) {
-            console.error('Error deleting from local directory:', error);
-            return false;
-        }
-    }
-
-    showToast(message, type = 'error') {
-        const toast = document.getElementById('validation-toast');
-        const messageElement = document.getElementById('toast-message');
-        
-        messageElement.textContent = message;
-        toast.className = `toast ${type}`;
-        toast.classList.remove('hidden');
-        
-        setTimeout(() => {
-            toast.classList.add('hidden');
-        }, 4000);
-    }
-
-    saveState() {
-        const state = {
-            currentOperator: this.currentOperator,
-            currentEvent: this.currentEvent,
-            roster: this.roster,
-            measurements: Object.fromEntries(this.measurements),
-            currentPersonId: this.currentPersonId,
-            activityLog: this.activityLog,
-            measurementUnits: this.measurementUnits,
-            adjustments: this.adjustments,
-            timestamp: new Date().toISOString()
-        };
-        
-        localStorage.setItem('manualEntryState', JSON.stringify(state));
-    }
-
-    loadState() {
-        const saved = localStorage.getItem('manualEntryState');
-        if (saved) {
-            try {
-                const state = JSON.parse(saved);
-                this.currentOperator = state.currentOperator || '';
-                this.currentEvent = state.currentEvent || '';
-                this.roster = state.roster || [];
-                this.measurements = new Map(Object.entries(state.measurements || {}));
-                this.currentPersonId = state.currentPersonId;
-                this.activityLog = state.activityLog || [];
-                
-                // Load setup data
-                if (state.measurementUnits) {
-                    this.measurementUnits = { ...this.measurementUnits, ...state.measurementUnits };
-                }
-                if (state.adjustments) {
-                    this.adjustments = { ...this.adjustments, ...state.adjustments };
-                }
-            } catch (error) {
-                console.error('Error loading saved state:', error);
-            }
-        }
-    }
-
-    restoreSession() {
-        if (this.currentOperator && this.currentEvent && this.roster.length > 0) {
-            document.getElementById('operator-name').value = this.currentOperator;
-            document.getElementById('event-name').value = this.currentEvent;
-            document.getElementById('event-title').textContent = this.currentEvent;
-            
-            document.getElementById('startup-screen').classList.remove('active');
-            document.getElementById('main-screen').classList.add('active');
-            
-            this.renderRoster();
-        }
-    }
-
-    createBackup() {
-        const backupKey = `backup_${this.currentEvent.replace(/[^a-zA-Z0-9]/g, '_')}_${Date.now()}`;
-        const data = {
-            event: this.currentEvent,
-            operator: this.currentOperator,
-            roster: this.roster,
-            measurements: Object.fromEntries(this.measurements),
-            timestamp: new Date().toISOString()
-        };
-        
-        try {
-            localStorage.setItem(backupKey, JSON.stringify(data));
-            
-            const backupKeys = Object.keys(localStorage).filter(key => key.startsWith('backup_'));
-            if (backupKeys.length > 5) {
-                backupKeys.sort();
-                localStorage.removeItem(backupKeys[0]);
-            }
-        } catch (error) {
-            console.warn('Could not create backup due to storage limitations');
-        }
-    }
-
-    // Check-in Section Methods
-    showCheckinSection() {
-        document.getElementById('roster-section').classList.add('hidden');
-        document.getElementById('measurement-form').classList.add('hidden');
-        document.getElementById('spreadsheet-view').classList.add('hidden');
-        document.getElementById('checkin-section').classList.remove('hidden');
-        this.renderCheckinGrid();
-        this.logActivity('CHECKIN_VIEW_OPENED');
-    }
-
-    toggleCheckinEditMode() {
-        this.checkinEditMode = !this.checkinEditMode;
-        const button = document.getElementById('toggle-checkin-edit');
-        if (this.checkinEditMode) {
-            button.textContent = '📝 Edit Mode: ON';
-            button.classList.add('edit-active');
-        } else {
-            button.textContent = '📝 Edit Mode: OFF';
-            button.classList.remove('edit-active');
-        }
-        this.renderCheckinGrid();
-        this.logActivity('CHECKIN_EDIT_MODE_TOGGLED', { editMode: this.checkinEditMode });
-    }
-
-    renderCheckinGrid() {
-        const grid = document.getElementById('checkin-grid');
-        if (!grid) return;
-
-        grid.innerHTML = this.roster.map(person => {
-            const personId = person.id || person.name;
-            const sourceLabel = person.source === 'added' ? 'Added' : 'Roster';
-            const sourceBadgeClass = person.source === 'added' ? 'added' : 'roster';
-            
-            let genderEdit = '';
-            if (this.checkinEditMode) {
-                genderEdit = `
-                    <div class="checkin-gender-edit">
-                        <select onchange="app.updatePersonGender('${this.escapeHtml(personId)}', this.value)">
-                            <option value="M" ${person.gender === 'M' ? 'selected' : ''}>Male</option>
-                            <option value="F" ${person.gender === 'F' ? 'selected' : ''}>Female</option>
-                            <option value="Other" ${person.gender === 'Other' ? 'selected' : ''}>Other</option>
-                        </select>
-                    </div>
-                `;
-            }
-
-            return `
-                <div class="checkin-item ${person.present ? 'present' : ''}" 
-                     onclick="app.togglePersonPresence('${this.escapeHtml(personId)}')">
-                    <div class="checkin-person-info">
-                        <h4>${this.escapeHtml(person.name)}</h4>
-                        <p>ID: ${person.id || 'N/A'}</p>
-                        <p>Gender: ${person.gender}</p>
-                        <span class="source-badge ${sourceBadgeClass}">${sourceLabel}</span>
-                        ${genderEdit}
-                    </div>
-                    <div class="checkin-status">
-                        ${person.present ? '✓' : '○'}
-                    </div>
-                </div>
-            `;
-        }).join('');
-    }
-
-    togglePersonPresence(personId) {
-        const person = this.roster.find(p => (p.id || p.name) === personId);
-        if (person) {
-            person.present = !person.present;
-            this.saveState();
-            this.renderCheckinGrid();
-            this.logActivity('PRESENCE_TOGGLED', { 
-                person: person.name, 
-                present: person.present 
-            });
-            
-            const status = person.present ? 'checked in' : 'checked out';
-            this.showToast(`${person.name} ${status}`, 'success');
-        }
-    }
-
-    updatePersonGender(personId, newGender) {
-        const person = this.roster.find(p => (p.id || p.name) === personId);
-        if (person) {
-            const oldGender = person.gender;
-            person.gender = newGender;
-            this.saveState();
-            this.logActivity('GENDER_UPDATED', { 
-                person: person.name, 
-                oldGender: oldGender,
-                newGender: newGender 
-            });
-            this.showToast(`Updated gender for ${person.name}`, 'success');
-        }
-    }
-
-    showSetupScreen() {
-        const operatorName = document.getElementById('operator-name').value.trim();
-        const eventName = document.getElementById('event-name').value.trim();
-        const hasRoster = this.roster.length > 0;
-        
-        // Detailed validation with specific error messages
-        if (!operatorName) {
-            this.showToast('Please enter the operator name first', 'warning');
-            document.getElementById('operator-name').focus();
-            return;
-        }
-        
-        if (!eventName) {
-            this.showToast('Please enter the event name first', 'warning');
-            document.getElementById('event-name').focus();
-            return;
-        }
-        
-        if (!hasRoster) {
-            this.showToast('Please upload a roster CSV file first', 'warning');
-            document.getElementById('roster-upload').focus();
-            return;
-        }
-        
-        // All validations passed, proceed to setup screen
-        document.querySelectorAll('.screen').forEach(screen => screen.classList.remove('active'));
-        document.getElementById('setup-screen').classList.add('active');
-        
-        // Load saved settings if they exist
-        this.loadSetupSettings();
-        this.logActivity('SETUP_SCREEN_OPENED');
-    }
-
-    loadSetupSettings() {
-        // Load measurement units
-        Object.keys(this.measurementUnits).forEach(measurement => {
-            const element = document.getElementById(`${measurement}-unit`);
-            if (element) {
-                element.value = this.measurementUnits[measurement];
-            }
-        });
-
-        // Load adjustments
-        Object.keys(this.adjustments).forEach(measurement => {
-            ['M', 'F'].forEach(gender => {
-                const element = document.getElementById(`adj-${measurement.replace('_', '-')}-${gender}`);
-                if (element) {
-                    element.value = this.adjustments[measurement][gender];
-                }
-            });
-        });
-
-        // Update unit displays in measurement form
-        this.updateMeasurementUnitDisplays();
-    }
-
-    saveSetupSettings() {
-        // Save measurement units
-        Object.keys(this.measurementUnits).forEach(measurement => {
-            const element = document.getElementById(`${measurement}-unit`);
-            if (element) {
-                this.measurementUnits[measurement] = element.value;
-            }
-        });
-
-        // Save adjustments
-        Object.keys(this.adjustments).forEach(measurement => {
-            ['M', 'F'].forEach(gender => {
-                const element = document.getElementById(`adj-${measurement.replace('_', '-')}-${gender}`);
-                if (element) {
-                    this.adjustments[measurement][gender] = parseFloat(element.value) || 0;
-                }
-            });
-        });
-
-        this.saveState();
-        this.logActivity('SETUP_SETTINGS_SAVED', { 
-            units: this.measurementUnits, 
-            adjustments: this.adjustments 
-        });
-    }
-
-    updateMeasurementUnitDisplays() {
-        // Update unit displays in measurement form
-        const unitMappings = {
-            'height-unit-display': this.measurementUnits.height,
-            'height-unit-display-2': this.measurementUnits.height,
-            'reach-unit-display': this.measurementUnits.reach,
-            'wingspan-unit-display': this.measurementUnits.wingspan,
-            'vertical-unit-display': this.measurementUnits.vertical,
-            'approach-unit-display': this.measurementUnits.approach,
-            'broad-unit-display': this.measurementUnits.broad
-        };
-
-        Object.entries(unitMappings).forEach(([elementId, unit]) => {
-            const element = document.getElementById(elementId);
-            if (element) {
-                element.textContent = `(${unit})`;
-            }
-        });
-    }
-
-    getAdjustedMeasurementValue(measurement, measurementType, gender) {
-        const data = measurement[measurementType];
-        if (!data || !data.value) return null;
-        
-        const unit = this.getMeasurementUnit(measurementType);
-        const valueInInches = this.convertToInches(data.value, data.unit || unit);
-        const adjustmentValue = this.adjustments[measurementType] ? this.adjustments[measurementType][gender] || 0 : 0;
-        const overrideValue = measurement[`${measurementType}_override`] || 0;
-        
-        const rawAdjusted = overrideValue !== 0 ? 
-            valueInInches + overrideValue : 
-            valueInInches + adjustmentValue;
-            
-        // Apply rounding based on measurement type
-        return this.roundMeasurement(rawAdjusted, measurementType);
-    }
-
-    roundMeasurement(value, measurementType) {
-        // Anthro measurements (height, reach, wingspan, weight, hand sizes) - round to 0.25 inch
-        const anthroTypes = ['height_shoes', 'height_no_shoes', 'reach', 'wingspan', 'weight', 'hand_length', 'hand_width'];
-        // Vertical and approach - round to 0.5 inch
-        const jumpTypes = ['vertical', 'approach'];
-        
-        if (anthroTypes.includes(measurementType)) {
-            return Math.round(value * 4) / 4; // Round to nearest 0.25
-        } else if (jumpTypes.includes(measurementType)) {
-            return Math.round(value * 2) / 2; // Round to nearest 0.5
-        } else {
-            return Math.round(value * 100) / 100; // Default: round to 0.01 (broad jump)
-        }
-    }
-
-    getAnthrosCompletedStatus(personId) {
-        const measurement = this.measurements.get(personId) || {};
-        const anthroTypes = ['height_shoes', 'height_no_shoes', 'reach', 'wingspan', 'weight', 'hand_length', 'hand_width'];
-        const completed = anthroTypes.filter(type => measurement[type] && measurement[type].value).length;
-        return `${completed}/${anthroTypes.length}`;
-    }
-
-    getMeasuresCompletedStatus(personId) {
-        const measurement = this.measurements.get(personId) || {};
-        const measureTypes = ['vertical', 'approach', 'broad'];
-        const completed = measureTypes.filter(type => measurement[type] && measurement[type].value).length;
-        return `${completed}/${measureTypes.length}`;
-    }
-
-    // Station View Methods
-    switchView() {
-        const viewMode = document.getElementById('view-mode').value;
-        this.currentView = viewMode;
-        
-        if (viewMode === 'station') {
-            this.showStationView();
-        } else {
-            this.showAthleteView();
-        }
-        
-        this.saveState();
-    }
-
-    showStationView() {
-        document.getElementById('roster-section').classList.add('hidden');
-        document.getElementById('measurement-form').classList.add('hidden');
-        document.getElementById('station-view').classList.remove('hidden');
-        
-        // Initialize station if not set
-        if (!this.currentStation) {
-            this.currentStation = 'height-shoes';
-            document.getElementById('station-select').value = this.currentStation;
-        }
-        
-        this.selectStation();
-        this.renderStationRoster();
-        this.logActivity('STATION_VIEW_OPENED', { station: this.currentStation });
-    }
-
-    showAthleteView() {
-        document.getElementById('station-view').classList.add('hidden');
-        document.getElementById('roster-section').classList.remove('hidden');
-        document.getElementById('view-mode').value = 'athlete';
-        this.currentView = 'athlete';
-        this.selectedPersonInStation = null;
-        this.logActivity('ATHLETE_VIEW_OPENED');
-    }
-
-    selectStation() {
-        const newStation = document.getElementById('station-select').value;
-        
-        // Check if there's unsaved data in current station
-        if (this.currentStation && this.selectedPersonInStation && this.hasUnsavedStationData()) {
-            if (!confirm(`You have unsaved data for ${this.currentStation}. Do you want to change to ${newStation} and lose this data?`)) {
-                // Revert the dropdown selection
-                document.getElementById('station-select').value = this.currentStation;
-                return;
-            }
-        }
-        
-        this.currentStation = newStation;
-        this.selectedPersonInStation = null;
-        
-        // Update station measurement form
-        this.updateStationMeasurementForm();
-        this.renderStationRoster();
         
         this.logActivity('STATION_SELECTED', { station: this.currentStation });
     }
 
-    hasUnsavedStationData() {
-        const value1 = document.getElementById('station-value-1').value.trim();
-        const value2 = document.getElementById('station-value-2').value.trim();
-        const override = document.getElementById('station-override').value.trim();
+    filterStationRoster(event) {
+        const filter = event.target.value.toLowerCase();
+        const grid = document.getElementById('station-roster-grid');
         
-        return value1 !== '' || value2 !== '' || override !== '';
+        if (!grid) return;
+        
+        grid.querySelectorAll('.station-person-card').forEach(card => {
+            const name = card.querySelector('.person-name').textContent.toLowerCase();
+            const number = card.querySelector('.person-number').textContent.toLowerCase();
+            
+            if (name.includes(filter) || number.includes(filter)) {
+                card.style.display = 'block';
+            } else {
+                card.style.display = 'none';
+            }
+        });
     }
 
-    updateStationMeasurementForm() {
-        const stationLabels = {
-            'height-shoes': `Height with Shoes (${this.getMeasurementUnit('height')})`,
-            'height-no-shoes': `Height without Shoes (${this.getMeasurementUnit('height')})`,
-            'reach': `Reach (${this.getMeasurementUnit('reach')})`,
-            'wingspan': `Wingspan (${this.getMeasurementUnit('wingspan')})`,
-            'weight': 'Weight (lbs)',
-            'hand-length': 'Hand Length (inches)',
-            'hand-width': 'Hand Width (inches)',
-            'vertical': `Vertical Jump (${this.getMeasurementUnit('vertical')})`,
-            'approach': `Approach Jump (${this.getMeasurementUnit('approach')})`,
-            'broad': `Broad Jump (${this.getMeasurementUnit('broad')})`
-        };
+    saveStationMeasurement() {
+        if (!this.selectedPersonInStation || !this.currentStation) {
+            this.showToast('Please select a person and station', 'error');
+            return;
+        }
 
-        document.getElementById('station-measurement-label').textContent = stationLabels[this.currentStation] || '';
-        
+        const value1 = parseFloat(document.getElementById('station-value-1').value);
+        const value2 = parseFloat(document.getElementById('station-value-2').value);
+        const override = parseFloat(document.getElementById('station-override').value) || 0;
+
+        if (isNaN(value1) || isNaN(value2)) {
+            this.showToast('Please enter valid measurements', 'error');
+            return;
+        }
+
+        if (Math.abs(value1 - value2) > 1) {
+            this.showToast('Measurements differ by more than 1 unit', 'error');
+            return;
+        }
+
+        const average = (value1 + value2) / 2;
+        const finalValue = average + override;
+
+        // Save measurement
+        const measurementKey = `${this.selectedPersonInStation.id}_${this.currentStation}`;
+        this.measurements.set(measurementKey, {
+            personId: this.selectedPersonInStation.id,
+            measurement: this.currentStation,
+            value1: value1,
+            value2: value2,
+            average: average,
+            adjustment: override,
+            finalValue: finalValue,
+            timestamp: new Date().toISOString(),
+            operator: this.currentOperator,
+            event: this.currentEvent,
+            device: this.deviceId
+        });
+
         // Clear inputs
         document.getElementById('station-value-1').value = '';
         document.getElementById('station-value-2').value = '';
         document.getElementById('station-override').value = '';
         document.getElementById('station-display-value').textContent = '';
-        
-        // Hide inputs until person is selected
-        document.getElementById('station-measurement-inputs').classList.add('hidden');
-        document.getElementById('station-person-name').textContent = 'Select a person';
-    }
 
-    renderStationRoster() {
-        const container = document.getElementById('station-roster-grid');
-        container.innerHTML = '';
-        
-        // Apply search filter
-        const searchTerm = document.getElementById('station-name-filter').value.toLowerCase();
-        const filteredRoster = this.roster.filter(person => 
-            person.name.toLowerCase().includes(searchTerm)
-        );
-
-        // Sort roster: incomplete measurements first, then alphabetically
-        filteredRoster.sort((a, b) => {
-            const aHasMeasurement = this.hasMeasurement(a.id || a.name, this.currentStation);
-            const bHasMeasurement = this.hasMeasurement(b.id || b.name, this.currentStation);
-            
-            if (aHasMeasurement !== bHasMeasurement) {
-                return aHasMeasurement ? 1 : -1;
-            }
-            return a.name.localeCompare(b.name);
-        });
-
-        filteredRoster.forEach(person => {
-            const personId = person.id || person.name;
-            const hasMeasurement = this.hasMeasurement(personId, this.currentStation);
-            
-            const item = document.createElement('div');
-            item.className = 'station-roster-item';
-            if (hasMeasurement) item.classList.add('completed');
-            if (this.selectedPersonInStation === personId) item.classList.add('selected');
-            
-            const statusClass = person.present ? 'present' : 'absent';
-            const statusText = person.present ? 'Present' : 'Absent';
-            
-            // Include ID after name to prevent confusion with identical names
-            const displayName = person.id ? `${person.name} (ID: ${person.id})` : person.name;
-            
-            item.innerHTML = `
-                <span>${displayName}</span>
-                <span class="roster-status ${statusClass}">${statusText}</span>
-            `;
-            
-            item.addEventListener('click', () => this.selectPersonInStation(personId, person.name));
-            container.appendChild(item);
-        });
-    }
-
-    hasMeasurement(personId, measurementType) {
-        const measurements = this.measurements.get(personId);
-        if (!measurements) return false;
-        
-        const key = measurementType.replace('-', '_');
-        return measurements[key] && measurements[key].value !== undefined && measurements[key].value !== '';
-    }
-
-    selectPersonInStation(personId, personName) {
-        this.selectedPersonInStation = personId;
-        
-        // Update UI
-        document.getElementById('station-person-name').textContent = personName;
-        document.getElementById('station-measurement-inputs').classList.remove('hidden');
-        
-        // Load existing measurement if any
-        this.loadStationMeasurement();
-        
-        // Re-render roster to show selection
-        this.renderStationRoster();
-        
-        this.logActivity('STATION_PERSON_SELECTED', { 
-            person: personName, 
-            station: this.currentStation 
-        });
-    }
-
-    loadStationMeasurement() {
-        if (!this.selectedPersonInStation) return;
-        
-        const measurements = this.measurements.get(this.selectedPersonInStation) || {};
-        const key = this.currentStation.replace('-', '_');
-        const measurementData = measurements[key];
-        
-        if (measurementData) {
-            // Load values - since they must match in our system, use the same value for both
-            document.getElementById('station-value-1').value = measurementData.value || '';
-            document.getElementById('station-value-2').value = measurementData.value || '';
-            document.getElementById('station-override').value = measurementData.adjustmentOverride || '';
-        } else {
-            // Clear values if no measurement exists
-            document.getElementById('station-value-1').value = '';
-            document.getElementById('station-value-2').value = '';
-            document.getElementById('station-override').value = '';
-        }
-        
         // Update display
-        this.updateStationDisplay();
+        this.updateStationPersonCard(this.selectedPersonInStation);
+        
+        this.logActivity('MEASUREMENT_SAVED', {
+            personId: this.selectedPersonInStation.id,
+            measurement: this.currentStation,
+            value: finalValue
+        });
+
+        this.showToast(`${this.currentStation.replace('-', ' ')} saved successfully!`, 'success');
+        this.saveState();
     }
 
     updateStationDisplay() {
         const value1 = parseFloat(document.getElementById('station-value-1').value);
         const value2 = parseFloat(document.getElementById('station-value-2').value);
         const override = parseFloat(document.getElementById('station-override').value) || 0;
-        
-        if (isNaN(value1) || isNaN(value2)) {
-            document.getElementById('station-display-value').textContent = '';
-            return;
-        }
-        
-        if (Math.abs(value1 - value2) > 0.5) {
-            document.getElementById('station-display-value').textContent = 'Values differ by more than 0.5';
-            document.getElementById('station-display-value').style.color = 'red';
-            return;
-        }
-        
-        const person = this.roster.find(p => (p.id || p.name) === this.selectedPersonInStation);
-        const gender = person ? person.gender : 'M';
-        const measurementType = this.currentStation;
-        
-        // Calculate adjusted value
-        const avgValue = (value1 + value2) / 2;
-        const adjustmentValue = this.adjustments[measurementType] ? this.adjustments[measurementType][gender] || 0 : 0;
-        const finalAdjustment = override !== 0 ? override : adjustmentValue;
-        const adjustedValue = avgValue + finalAdjustment;
-        
-        // Display format
-        let displayText = `Avg: ${avgValue.toFixed(2)}`;
-        if (finalAdjustment !== 0) {
-            displayText += ` + ${finalAdjustment.toFixed(1)} = ${adjustedValue.toFixed(2)}`;
-        }
-        
-        // Add feet/inches display for applicable measurements
-        if (['height-shoes', 'height-no-shoes', 'reach', 'wingspan'].includes(measurementType)) {
-            const inInches = this.convertToInches(adjustedValue, this.getMeasurementUnit(measurementType.replace('-', '_')));
-            displayText += `\n(${this.inchesToFeetAndInches(inInches)})`;
-        }
-        
-        document.getElementById('station-display-value').textContent = displayText;
-        document.getElementById('station-display-value').style.color = '#333';
-    }
 
-    saveStationMeasurement() {
-        if (!this.selectedPersonInStation) return;
-        
-        const value1 = parseFloat(document.getElementById('station-value-1').value);
-        const value2 = parseFloat(document.getElementById('station-value-2').value);
-        const override = parseFloat(document.getElementById('station-override').value) || 0;
-        
-        if (isNaN(value1) || isNaN(value2)) {
-            this.showToast('Please enter both measurement values', 'error');
-            return;
-        }
-        
-        if (Math.abs(value1 - value2) > 0.5) {
-            this.showToast('Values differ by more than 0.5 - please verify', 'warning');
-            return;
-        }
-        
-        // Save the measurement using existing logic
-        this.saveIndividualMeasurement(this.currentStation);
-        
-        // Clear form and move to next person
-        this.clearStationForm();
-        this.moveToNextPerson();
-        
-        this.showToast('Measurement saved successfully!', 'success');
-    }
-
-    clearStationForm() {
-        document.getElementById('station-value-1').value = '';
-        document.getElementById('station-value-2').value = '';
-        document.getElementById('station-override').value = '';
-        document.getElementById('station-display-value').textContent = '';
-    }
-
-    moveToNextPerson() {
-        // Find next person without this measurement
-        const currentIndex = this.roster.findIndex(p => (p.id || p.name) === this.selectedPersonInStation);
-        
-        for (let i = 1; i < this.roster.length; i++) {
-            const nextIndex = (currentIndex + i) % this.roster.length;
-            const nextPerson = this.roster[nextIndex];
-            const nextPersonId = nextPerson.id || nextPerson.name;
+        if (!isNaN(value1) && !isNaN(value2)) {
+            const average = (value1 + value2) / 2;
+            const finalValue = average + override;
+            const unit = this.measurementUnits[this.currentStation] || '';
             
-            if (!this.hasMeasurement(nextPersonId, this.currentStation)) {
-                this.selectPersonInStation(nextPersonId, nextPerson.name);
-                return;
+            document.getElementById('station-display-value').textContent = 
+                `Average: ${average.toFixed(2)} + ${override.toFixed(2)} = ${finalValue.toFixed(2)} ${unit}`;
+        } else {
+            document.getElementById('station-display-value').textContent = '';
+        }
+    }
+
+    loadStationMeasurement() {
+        if (!this.selectedPersonInStation || !this.currentStation) return;
+
+        const measurementKey = `${this.selectedPersonInStation.id}_${this.currentStation}`;
+        const measurement = this.measurements.get(measurementKey);
+
+        if (measurement) {
+            document.getElementById('station-value-1').value = measurement.value1;
+            document.getElementById('station-value-2').value = measurement.value2;
+            document.getElementById('station-override').value = measurement.adjustment || 0;
+            this.updateStationDisplay();
+        } else {
+            // Clear inputs for new measurement
+            document.getElementById('station-value-1').value = '';
+            document.getElementById('station-value-2').value = '';
+            document.getElementById('station-override').value = '';
+            document.getElementById('station-display-value').textContent = '';
+        }
+    }
+
+    updateStationPersonCard(person) {
+        // Update the visual indicator on the person card to show measurement status
+        const card = document.querySelector(`[data-person-id="${person.id}"]`);
+        if (card && this.currentStation) {
+            const measurementKey = `${person.id}_${this.currentStation}`;
+            const hasMeasurement = this.measurements.has(measurementKey);
+            
+            if (hasMeasurement) {
+                card.classList.add('has-measurement');
+            } else {
+                card.classList.remove('has-measurement');
             }
         }
-        
-        // If all have measurements, just select the next person
-        if (this.roster.length > 1) {
-            const nextIndex = (currentIndex + 1) % this.roster.length;
-            const nextPerson = this.roster[nextIndex];
-            this.selectPersonInStation(nextPerson.id || nextPerson.name, nextPerson.name);
-        }
     }
 
-    filterStationRoster() {
-        this.renderStationRoster();
-    }
+    // Station Roster Methods
+    renderStationRoster() {
+        const grid = document.getElementById('station-roster-grid');
+        if (!grid) return;
 
-    // Override saveIndividualMeasurement to work with station inputs
-    saveIndividualMeasurement(measurementType) {
-        let personId, value1, value2, override;
-        
-        if (this.currentView === 'station' && this.selectedPersonInStation) {
-            // Station view inputs
-            personId = this.selectedPersonInStation;
-            value1 = parseFloat(document.getElementById('station-value-1').value);
-            value2 = parseFloat(document.getElementById('station-value-2').value);
-            override = parseFloat(document.getElementById('station-override').value) || 0;
-        } else {
-            // Athlete view inputs
-            personId = this.currentPersonId;
-            value1 = parseFloat(document.getElementById(`${measurementType}-1`).value);
-            value2 = parseFloat(document.getElementById(`${measurementType}-2`).value);
-            override = parseFloat(document.getElementById(`${measurementType}-override`).value) || 0;
-        }
-        
-        if (!personId) {
-            this.showToast('No person selected', 'error');
-            return;
-        }
-        
-        const person = this.roster.find(p => (p.id || p.name) === personId);
-        if (!person) {
-            this.showToast('Person not found', 'error');
-            return;
-        }
-        
-        // Validation
-        if (isNaN(value1) || isNaN(value2)) {
-            this.showToast('Please enter both measurement values', 'error');
-            return;
-        }
-        
-        if (Math.abs(value1 - value2) >= 0.01) {
-            this.showToast(`${measurementType.replace('-', ' ')} values do not match`, 'error');
-            return;
-        }
-        
-        // Get unit from setup settings
-        const unit = this.getMeasurementUnit(measurementType);
-        
-        // Get or create measurement data using same format as original method
-        let measurementData = this.measurements.get(personId) || {
-            timestamp: new Date().toISOString(),
-            operator: this.currentOperator,
-            device: this.deviceId,
-            comments: this.currentView === 'station' ? '' : (document.getElementById('comments').value || '')
-        };
+        grid.innerHTML = '';
 
-        // Calculate adjustments
-        const key = measurementType.replace('-', '_');
-        const baseAdjustment = this.adjustments[key] ? this.adjustments[key][person.gender] || 0 : 0;
-        const finalAdjustment = override !== 0 ? override : baseAdjustment;
-        const adjustedValue = value1 + finalAdjustment;
+        this.roster.forEach(person => {
+            const card = document.createElement('div');
+            card.className = 'station_person-card';
+            card.setAttribute('data-person-id', person.id);
+            
+            card.innerHTML = `
+                <div class="person-name">${person.last_name}, ${person.first_name}</div>
+                <div class="person-number">#${person.number || 'N/A'}</div>
+                <div class="person-details">${person.position || ''} | ${person.class || ''}</div>
+            `;
 
-        // Update the specific measurement using same format as original
-        measurementData[key] = {
-            value: value1,
-            unit: unit,
-            adjustment: baseAdjustment,
-            adjustmentOverride: override,
-            adjustedValue: adjustedValue
-        };
+            card.addEventListener('click', () => this.selectStationPerson(person));
+            grid.appendChild(card);
 
-        // Update measurements and person status
-        this.measurements.set(personId, measurementData);
-        
-        // No longer setting person.completed - allowing re-entry
-
-        // Update display
-        if (this.currentView === 'station') {
-            this.updateStationDisplay();
-            this.renderStationRoster();
-        } else {
-            this.renderRoster();
-        }
-        
-        // Save state and log activity
-        this.saveState();
-        this.logActivity('MEASUREMENT_SAVED', {
-            person: person.name,
-            measurement: measurementType,
-            value1: value1,
-            value2: value1, // Since they must match
-            override: override,
-            adjusted: adjustedValue,
-            view: this.currentView
+            // Update measurement status if station is selected
+            if (this.currentStation) {
+                this.updateStationPersonCard(person);
+            }
         });
+    }
+
+    selectStationPerson(person) {
+        // Clear previous selection
+        document.querySelectorAll('.station-person-card').forEach(card => {
+            card.classList.remove('selected');
+        });
+
+        // Select new person
+        this.selectedPersonInStation = person;
+        const card = document.querySelector(`[data-person-id="${person.id}"]`);
+        if (card) {
+            card.classList.add('selected');
+        }
+
+        // Update UI
+        document.getElementById('station-person-name').textContent = `${person.first_name} ${person.last_name}`;
+
+        // Show measurement inputs if station is selected
+        if (this.currentStation) {
+            document.getElementById('station-measurement-inputs').classList.remove('hidden');
+            this.loadStationMeasurement();
+        }
+
+        this.logActivity('STATION_PERSON_SELECTED', { personId: person.id });
+    }
+
+    // View switching methods
+    showStationView() {
+        this.currentView = 'station';
+        document.getElementById('athlete-view').classList.add('hidden');
+        document.getElementById('station-view').classList.remove('hidden');
         
-        this.showToast(`${measurementType.replace('-', ' ')} saved!`, 'success');
+        // Render roster for station view
+        this.renderStationRoster();
+        
+        this.logActivity('STATION_VIEW_OPENED');
+    }
+
+    showAthleteView() {
+        this.currentView = 'athlete';
+        document.getElementById('station-view').classList.add('hidden');
+        document.getElementById('athlete-view').classList.remove('hidden');
+        
+        this.logActivity('ATHLETE_VIEW_OPENED');
+    }
+
+    switchView(event) {
+        const selectedView = event.target.value;
+        
+        if (selectedView === 'station') {
+            this.showStationView();
+        } else {
+            this.showAthleteView();
+        }
     }
 }
-
-// Initialize app when DOM is loaded
-let app;
-document.addEventListener('DOMContentLoaded', () => {
-    app = new ManualEntryApp();
-});
-
-// Handle page visibility changes to save state
-document.addEventListener('visibilitychange', () => {
-    if (app && document.visibilityState === 'hidden') {
-        app.saveState();
-    }
-});
-
-// Handle beforeunload to save state
-window.addEventListener('beforeunload', () => {
-    if (app) {
-        app.saveState();
-    }
-});

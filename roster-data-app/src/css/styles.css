@@ -1261,52 +1261,290 @@ header {
     margin: 20px 0;
 }
 
-/* Responsive Design for Station View */
+/* 10-Key Layout Styles */
+.tenkey-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.tenkey-modal.hidden {
+    display: none;
+}
+
+.tenkey-container {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    max-width: 400px;
+    width: 90%;
+}
+
+.tenkey-header {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.tenkey-title {
+    font-size: 1.2em;
+    font-weight: bold;
+    margin: 0 0 10px 0;
+    color: #333;
+}
+
+.tenkey-display {
+    margin-bottom: 15px;
+}
+
+.tenkey-display-input {
+    width: 100%;
+    padding: 12px;
+    font-size: 1.5em;
+    text-align: center;
+    border: 2px solid #ddd;
+    border-radius: 6px;
+    background: #f9f9f9;
+    margin-bottom: 8px;
+}
+
+.tenkey-status {
+    text-align: center;
+    font-size: 0.9em;
+    color: #666;
+    margin-bottom: 5px;
+}
+
+.tenkey-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8em;
+    color: #888;
+}
+
+.tenkey-confirm-label.hidden,
+.tenkey-field-label.hidden {
+    display: none;
+}
+
+.tenkey-keypad {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.tenkey-btn {
+    padding: 15px;
+    font-size: 1.2em;
+    font-weight: bold;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    background: white;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.tenkey-btn:hover {
+    background: #f0f0f0;
+    border-color: #007acc;
+    transform: translateY(-1px);
+}
+
+.tenkey-btn:active {
+    transform: translateY(0);
+    background: #e0e0e0;
+}
+
+.tenkey-number {
+    background: #f8f9fa;
+}
+
+.tenkey-number:hover {
+    background: #e9ecef;
+    border-color: #007acc;
+}
+
+.tenkey-action {
+    background: #fff3cd;
+    border-color: #ffc107;
+    color: #856404;
+}
+
+.tenkey-action:hover {
+    background: #ffeaa7;
+    border-color: #e6ac00;
+}
+
+.tenkey-zero {
+    grid-column: span 2;
+}
+
+.tenkey-controls {
+    display: flex;
+    gap: 10px;
+    justify-content: space-between;
+}
+
+.tenkey-controls button {
+    flex: 1;
+    padding: 12px;
+    font-size: 1em;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.tenkey-save {
+    background: #28a745;
+    color: white;
+}
+
+.tenkey-save:hover {
+    background: #218838;
+}
+
+.tenkey-save.hidden {
+    display: none;
+}
+
+.tenkey-cancel,
+.tenkey-close {
+    background: #6c757d;
+    color: white;
+}
+
+.tenkey-cancel:hover,
+.tenkey-close:hover {
+    background: #545b62;
+}
+
+/* 10-Key Trigger Button */
+.tenkey-trigger-btn {
+    background: #007acc;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 8px 12px;
+    font-size: 1.2em;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-left: 5px;
+}
+
+.tenkey-trigger-btn:hover {
+    background: #005999;
+    transform: scale(1.05);
+}
+
+.tenkey-trigger-btn:active {
+    transform: scale(0.95);
+}
+
+/* Station Person Card Styles */
+.station-person-card {
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    padding: 12px;
+    margin: 5px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: white;
+}
+
+.station-person-card:hover {
+    border-color: #007acc;
+    box-shadow: 0 2px 8px rgba(0, 122, 204, 0.2);
+}
+
+.station-person-card.selected {
+    border-color: #007acc;
+    background: #f0f8ff;
+    box-shadow: 0 2px 8px rgba(0, 122, 204, 0.3);
+}
+
+.station-person-card.has-measurement {
+    border-left: 5px solid #28a745;
+    background: #f8fff8;
+}
+
+.station-person-card.has-measurement.selected {
+    border-color: #007acc;
+    border-left-color: #28a745;
+    background: #f0f8ff;
+}
+
+.person-name {
+    font-weight: bold;
+    font-size: 1.1em;
+    color: #333;
+    margin-bottom: 4px;
+}
+
+.person-number {
+    color: #666;
+    font-size: 0.9em;
+    margin-bottom: 4px;
+}
+
+.person-details {
+    font-size: 0.8em;
+    color: #888;
+}
+
+/* Station Layout Improvements */
+.station-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.station-roster {
+    max-height: 600px;
+    overflow-y: auto;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 10px;
+}
+
+.station-measurement {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 20px;
+    background: #f9f9f9;
+}
+
+/* Responsive adjustments for station view */
 @media (max-width: 768px) {
     .station-layout {
         grid-template-columns: 1fr;
-        gap: 15px;
     }
     
-    .station-measurement {
-        order: -1;
+    .tenkey-container {
+        width: 95%;
+        padding: 15px;
     }
     
-    .station-header {
-        flex-direction: column;
-        gap: 15px;
-        align-items: stretch;
+    .tenkey-keypad {
+        gap: 8px;
     }
     
-    .station-controls {
-        justify-content: center;
-    }
-    
-    /* Fix view mode controls on iPad mini portrait */
-    .roster-controls {
-        flex-wrap: wrap;
-        gap: 10px;
-    }
-    
-    .view-mode-controls {
-        margin-left: 0;
-        order: -1;
-        width: 100%;
-        justify-content: center;
-        margin-bottom: 10px;
-    }
-}
-
-/* iPad mini portrait specific fixes */
-@media (max-width: 820px) and (orientation: portrait) {
-    .view-mode-controls {
-        margin-left: 0;
-        margin-right: 0;
-        flex: 1;
-        min-width: 180px;
-    }
-    
-    .view-mode-controls select {
-        min-width: 120px;
+    .tenkey-btn {
+        padding: 12px;
+        min-height: 45px;
+        font-size: 1.1em;
     }
 }
