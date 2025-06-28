@@ -525,21 +525,24 @@ class ManualEntryApp {
     }
 
     bind10KeyTriggers() {
-        // Bind 10-key triggers for athlete view
-        document.querySelectorAll('.tenkey-trigger-btn[data-measurement]').forEach(button => {
+        // Bind 10-key triggers for athlete view - now primary buttons
+        document.querySelectorAll('.tenkey-primary-btn[data-measurement]').forEach(button => {
             button.addEventListener('click', (e) => {
-                const measurement = e.target.getAttribute('data-measurement');
+                const measurement = e.target.closest('.tenkey-primary-btn').getAttribute('data-measurement');
                 this.open10Key(measurement, 'athlete');
             });
         });
 
         // Bind 10-key trigger for station view
-        document.getElementById('station-tenkey-btn').addEventListener('click', () => {
-            const currentMeasurement = this.currentStationMeasurement;
-            if (currentMeasurement) {
-                this.open10Key(currentMeasurement, 'station');
-            }
-        });
+        const stationTenkeyBtn = document.getElementById('station-tenkey-btn');
+        if (stationTenkeyBtn) {
+            stationTenkeyBtn.addEventListener('click', () => {
+                const currentMeasurement = this.currentStationMeasurement;
+                if (currentMeasurement) {
+                    this.open10Key(currentMeasurement, 'station');
+                }
+            });
+        }
 
         // Bind 10-key modal controls
         this.bind10KeyControls();
@@ -729,23 +732,26 @@ class ManualEntryApp {
         const mode = this.tenKeyState.mode;
 
         if (mode === 'athlete') {
-            // Update athlete view inputs
-            document.getElementById(`${measurement}-1`).value = value;
-            document.getElementById(`${measurement}-2`).value = value;
-            
-            // Trigger save automatically
-            const saveBtn = document.querySelector(`[data-measurement="${measurement}"]`);
-            if (saveBtn && saveBtn.classList.contains('measurement-save-btn')) {
-                saveBtn.click();
+            // Update athlete view display
+            const displayElement = document.getElementById(`${measurement}-display`);
+            if (displayElement) {
+                displayElement.textContent = value.toFixed(2);
+                displayElement.classList.add('has-value');
             }
+            
+            // Auto-save the measurement
+            this.saveSingleMeasurement(measurement, value);
 
         } else if (mode === 'station') {
-            // Update station view inputs
-            document.getElementById('station-value-1').value = value;
-            document.getElementById('station-value-2').value = value;
+            // Update station view display
+            const displayElement = document.getElementById('station-value-display');
+            if (displayElement) {
+                displayElement.textContent = value.toFixed(2);
+                displayElement.classList.add('has-value');
+            }
             
-            // Trigger save automatically
-            document.getElementById('station-save-btn').click();
+            // Auto-save the station measurement
+            this.saveStationMeasurementFromValue(value);
         }
 
         this.close10Key();
@@ -1211,15 +1217,24 @@ class ManualEntryApp {
         const measurements = this.measurements.get(personId);
         
         if (measurements) {
-            // Load existing measurements into form inputs
+            // Load existing measurements into display elements
             Object.keys(measurements).forEach(key => {
                 if (key !== 'timestamp' && key !== 'operator' && key !== 'device' && key !== 'comments') {
                     const measurement = measurements[key];
                     if (measurement && typeof measurement === 'object' && measurement.value) {
-                        const input1 = document.getElementById(`${key}-1`);
-                        const input2 = document.getElementById(`${key}-2`);
-                        if (input1) input1.value = measurement.value;
-                        if (input2) input2.value = measurement.value;
+                        // Update display element
+                        const displayElement = document.getElementById(`${key}-display`);
+                        if (displayElement) {
+                            displayElement.textContent = measurement.value.toFixed(2);
+                            displayElement.classList.add('has-value');
+                        }
+                    } else if (key.endsWith('_override')) {
+                        // Load override values
+                        const baseKey = key.replace('_override', '');
+                        const overrideInput = document.getElementById(`${baseKey}-override`);
+                        if (overrideInput) {
+                            overrideInput.value = measurements[key] || '';
+                        }
                     }
                 }
             });
@@ -1228,6 +1243,27 @@ class ManualEntryApp {
             const commentsField = document.getElementById('comments');
             if (commentsField && measurements.comments) {
                 commentsField.value = measurements.comments;
+            }
+        } else {
+            // Clear all display elements for new person
+            const measurementTypes = ['height-shoes', 'height-no-shoes', 'reach', 'wingspan', 'weight', 'hand-length', 'hand-width', 'vertical', 'approach', 'broad'];
+            measurementTypes.forEach(type => {
+                const displayElement = document.getElementById(`${type}-display`);
+                if (displayElement) {
+                    displayElement.textContent = '--';
+                    displayElement.classList.remove('has-value');
+                }
+                
+                const overrideInput = document.getElementById(`${type}-override`);
+                if (overrideInput) {
+                    overrideInput.value = '';
+                }
+            });
+            
+            // Clear comments
+            const commentsField = document.getElementById('comments');
+            if (commentsField) {
+                commentsField.value = '';
             }
         }
     }
@@ -1537,6 +1573,113 @@ class ManualEntryApp {
         if (measurementType.includes('hand')) return 'inches';
         
         return unitMap[measurementType] || 'inches';
+    }
+
+    saveSingleMeasurement(measurementType, value) {
+        if (!this.currentPersonId) {
+            this.showToast('No person selected', 'error');
+            return;
+        }
+
+        // Get the unit for this measurement type
+        const unit = this.getMeasurementUnit(measurementType);
+        
+        // Get or create measurement data for this person
+        let measurementData = this.measurements.get(this.currentPersonId) || {
+            timestamp: new Date().toISOString(),
+            operator: this.currentOperator,
+            device: this.deviceId,
+            comments: ''
+        };
+
+        // Store the measurement with both entries as the same value (10-key double entry)
+        measurementData[measurementType] = {
+            value: value,
+            unit: unit,
+            entry1: value,
+            entry2: value,
+            timestamp: new Date().toISOString()
+        };
+
+        // Get adjustment override if any
+        const overrideInput = document.getElementById(`${measurementType}-override`);
+        if (overrideInput && overrideInput.value) {
+            measurementData[`${measurementType}_override`] = parseFloat(overrideInput.value) || 0;
+        }
+
+        // Update measurements
+        this.measurements.set(this.currentPersonId, measurementData);
+        
+        // Update person status
+        const person = this.roster.find(p => (p.id || p.name) === this.currentPersonId);
+        if (person) {
+            // Update completion status based on measurements
+            this.updatePersonCompletionStatus(person);
+        }
+
+        // Save state and log activity
+        this.saveState();
+        this.logActivity('MEASUREMENT_SAVED_10KEY', {
+            person: this.currentPersonId,
+            measurement: measurementType,
+            value: value,
+            unit: unit
+        });
+
+        // Update the display to show saved status
+        this.updateMeasurementDisplayStatus(measurementType);
+    }
+
+    updateMeasurementDisplayStatus(measurementType) {
+        const displayElement = document.getElementById(`${measurementType}-display`);
+        const saveBtn = document.querySelector(`[data-measurement="${measurementType}"].measurement-save-btn`);
+        
+        if (displayElement && displayElement.classList.contains('has-value')) {
+            // Add visual feedback that measurement is saved
+            displayElement.style.background = 'rgba(40, 167, 69, 0.2)';
+            displayElement.style.color = '#155724';
+            
+            // Reset after a moment
+            setTimeout(() => {
+                displayElement.style.background = 'rgba(255, 255, 255, 0.25)';
+                displayElement.style.color = '#fff';
+            }, 2000);
+        }
+        
+        if (saveBtn) {
+            saveBtn.style.background = '#28a745';
+            saveBtn.innerHTML = '✅';
+            
+            // Reset after a moment
+            setTimeout(() => {
+                saveBtn.style.background = '#28a745';
+                saveBtn.innerHTML = '💾';
+            }, 2000);
+        }
+    }
+
+    updatePersonCompletionStatus(person) {
+        const personId = person.id || person.name;
+        const measurements = this.measurements.get(personId);
+        
+        if (measurements) {
+            // Check anthros completion (4 measurements)
+            const anthroTypes = ['height_shoes', 'height_no_shoes', 'reach', 'wingspan'];
+            const anthrosComplete = anthroTypes.filter(type => 
+                measurements[type] && measurements[type].value
+            ).length;
+            
+            // Check measures completion (3 measurements)
+            const measureTypes = ['vertical', 'approach', 'broad'];
+            const measuresComplete = measureTypes.filter(type => 
+                measurements[type] && measurements[type].value
+            ).length;
+            
+            // Update person status
+            person.anthrosComplete = anthrosComplete === 4;
+            person.measuresComplete = measuresComplete === 3;
+            person.completed = person.anthrosComplete && person.measuresComplete;
+        }
     }
 }
 
