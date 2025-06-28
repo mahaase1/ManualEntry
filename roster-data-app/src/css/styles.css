@@ -1351,23 +1351,28 @@ header {
 .tenkey-keypad {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 10px;
+    grid-template-rows: repeat(5, 1fr);
+    gap: 12px;
     margin-bottom: 20px;
+    width: 100%;
 }
 
 .tenkey-btn {
-    padding: 15px;
-    font-size: 1.2em;
+    padding: 18px;
+    font-size: 1.4em;
     font-weight: bold;
     border: 2px solid #ddd;
     border-radius: 8px;
     background: white;
     cursor: pointer;
     transition: all 0.2s ease;
-    min-height: 50px;
+    min-height: 60px;
     display: flex;
     align-items: center;
     justify-content: center;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent;
 }
 
 .tenkey-btn:hover {
@@ -1402,7 +1407,7 @@ header {
 }
 
 .tenkey-zero {
-    grid-column: span 2;
+    grid-column: span 1;
 }
 
 .tenkey-controls {
