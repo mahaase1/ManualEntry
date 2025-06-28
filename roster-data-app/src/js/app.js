@@ -947,8 +947,8 @@ class ManualEntryApp {
             
             card.innerHTML = `
                 <div class="person-name">${person.name || 'Unknown'}</div>
-                <div class="person-number">#${person.number || 'N/A'}</div>
-                <div class="person-details">${person.position || ''} | ${person.class || ''}</div>
+                <div class="person-number">ID: ${person.id || 'N/A'}</div>
+                <div class="person-details">${[person.position, person.class].filter(x => x).join(' | ') || 'No details'}</div>
             `;
 
             card.addEventListener('click', () => this.selectStationPerson(person));
@@ -1406,23 +1406,42 @@ class ManualEntryApp {
         document.querySelectorAll('.measurement-save-btn').forEach(button => {
             const handler = (e) => {
                 e.preventDefault();
+                e.stopPropagation();
                 const measurement = button.getAttribute('data-measurement');
+                console.log('Save button clicked for:', measurement); // Debug
                 this.saveSingleMeasurement(measurement);
             };
             button._saveHandler = handler;
             button.addEventListener('click', handler);
         });
+        
+        console.log('Bound', document.querySelectorAll('.measurement-save-btn').length, 'save buttons'); // Debug
     }
 
     saveSingleMeasurement(measurementType) {
+        console.log('saveSingleMeasurement called for:', measurementType, 'currentPersonId:', this.currentPersonId); // Debug
+        
         if (!this.currentPersonId) {
             this.showToast('Please select a person first', 'error');
             return;
         }
 
-        const value1 = parseFloat(document.getElementById(`${measurementType}-1`).value);
-        const value2 = parseFloat(document.getElementById(`${measurementType}-2`).value);
-        const override = parseFloat(document.getElementById(`${measurementType}-override`).value) || 0;
+        const input1 = document.getElementById(`${measurementType}-1`);
+        const input2 = document.getElementById(`${measurementType}-2`);
+        const overrideInput = document.getElementById(`${measurementType}-override`);
+        
+        console.log('Input elements found:', input1 ? 'yes' : 'no', input2 ? 'yes' : 'no', overrideInput ? 'yes' : 'no'); // Debug
+        
+        if (!input1 || !input2) {
+            this.showToast('Input fields not found', 'error');
+            return;
+        }
+
+        const value1 = parseFloat(input1.value);
+        const value2 = parseFloat(input2.value);
+        const override = parseFloat(overrideInput ? overrideInput.value : 0) || 0;
+
+        console.log('Values:', value1, value2, override); // Debug
 
         if (isNaN(value1) || isNaN(value2)) {
             this.showToast('Please enter valid measurements for both fields', 'error');
