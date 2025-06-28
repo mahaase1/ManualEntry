@@ -946,7 +946,7 @@ class ManualEntryApp {
             card.setAttribute('data-person-id', person.id);
             
             card.innerHTML = `
-                <div class="person-name">${person.last_name}, ${person.first_name}</div>
+                <div class="person-name">${person.name || 'Unknown'}</div>
                 <div class="person-number">#${person.number || 'N/A'}</div>
                 <div class="person-details">${person.position || ''} | ${person.class || ''}</div>
             `;
@@ -975,7 +975,7 @@ class ManualEntryApp {
         }
 
         // Update UI
-        document.getElementById('station-person-name').textContent = `${person.first_name} ${person.last_name}`;
+        document.getElementById('station-person-name').textContent = person.name || 'Unknown';
 
         // Show measurement inputs if station is selected
         if (this.currentStation) {
@@ -1208,6 +1208,9 @@ class ManualEntryApp {
         // Load existing measurements if any
         this.loadPersonMeasurements(person);
         
+        // Rebind measurement save buttons now that the form is visible
+        this.bindIndividualSaveButtons();
+        
         this.logActivity('PERSON_SELECTED', { personId: this.currentPersonId });
     }
 
@@ -1394,13 +1397,20 @@ class ManualEntryApp {
     }
 
     bindIndividualSaveButtons() {
+        // Remove existing listeners first to avoid duplicates
+        document.querySelectorAll('.measurement-save-btn').forEach(button => {
+            button.removeEventListener('click', button._saveHandler);
+        });
+        
         // Bind individual measurement save buttons
         document.querySelectorAll('.measurement-save-btn').forEach(button => {
-            button.addEventListener('click', (e) => {
+            const handler = (e) => {
                 e.preventDefault();
                 const measurement = button.getAttribute('data-measurement');
                 this.saveSingleMeasurement(measurement);
-            });
+            };
+            button._saveHandler = handler;
+            button.addEventListener('click', handler);
         });
     }
 
