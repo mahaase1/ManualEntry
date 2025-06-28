@@ -98,6 +98,9 @@ button {
     min-height: 48px;
     transition: background-color 0.2s;
     -webkit-tap-highlight-color: transparent;
+    color: inherit;
+    font-size: inherit;
+    font-family: inherit;
 }
 
 button:hover {
@@ -845,4 +848,198 @@ header {
 
 .checkin-controls button:hover {
     background: #f0f0f0;
+}
+
+/* Measurement Setup Screen */
+#setup-screen {
+    padding: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+#setup-screen h1 {
+    text-align: center;
+    margin-bottom: 30px;
+    color: #333;
+}
+
+.setup-section {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.setup-section h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    color: #2c5aa0;
+    border-bottom: 2px solid #e0e0e0;
+    padding-bottom: 10px;
+}
+
+.setup-note {
+    font-style: italic;
+    color: #666;
+    margin-bottom: 15px;
+    padding: 10px;
+    background: #f8f9fa;
+    border-left: 4px solid #2c5aa0;
+    border-radius: 4px;
+}
+
+.units-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.unit-option {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.unit-option label {
+    font-weight: 600;
+    color: #333;
+}
+
+.unit-option select {
+    padding: 8px 12px;
+    border: 2px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+    background: white;
+}
+
+.unit-option select:focus {
+    border-color: #2c5aa0;
+    outline: none;
+}
+
+.adjustments-table {
+    overflow-x: auto;
+    margin-top: 15px;
+}
+
+.adjustments-table table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.adjustments-table th {
+    background: #2c5aa0;
+    color: white;
+    padding: 12px;
+    text-align: left;
+    font-weight: 600;
+}
+
+.adjustments-table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid #eee;
+}
+
+.adjustments-table tr:nth-child(even) {
+    background: #f8f9fa;
+}
+
+.adjustments-table input[type="number"] {
+    width: 80px;
+    padding: 6px 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    text-align: center;
+    font-size: 14px;
+}
+
+.adjustments-table input[type="number"]:focus {
+    border-color: #2c5aa0;
+    outline: none;
+}
+
+.setup-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 30px;
+    padding: 20px 0;
+}
+
+.setup-controls button {
+    padding: 12px 24px;
+    font-size: 16px;
+    font-weight: 600;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+#back-to-startup {
+    background: #6c757d;
+    color: white;
+}
+
+#back-to-startup:hover {
+    background: #5a6268;
+}
+
+#start-event {
+    background: #28a745;
+    color: white;
+    padding: 12px 30px;
+}
+
+#start-event:hover {
+    background: #218838;
+}
+
+/* Mobile responsiveness for setup screen */
+@media (max-width: 768px) {
+    #setup-screen {
+        padding: 10px;
+    }
+    
+    .setup-section {
+        padding: 15px;
+        margin-bottom: 15px;
+    }
+    
+    .units-grid {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+    
+    .adjustments-table {
+        font-size: 14px;
+    }
+    
+    .adjustments-table th,
+    .adjustments-table td {
+        padding: 8px;
+    }
+    
+    .adjustments-table input[type="number"] {
+        width: 60px;
+        padding: 4px;
+        font-size: 12px;
+    }
+    
+    .setup-controls {
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .setup-controls button {
+        width: 100%;
+        padding: 15px;
+    }
 }

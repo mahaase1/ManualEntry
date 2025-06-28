@@ -456,6 +456,8 @@ class ManualEntryApp {
         document.getElementById('back-to-roster-from-checkin').addEventListener('click', this.showRosterView.bind(this));
         document.getElementById('toggle-checkin-edit').addEventListener('click', this.toggleCheckinEditMode.bind(this));
         document.getElementById('save-measurements').addEventListener('click', this.saveMeasurements.bind(this));
+        console.log('Save measurements button element:', document.getElementById('save-measurements'));
+        console.log('Save measurements handler bound successfully');
 
         // View mode events
         document.getElementById('view-mode').addEventListener('change', this.switchView.bind(this));
@@ -1063,6 +1065,7 @@ class ManualEntryApp {
 
     // Setup Screen Methods
     showMeasurementSetup() {
+        this.hideSettings();
         this.showSetupScreen();
     }
 
@@ -1525,18 +1528,26 @@ class ManualEntryApp {
     }
 
     showSettings() {
+        console.log('showSettings called');
         // Show settings modal - implement if modal exists
         const modal = document.getElementById('settings-modal');
+        console.log('Settings modal element:', modal);
         if (modal) {
             modal.classList.remove('hidden');
+            console.log('Settings modal opened');
+        } else {
+            console.error('Settings modal not found');
         }
     }
 
     hideSettings() {
+        console.log('hideSettings called');
         // Hide settings modal
         const modal = document.getElementById('settings-modal');
+        console.log('Settings modal element:', modal);
         if (modal) {
             modal.classList.add('hidden');
+            console.log('Settings modal closed');
         }
     }
 
@@ -1659,7 +1670,67 @@ class ManualEntryApp {
     }
 
     saveMeasurements() {
-        this.showToast('Measurements saved!', 'success');
+        console.log('=== saveMeasurements called ===');
+        console.log('Current person:', this.currentPerson);
+        console.log('Current screen:', document.querySelector('.screen.active'));
+        
+        if (!this.currentPerson) {
+            console.log('No current person selected');
+            this.showToast('No athlete selected for measurement', 'error');
+            return;
+        }
+
+        // Get all measurement inputs
+        const measurements = {};
+        let hasValidMeasurement = false;
+
+        // Get measurements from the measurement form
+        const measurementInputs = document.querySelectorAll('#measurement-screen input[type="number"]');
+        console.log('Found measurement inputs:', measurementInputs.length);
+        
+        measurementInputs.forEach(input => {
+            const value = parseFloat(input.value);
+            console.log(`Input ${input.id}: ${input.value} -> ${value}`);
+            if (!isNaN(value) && value > 0) {
+                measurements[input.id] = value;
+                hasValidMeasurement = true;
+            }
+        });
+
+        console.log('Collected measurements:', measurements);
+        console.log('Has valid measurement:', hasValidMeasurement);
+
+        if (!hasValidMeasurement) {
+            this.showToast('Please enter at least one measurement', 'warning');
+            return;
+        }
+
+        // Save measurements to the person
+        if (!this.measurements.has(this.currentPerson.id)) {
+            this.measurements.set(this.currentPerson.id, {});
+        }
+        
+        const personMeasurements = this.measurements.get(this.currentPerson.id);
+        Object.assign(personMeasurements, measurements);
+
+        // Update activity log
+        this.activityLog.push({
+            type: 'measurement',
+            timestamp: new Date().toISOString(),
+            person: this.currentPerson.name,
+            measurements: Object.keys(measurements)
+        });
+
+        // Save state
+        this.saveState();
+
+        console.log('Measurements saved for', this.currentPerson.name, measurements);
+        this.showToast(`Measurements saved for ${this.currentPerson.name}!`, 'success');
+
+        // Clear form after saving
+        measurementInputs.forEach(input => {
+            input.value = '';
+        });
     }
 
     showFileManagement() {

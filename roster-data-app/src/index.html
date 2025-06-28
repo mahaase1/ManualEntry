@@ -240,17 +240,13 @@
                                 <h4 id="station-person-name">Select a person</h4>
                                 <div id="station-measurement-inputs" class="hidden">
                                     <label id="station-measurement-label"></label>
-                                    <div class="measurement-main-input">
-                                        <button class="tenkey-primary-btn" id="station-tenkey-btn">
-                                            <span class="measurement-icon">📊</span>
-                                            <span class="measurement-label">Enter Measurement</span>
-                                            <span class="measurement-value" id="station-value-display">--</span>
-                                        </button>
+                                    <div class="measurement-input-group">
+                                        <input type="number" step="0.01" id="station-value-1" placeholder="Enter value">
+                                        <input type="number" step="0.01" id="station-value-2" placeholder="Confirm value">
+                                        <button class="tenkey-trigger-btn" id="station-tenkey-btn" title="Use 10-Key">🔢</button>
                                     </div>
-                                    <div class="measurement-controls">
-                                        <input type="number" step="0.1" id="station-override" placeholder="Adjustment (0)" class="adjustment-override" title="Adjustment Override">
-                                        <button id="station-save-btn" class="measurement-save-btn">💾 Save</button>
-                                    </div>
+                                    <input type="number" step="0.1" id="station-override" placeholder="Adj Override (0)" class="adjustment-override">
+                                    <button id="station-save-btn">💾 Save</button>
                                     <div id="station-display-value" class="display-value"></div>
                                 </div>
                             </div>
@@ -270,107 +266,79 @@
                     <div class="measurements-grid">
                         <div class="measurement-item">
                             <label>Height with shoes <span class="unit-display" id="height-unit-display"></span></label>
-                            <div class="measurement-main-input">
-                                <button class="tenkey-primary-btn" data-measurement="height-shoes">
-                                    <span class="measurement-icon">📏</span>
-                                    <span class="measurement-label">Enter Height</span>
-                                    <span class="measurement-value" id="height-shoes-display">--</span>
-                                </button>
+                            <div class="measurement-input-group">
+                                <input type="number" step="0.01" id="height-shoes-1" placeholder="Enter value">
+                                <input type="number" step="0.01" id="height-shoes-2" placeholder="Confirm value">
+                                <button class="tenkey-trigger-btn" data-measurement="height-shoes" title="Use 10-Key">🔢</button>
                             </div>
-                            <div class="measurement-controls">
-                                <input type="number" step="0.1" id="height-shoes-override" placeholder="Adjustment (0)" class="adjustment-override" title="Adjustment Override">
-                                <button class="measurement-save-btn" data-measurement="height-shoes" title="Save Measurement">💾</button>
-                            </div>
+                            <input type="number" step="0.1" id="height-shoes-override" placeholder="Adj Override (0)" class="adjustment-override">
+                            <button class="measurement-save-btn" data-measurement="height-shoes">💾</button>
                         </div>
 
                         <div class="measurement-item">
                             <label>Height without shoes <span class="unit-display" id="height-unit-display-2"></span></label>
-                            <div class="measurement-main-input">
-                                <button class="tenkey-primary-btn" data-measurement="height-no-shoes">
-                                    <span class="measurement-icon">📏</span>
-                                    <span class="measurement-label">Enter Height</span>
-                                    <span class="measurement-value" id="height-no-shoes-display">--</span>
-                                </button>
+                            <div class="measurement-input-group">
+                                <input type="number" step="0.01" id="height-no-shoes-1" placeholder="Enter value">
+                                <input type="number" step="0.01" id="height-no-shoes-2" placeholder="Confirm value">
+                                <button class="tenkey-trigger-btn" data-measurement="height-no-shoes" title="Use 10-Key">🔢</button>
                             </div>
-                            <div class="measurement-controls">
-                                <input type="number" step="0.1" id="height-no-shoes-override" placeholder="Adjustment (0)" class="adjustment-override" title="Adjustment Override">
-                                <button class="measurement-save-btn" data-measurement="height-no-shoes" title="Save Measurement">💾</button>
-                            </div>
+                            <input type="number" step="0.1" id="height-no-shoes-override" placeholder="Adj Override (0)" class="adjustment-override">
+                            <button class="measurement-save-btn" data-measurement="height-no-shoes">💾</button>
                         </div>
 
                         <div class="measurement-item">
                             <label>Reach <span class="unit-display" id="reach-unit-display"></span></label>
-                            <div class="measurement-main-input">
-                                <button class="tenkey-primary-btn" data-measurement="reach">
-                                    <span class="measurement-icon">🤲</span>
-                                    <span class="measurement-label">Enter Reach</span>
-                                    <span class="measurement-value" id="reach-display">--</span>
-                                </button>
+                            <div class="measurement-input-group">
+                                <input type="number" step="0.01" id="reach-1" placeholder="Enter value">
+                                <input type="number" step="0.01" id="reach-2" placeholder="Confirm value">
+                                <button class="tenkey-trigger-btn" data-measurement="reach" title="Use 10-Key">🔢</button>
                             </div>
-                            <div class="measurement-controls">
-                                <input type="number" step="0.1" id="reach-override" placeholder="Adjustment (0)" class="adjustment-override" title="Adjustment Override">
-                                <button class="measurement-save-btn" data-measurement="reach" title="Save Measurement">💾</button>
-                            </div>
+                            <input type="number" step="0.1" id="reach-override" placeholder="Adj Override (0)" class="adjustment-override">
+                            <button class="measurement-save-btn" data-measurement="reach">💾</button>
                         </div>
 
                         <div class="measurement-item">
                             <label>Wingspan <span class="unit-display" id="wingspan-unit-display"></span></label>
-                            <div class="measurement-main-input">
-                                <button class="tenkey-primary-btn" data-measurement="wingspan">
-                                    <span class="measurement-icon">🕊️</span>
-                                    <span class="measurement-label">Enter Wingspan</span>
-                                    <span class="measurement-value" id="wingspan-display">--</span>
-                                </button>
+                            <div class="measurement-input-group">
+                                <input type="number" step="0.01" id="wingspan-1" placeholder="Enter value">
+                                <input type="number" step="0.01" id="wingspan-2" placeholder="Confirm value">
+                                <button class="tenkey-trigger-btn" data-measurement="wingspan" title="Use 10-Key">🔢</button>
                             </div>
-                            <div class="measurement-controls">
-                                <input type="number" step="0.1" id="wingspan-override" placeholder="Adjustment (0)" class="adjustment-override" title="Adjustment Override">
-                                <button class="measurement-save-btn" data-measurement="wingspan" title="Save Measurement">💾</button>
-                            </div>
+                            <input type="number" step="0.1" id="wingspan-override" placeholder="Adj Override (0)" class="adjustment-override">
+                            <button class="measurement-save-btn" data-measurement="wingspan">💾</button>
                         </div>
 
                         <div class="measurement-item">
                             <label>Weight (lbs)</label>
-                            <div class="measurement-main-input">
-                                <button class="tenkey-primary-btn" data-measurement="weight">
-                                    <span class="measurement-icon">⚖️</span>
-                                    <span class="measurement-label">Enter Weight</span>
-                                    <span class="measurement-value" id="weight-display">--</span>
-                                </button>
+                            <div class="measurement-input-group">
+                                <input type="number" step="0.01" id="weight-1" placeholder="Enter value">
+                                <input type="number" step="0.01" id="weight-2" placeholder="Confirm value">
+                                <button class="tenkey-trigger-btn" data-measurement="weight" title="Use 10-Key">🔢</button>
                             </div>
-                            <div class="measurement-controls">
-                                <input type="number" step="0.1" id="weight-override" placeholder="Adjustment (0)" class="adjustment-override" title="Adjustment Override">
-                                <button class="measurement-save-btn" data-measurement="weight" title="Save Measurement">💾</button>
-                            </div>
+                            <input type="number" step="0.1" id="weight-override" placeholder="Adj Override (0)" class="adjustment-override">
+                            <button class="measurement-save-btn" data-measurement="weight">💾</button>
                         </div>
 
                         <div class="measurement-item">
                             <label>Hand length (inches)</label>
-                            <div class="measurement-main-input">
-                                <button class="tenkey-primary-btn" data-measurement="hand-length">
-                                    <span class="measurement-icon">✋</span>
-                                    <span class="measurement-label">Enter Length</span>
-                                    <span class="measurement-value" id="hand-length-display">--</span>
-                                </button>
+                            <div class="measurement-input-group">
+                                <input type="number" step="0.01" id="hand-length-1" placeholder="Enter value">
+                                <input type="number" step="0.01" id="hand-length-2" placeholder="Confirm value">
+                                <button class="tenkey-trigger-btn" data-measurement="hand-length" title="Use 10-Key">🔢</button>
                             </div>
-                            <div class="measurement-controls">
-                                <input type="number" step="0.1" id="hand-length-override" placeholder="Adjustment (0)" class="adjustment-override" title="Adjustment Override">
-                                <button class="measurement-save-btn" data-measurement="hand-length" title="Save Measurement">💾</button>
-                            </div>
+                            <input type="number" step="0.1" id="hand-length-override" placeholder="Adj Override (0)" class="adjustment-override">
+                            <button class="measurement-save-btn" data-measurement="hand-length">💾</button>
                         </div>
 
                         <div class="measurement-item">
                             <label>Hand width (inches)</label>
-                            <div class="measurement-main-input">
-                                <button class="tenkey-primary-btn" data-measurement="hand-width">
-                                    <span class="measurement-icon">🖐️</span>
-                                    <span class="measurement-label">Enter Width</span>
-                                    <span class="measurement-value" id="hand-width-display">--</span>
-                                </button>
+                            <div class="measurement-input-group">
+                                <input type="number" step="0.01" id="hand-width-1" placeholder="Enter value">
+                                <input type="number" step="0.01" id="hand-width-2" placeholder="Confirm value">
+                                <button class="tenkey-trigger-btn" data-measurement="hand-width" title="Use 10-Key">🔢</button>
                             </div>
-                            <div class="measurement-controls">
-                                <input type="number" step="0.1" id="hand-width-override" placeholder="Adjustment (0)" class="adjustment-override" title="Adjustment Override">
-                                <button class="measurement-save-btn" data-measurement="hand-width" title="Save Measurement">💾</button>
-                            </div>
+                            <input type="number" step="0.1" id="hand-width-override" placeholder="Adj Override (0)" class="adjustment-override">
+                            <button class="measurement-save-btn" data-measurement="hand-width">💾</button>
                         </div>
                     </div>
                 </div>
@@ -381,47 +349,35 @@
                     <div class="measurements-grid">
                         <div class="measurement-item">
                             <label>Vertical <span class="unit-display" id="vertical-unit-display"></span></label>
-                            <div class="measurement-main-input">
-                                <button class="tenkey-primary-btn" data-measurement="vertical">
-                                    <span class="measurement-icon">⬆️</span>
-                                    <span class="measurement-label">Enter Vertical</span>
-                                    <span class="measurement-value" id="vertical-display">--</span>
-                                </button>
+                            <div class="measurement-input-group">
+                                <input type="number" step="0.01" id="vertical-1" placeholder="Enter value">
+                                <input type="number" step="0.01" id="vertical-2" placeholder="Confirm value">
+                                <button class="tenkey-trigger-btn" data-measurement="vertical" title="Use 10-Key">🔢</button>
                             </div>
-                            <div class="measurement-controls">
-                                <input type="number" step="0.1" id="vertical-override" placeholder="Adjustment (0)" class="adjustment-override" title="Adjustment Override">
-                                <button class="measurement-save-btn" data-measurement="vertical" title="Save Measurement">💾</button>
-                            </div>
+                            <input type="number" step="0.1" id="vertical-override" placeholder="Adj Override (0)" class="adjustment-override">
+                            <button class="measurement-save-btn" data-measurement="vertical">💾</button>
                         </div>
 
                         <div class="measurement-item">
                             <label>Approach <span class="unit-display" id="approach-unit-display"></span></label>
-                            <div class="measurement-main-input">
-                                <button class="tenkey-primary-btn" data-measurement="approach">
-                                    <span class="measurement-icon">🏃</span>
-                                    <span class="measurement-label">Enter Approach</span>
-                                    <span class="measurement-value" id="approach-display">--</span>
-                                </button>
+                            <div class="measurement-input-group">
+                                <input type="number" step="0.01" id="approach-1" placeholder="Enter value">
+                                <input type="number" step="0.01" id="approach-2" placeholder="Confirm value">
+                                <button class="tenkey-trigger-btn" data-measurement="approach" title="Use 10-Key">🔢</button>
                             </div>
-                            <div class="measurement-controls">
-                                <input type="number" step="0.1" id="approach-override" placeholder="Adjustment (0)" class="adjustment-override" title="Adjustment Override">
-                                <button class="measurement-save-btn" data-measurement="approach" title="Save Measurement">💾</button>
-                            </div>
+                            <input type="number" step="0.1" id="approach-override" placeholder="Adj Override (0)" class="adjustment-override">
+                            <button class="measurement-save-btn" data-measurement="approach">💾</button>
                         </div>
 
                         <div class="measurement-item">
                             <label>Broad <span class="unit-display" id="broad-unit-display"></span></label>
-                            <div class="measurement-main-input">
-                                <button class="tenkey-primary-btn" data-measurement="broad">
-                                    <span class="measurement-icon">🦘</span>
-                                    <span class="measurement-label">Enter Broad</span>
-                                    <span class="measurement-value" id="broad-display">--</span>
-                                </button>
+                            <div class="measurement-input-group">
+                                <input type="number" step="0.01" id="broad-1" placeholder="Enter value">
+                                <input type="number" step="0.01" id="broad-2" placeholder="Confirm value">
+                                <button class="tenkey-trigger-btn" data-measurement="broad" title="Use 10-Key">🔢</button>
                             </div>
-                            <div class="measurement-controls">
-                                <input type="number" step="0.1" id="broad-override" placeholder="Adjustment (0)" class="adjustment-override" title="Adjustment Override">
-                                <button class="measurement-save-btn" data-measurement="broad" title="Save Measurement">💾</button>
-                            </div>
+                            <input type="number" step="0.1" id="broad-override" placeholder="Adj Override (0)" class="adjustment-override">
+                            <button class="measurement-save-btn" data-measurement="broad">💾</button>
                         </div>
                     </div>
                 </div>
@@ -453,30 +409,36 @@
                         </div>
                     </div>
                     
-                    <div class="tenkey-keypad">
-                        <button class="tenkey-btn tenkey-number" data-number="7">7</button>
-                        <button class="tenkey-btn tenkey-number" data-number="8">8</button>
-                        <button class="tenkey-btn tenkey-number" data-number="9">9</button>
-                        
-                        <button class="tenkey-btn tenkey-number" data-number="4">4</button>
-                        <button class="tenkey-btn tenkey-number" data-number="5">5</button>
-                        <button class="tenkey-btn tenkey-number" data-number="6">6</button>
-                        
-                        <button class="tenkey-btn tenkey-number" data-number="1">1</button>
-                        <button class="tenkey-btn tenkey-number" data-number="2">2</button>
-                        <button class="tenkey-btn tenkey-number" data-number="3">3</button>
-                        
-                        <button class="tenkey-btn tenkey-number tenkey-zero" data-number="0">0</button>
-                        <button class="tenkey-btn tenkey-action" data-action="decimal">.</button>
-                        
-                        <button class="tenkey-btn tenkey-action" data-action="clear">Clear</button>
-                        <button class="tenkey-btn tenkey-action" data-action="backspace">⌫</button>
-                        <button class="tenkey-btn tenkey-action" data-action="enter">Enter</button>
+                    <div class="tenkey-pad">
+                        <div class="tenkey-row">
+                            <button class="tenkey-btn tenkey-clear" data-action="clear">Clear</button>
+                            <button class="tenkey-btn tenkey-backspace" data-action="backspace">⌫</button>
+                            <button class="tenkey-btn tenkey-decimal" data-action="decimal">.</button>
+                        </div>
+                        <div class="tenkey-row">
+                            <button class="tenkey-btn tenkey-number" data-number="7">7</button>
+                            <button class="tenkey-btn tenkey-number" data-number="8">8</button>
+                            <button class="tenkey-btn tenkey-number" data-number="9">9</button>
+                        </div>
+                        <div class="tenkey-row">
+                            <button class="tenkey-btn tenkey-number" data-number="4">4</button>
+                            <button class="tenkey-btn tenkey-number" data-number="5">5</button>
+                            <button class="tenkey-btn tenkey-number" data-number="6">6</button>
+                        </div>
+                        <div class="tenkey-row">
+                            <button class="tenkey-btn tenkey-number" data-number="1">1</button>
+                            <button class="tenkey-btn tenkey-number" data-number="2">2</button>
+                            <button class="tenkey-btn tenkey-number" data-number="3">3</button>
+                        </div>
+                        <div class="tenkey-row">
+                            <button class="tenkey-btn tenkey-number tenkey-zero" data-number="0">0</button>
+                            <button class="tenkey-btn tenkey-enter" data-action="enter">Enter</button>
+                        </div>
                     </div>
                     
-                    <div class="tenkey-controls">
-                        <button id="tenkey-cancel" class="tenkey-cancel">Cancel</button>
-                        <button id="tenkey-save" class="tenkey-save hidden">💾 Save Measurement</button>
+                    <div class="tenkey-actions">
+                        <button id="tenkey-cancel" class="tenkey-cancel-btn">Cancel</button>
+                        <button id="tenkey-save" class="tenkey-save-btn hidden">💾 Save Measurement</button>
                     </div>
                 </div>
             </div>
