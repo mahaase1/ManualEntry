@@ -499,6 +499,29 @@ class ManualEntryApp {
         
         // Bind 10-key trigger buttons
         this.bind10KeyTriggers();
+        
+        // Bind setup screen inputs for auto-save
+        this.bindSetupInputs();
+    }
+
+    bindSetupInputs() {
+        // Unit selection auto-save
+        document.querySelectorAll('#setup-screen select').forEach(select => {
+            select.addEventListener('change', () => {
+                this.saveSetupValues();
+            });
+        });
+
+        // Adjustment inputs auto-save (debounced)
+        let saveTimeout;
+        document.querySelectorAll('#adjustments-table input').forEach(input => {
+            input.addEventListener('input', () => {
+                clearTimeout(saveTimeout);
+                saveTimeout = setTimeout(() => {
+                    this.saveSetupValues();
+                }, 1000);
+            });
+        });
     }
 
     bind10KeyTriggers() {
@@ -991,5 +1014,106 @@ class ManualEntryApp {
         } else {
             this.showAthleteView();
         }
+    }
+
+    // Setup Screen Methods
+    showMeasurementSetup() {
+        this.showSetupScreen();
+    }
+
+    showSetupScreen() {
+        document.querySelectorAll('.screen').forEach(screen => screen.classList.remove('active'));
+        document.getElementById('setup-screen').classList.add('active');
+        
+        // Load current settings
+        this.loadSetupValues();
+        
+        this.logActivity('SETUP_SCREEN_OPENED');
+    }
+
+    loadSetupValues() {
+        // Load units
+        Object.keys(this.measurementUnits).forEach(measurement => {
+            const unitSelect = document.getElementById(`${measurement}-unit`);
+            if (unitSelect) {
+                unitSelect.value = this.measurementUnits[measurement];
+            }
+        });
+
+        // Load adjustments
+        Object.keys(this.adjustments).forEach(measurement => {
+            ['M', 'F'].forEach(gender => {
+                const input = document.getElementById(`adj-${measurement.replace('_', '-')}-${gender}`);
+                if (input) {
+                    input.value = this.adjustments[measurement][gender];
+                }
+            });
+        });
+    }
+
+    saveSetupValues() {
+        // Save units
+        Object.keys(this.measurementUnits).forEach(measurement => {
+            const unitSelect = document.getElementById(`${measurement}-unit`);
+            if (unitSelect) {
+                this.measurementUnits[measurement] = unitSelect.value;
+            }
+        });
+
+        // Save adjustments
+        Object.keys(this.adjustments).forEach(measurement => {
+            ['M', 'F'].forEach(gender => {
+                const input = document.getElementById(`adj-${measurement.replace('_', '-')}-${gender}`);
+                if (input) {
+                    this.adjustments[measurement][gender] = parseFloat(input.value) || 0;
+                }
+            });
+        });
+
+        // Save to localStorage
+        this.saveState();
+        
+        this.logActivity('SETUP_VALUES_SAVED');
+        this.showToast('Setup saved successfully!', 'success');
+    }
+
+    startEvent() {
+        // Save setup values first
+        this.saveSetupValues();
+        
+        // Get startup form values
+        const operatorName = document.getElementById('operator-name').value;
+        const eventName = document.getElementById('event-name').value;
+        const location = document.getElementById('location').value;
+        const date = document.getElementById('event-date').value;
+        
+        if (!operatorName || !eventName) {
+            this.showToast('Please fill in operator name and event name', 'error');
+            return;
+        }
+
+        // Set current values
+        this.currentOperator = operatorName;
+        this.currentEvent = eventName;
+        
+        // Update event title display
+        document.getElementById('event-title').textContent = 
+            `${eventName} - ${operatorName}${location ? ` @ ${location}` : ''}`;
+
+        // Show main screen
+        document.querySelectorAll('.screen').forEach(screen => screen.classList.remove('active'));
+        document.getElementById('main-screen').classList.add('active');
+        
+        // Show roster view initially
+        this.showRosterView();
+        
+        this.logActivity('EVENT_STARTED', {
+            event: eventName,
+            operator: operatorName,
+            location: location,
+            date: date
+        });
+        
+        this.saveState();
     }
 }
