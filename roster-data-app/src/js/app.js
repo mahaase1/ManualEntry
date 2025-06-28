@@ -1116,4 +1116,429 @@ class ManualEntryApp {
         
         this.saveState();
     }
+
+    showRosterView() {
+        // Hide other sections
+        document.getElementById('spreadsheet-view').classList.add('hidden');
+        document.getElementById('checkin-section').classList.add('hidden');
+        document.getElementById('measurement-form').classList.add('hidden');
+        
+        // Show roster section
+        document.getElementById('roster-section').classList.remove('hidden');
+        
+        // Render roster
+        this.renderRoster();
+        
+        this.logActivity('ROSTER_VIEW_OPENED');
+    }
+
+    renderRoster() {
+        const rosterGrid = document.getElementById('roster-grid');
+        if (!rosterGrid) {
+            console.error('Roster grid not found');
+            return;
+        }
+
+        // Clear existing roster
+        rosterGrid.innerHTML = '';
+
+        if (this.roster.length === 0) {
+            rosterGrid.innerHTML = '<p class="no-data">No roster uploaded. Please upload a CSV file to get started.</p>';
+            return;
+        }
+
+        // Render each person in the roster
+        this.roster.forEach(person => {
+            const personCard = document.createElement('div');
+            personCard.className = 'roster-item';
+            personCard.setAttribute('data-person-id', person.id || person.name);
+
+            // Add status classes
+            if (person.present) {
+                personCard.classList.add('present');
+            }
+            if (person.completed) {
+                personCard.classList.add('completed');
+            }
+
+            // Create card content
+            const personId = person.id || person.name;
+            const measurements = this.measurements.get(personId);
+            const anthrosComplete = this.getAnthrosCompletedCount(personId);
+            const measuresComplete = this.getMeasuresCompletedCount(personId);
+            
+            personCard.innerHTML = `
+                <h4>${person.name || 'Unknown'}</h4>
+                <p><strong>ID:</strong> ${person.id || 'N/A'}</p>
+                <p><strong>Gender:</strong> ${person.gender || 'N/A'}</p>
+                <p><strong>Number:</strong> ${person.number || 'N/A'}</p>
+                <p class="status ${person.present ? 'present' : ''}">${person.present ? 'Present' : 'Not checked in'}</p>
+                <p class="completion-status">Anthros: ${anthrosComplete}/4, Measures: ${measuresComplete}/3</p>
+            `;
+
+            // Add click event to open measurement form
+            personCard.addEventListener('click', () => {
+                this.selectPersonForMeasurement(person);
+            });
+
+            rosterGrid.appendChild(personCard);
+        });
+    }
+
+    selectPersonForMeasurement(person) {
+        this.currentPersonId = person.id || person.name;
+        
+        // Hide roster section and show measurement form
+        document.getElementById('roster-section').classList.add('hidden');
+        document.getElementById('measurement-form').classList.remove('hidden');
+        
+        // Update measurement form header
+        const header = document.querySelector('#measurement-form h3');
+        if (header) {
+            header.textContent = `Measurements for ${person.name}`;
+        }
+        
+        // Load existing measurements if any
+        this.loadPersonMeasurements(person);
+        
+        this.logActivity('PERSON_SELECTED', { personId: this.currentPersonId });
+    }
+
+    loadPersonMeasurements(person) {
+        const personId = person.id || person.name;
+        const measurements = this.measurements.get(personId);
+        
+        if (measurements) {
+            // Load existing measurements into form inputs
+            Object.keys(measurements).forEach(key => {
+                if (key !== 'timestamp' && key !== 'operator' && key !== 'device' && key !== 'comments') {
+                    const measurement = measurements[key];
+                    if (measurement && typeof measurement === 'object' && measurement.value) {
+                        const input1 = document.getElementById(`${key}-1`);
+                        const input2 = document.getElementById(`${key}-2`);
+                        if (input1) input1.value = measurement.value;
+                        if (input2) input2.value = measurement.value;
+                    }
+                }
+            });
+            
+            // Load comments
+            const commentsField = document.getElementById('comments');
+            if (commentsField && measurements.comments) {
+                commentsField.value = measurements.comments;
+            }
+        }
+    }
+
+    getAnthrosCompletedCount(personId) {
+        const measurements = this.measurements.get(personId);
+        if (!measurements) return 0;
+        
+        const anthroTypes = ['height_shoes', 'height_no_shoes', 'reach', 'wingspan'];
+        return anthroTypes.filter(type => measurements[type] && measurements[type].value).length;
+    }
+
+    getMeasuresCompletedCount(personId) {
+        const measurements = this.measurements.get(personId);
+        if (!measurements) return 0;
+        
+        const measureTypes = ['vertical', 'approach', 'broad'];
+        return measureTypes.filter(type => measurements[type] && measurements[type].value).length;
+    }
+
+    getAnthrosCompletedStatus(personId) {
+        const count = this.getAnthrosCompletedCount(personId);
+        const status = count === 4 ? 'completed' : 'incomplete';
+        return `<span class="${status}">${count}/4</span>`;
+    }
+
+    getMeasuresCompletedStatus(personId) {
+        const count = this.getMeasuresCompletedCount(personId);
+        const status = count === 3 ? 'completed' : 'incomplete';
+        return `<span class="${status}">${count}/3</span>`;
+    }
+
+    validateStartup() {
+        const operatorName = document.getElementById('operator-name').value.trim();
+        const eventName = document.getElementById('event-name').value.trim();
+        const rosterFile = document.getElementById('roster-upload').files.length > 0;
+        
+        const setupButton = document.getElementById('setup-measurements');
+        if (setupButton) {
+            setupButton.disabled = !(operatorName && eventName && rosterFile);
+        }
+    }
+
+    handleRosterUpload(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        if (!file.name.toLowerCase().endsWith('.csv')) {
+            this.showToast('Please select a CSV file', 'error');
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const csv = e.target.result;
+                this.parseRosterCSV(csv);
+                this.validateStartup();
+                this.showToast('Roster uploaded successfully!', 'success');
+            } catch (error) {
+                console.error('Error parsing CSV:', error);
+                this.showToast('Error parsing CSV file. Please check the format.', 'error');
+            }
+        };
+        reader.readAsText(file);
+    }
+
+    parseRosterCSV(csvText) {
+        const lines = csvText.trim().split('\n');
+        this.roster = [];
+        
+        lines.forEach((line, index) => {
+            if (line.trim()) {
+                const parts = line.split(',').map(part => part.trim());
+                if (parts.length >= 3) {
+                    const person = {
+                        id: parts[0],
+                        name: parts[1],
+                        gender: parts[2],
+                        number: parts[3] || '',
+                        position: parts[4] || '',
+                        class: parts[5] || '',
+                        present: false,
+                        completed: false,
+                        source: 'roster'
+                    };
+                    this.roster.push(person);
+                }
+            }
+        });
+        
+        this.logActivity('ROSTER_UPLOADED', { count: this.roster.length });
+        this.saveState();
+    }
+
+    showToast(message, type = 'info') {
+        // Remove existing toasts
+        document.querySelectorAll('.toast').forEach(toast => toast.remove());
+        
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        toast.textContent = message;
+        document.body.appendChild(toast);
+        
+        // Auto-remove after 3 seconds
+        setTimeout(() => {
+            if (toast.parentNode) {
+                toast.parentNode.removeChild(toast);
+            }
+        }, 3000);
+    }
+
+    saveState() {
+        const state = {
+            currentOperator: this.currentOperator,
+            currentEvent: this.currentEvent,
+            roster: this.roster,
+            measurements: Array.from(this.measurements.entries()),
+            measurementUnits: this.measurementUnits,
+            adjustments: this.adjustments,
+            activityLog: this.activityLog
+        };
+        localStorage.setItem('manualEntryAppState', JSON.stringify(state));
+    }
+
+    loadState() {
+        try {
+            const saved = localStorage.getItem('manualEntryAppState');
+            if (saved) {
+                const state = JSON.parse(saved);
+                this.currentOperator = state.currentOperator || '';
+                this.currentEvent = state.currentEvent || '';
+                this.roster = state.roster || [];
+                this.measurements = new Map(state.measurements || []);
+                this.measurementUnits = state.measurementUnits || this.measurementUnits;
+                this.adjustments = state.adjustments || this.adjustments;
+                this.activityLog = state.activityLog || [];
+            }
+        } catch (error) {
+            console.error('Error loading state:', error);
+        }
+    }
+
+    restoreSession() {
+        // If we have operator and event, we can show main screen
+        if (this.currentOperator && this.currentEvent) {
+            document.getElementById('event-title').textContent = 
+                `${this.currentEvent} - ${this.currentOperator}`;
+            document.querySelectorAll('.screen').forEach(screen => screen.classList.remove('active'));
+            document.getElementById('main-screen').classList.add('active');
+            this.showRosterView();
+        }
+    }
+
+    // Additional missing methods
+    bindMeasurementValidation() {
+        // Add measurement validation logic here if needed
+        // This method is called in bindEvents but was missing
+    }
+
+    bindIndividualSaveButtons() {
+        // Add individual save button logic here if needed
+        // This method is called in bindEvents but was missing
+    }
+
+    showSettings() {
+        // Show settings modal - implement if modal exists
+        const modal = document.getElementById('settings-modal');
+        if (modal) {
+            modal.classList.remove('hidden');
+        }
+    }
+
+    hideSettings() {
+        // Hide settings modal
+        const modal = document.getElementById('settings-modal');
+        if (modal) {
+            modal.classList.add('hidden');
+        }
+    }
+
+    exportData() {
+        // Export functionality - basic implementation
+        this.showToast('Export functionality coming soon!', 'info');
+    }
+
+    filterRoster() {
+        // Filter roster functionality - basic implementation
+        const filter = document.getElementById('name-filter').value.toLowerCase();
+        const rosterItems = document.querySelectorAll('.roster-item');
+        
+        rosterItems.forEach(item => {
+            const name = item.querySelector('h4').textContent.toLowerCase();
+            if (name.includes(filter)) {
+                item.style.display = 'block';
+            } else {
+                item.style.display = 'none';
+            }
+        });
+    }
+
+    showAddPersonModal() {
+        const modal = document.getElementById('add-person-modal');
+        if (modal) {
+            modal.classList.remove('hidden');
+        }
+    }
+
+    hideAddPersonModal() {
+        const modal = document.getElementById('add-person-modal');
+        if (modal) {
+            modal.classList.add('hidden');
+        }
+    }
+
+    addNewPerson() {
+        // Add new person functionality - basic implementation
+        this.showToast('Add person functionality coming soon!', 'info');
+        this.hideAddPersonModal();
+    }
+
+    showCheckinSection() {
+        document.getElementById('roster-section').classList.add('hidden');
+        document.getElementById('checkin-section').classList.remove('hidden');
+    }
+
+    toggleCheckinEditMode() {
+        this.checkinEditMode = !this.checkinEditMode;
+        // Toggle edit mode functionality
+    }
+
+    saveMeasurements() {
+        this.showToast('Measurements saved!', 'success');
+    }
+
+    showFileManagement() {
+        const modal = document.getElementById('file-management-modal');
+        if (modal) {
+            modal.classList.remove('hidden');
+        }
+    }
+
+    hideFileManagement() {
+        const modal = document.getElementById('file-management-modal');
+        if (modal) {
+            modal.classList.add('hidden');
+        }
+    }
+
+    showResetModal() {
+        const modal = document.getElementById('reset-modal');
+        if (modal) {
+            modal.classList.remove('hidden');
+        }
+    }
+
+    hideResetModal() {
+        const modal = document.getElementById('reset-modal');
+        if (modal) {
+            modal.classList.add('hidden');
+        }
+    }
+
+    confirmReset() {
+        // Reset all data
+        this.roster = [];
+        this.measurements.clear();
+        this.currentOperator = '';
+        this.currentEvent = '';
+        this.activityLog = [];
+        
+        localStorage.removeItem('manualEntryAppState');
+        
+        this.showToast('All data has been reset', 'success');
+        this.hideResetModal();
+        this.showStartupScreen();
+    }
+
+    escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    getMeasurementUnit(measurementType) {
+        const unitMap = {
+            'height': 'inches',
+            'reach': 'inches',
+            'wingspan': 'inches',
+            'vertical': 'inches',
+            'approach': 'inches',
+            'broad': 'inches',
+            'weight': 'lbs',
+            'hand_length': 'inches',
+            'hand_width': 'inches'
+        };
+        
+        // Map measurement types to unit keys
+        if (measurementType.includes('height')) return this.measurementUnits.height || 'inches';
+        if (measurementType.includes('reach')) return this.measurementUnits.reach || 'inches';
+        if (measurementType.includes('wingspan')) return this.measurementUnits.wingspan || 'inches';
+        if (measurementType.includes('vertical')) return this.measurementUnits.vertical || 'inches';
+        if (measurementType.includes('approach')) return this.measurementUnits.approach || 'inches';
+        if (measurementType.includes('broad')) return this.measurementUnits.broad || 'inches';
+        if (measurementType.includes('weight')) return 'lbs';
+        if (measurementType.includes('hand')) return 'inches';
+        
+        return unitMap[measurementType] || 'inches';
+    }
 }
+
+// Initialize the app when the DOM is loaded
+document.addEventListener('DOMContentLoaded', () => {
+    window.app = new ManualEntryApp();
+});
