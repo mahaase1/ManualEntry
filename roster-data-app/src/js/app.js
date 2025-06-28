@@ -943,7 +943,8 @@ class ManualEntryApp {
         this.roster.forEach(person => {
             const card = document.createElement('div');
             card.className = 'station-person-card';
-            card.setAttribute('data-person-id', person.id);
+            const personId = person.id || person.name;
+            card.setAttribute('data-person-id', personId);
             
             card.innerHTML = `
                 <div class="person-name">${person.name || 'Unknown'}</div>
@@ -951,7 +952,10 @@ class ManualEntryApp {
                 <div class="person-details">${[person.position, person.class].filter(x => x).join(' | ') || 'No details'}</div>
             `;
 
-            card.addEventListener('click', () => this.selectStationPerson(person));
+            card.addEventListener('click', () => {
+                console.log('Station card clicked:', person); // Debug
+                this.selectStationPerson(person);
+            });
             grid.appendChild(card);
 
             // Update measurement status if station is selected
@@ -962,6 +966,8 @@ class ManualEntryApp {
     }
 
     selectStationPerson(person) {
+        console.log('Station person selected:', person); // Debug
+        
         // Clear previous selection
         document.querySelectorAll('.station-person-card').forEach(card => {
             card.classList.remove('selected');
@@ -969,18 +975,33 @@ class ManualEntryApp {
 
         // Select new person
         this.selectedPersonInStation = person;
-        const card = document.querySelector(`[data-person-id="${person.id}"]`);
+        const card = document.querySelector(`[data-person-id="${person.id || person.name}"]`);
         if (card) {
             card.classList.add('selected');
+            console.log('Card selected:', card); // Debug
+        } else {
+            console.log('Card not found for:', person.id || person.name); // Debug
         }
 
         // Update UI
-        document.getElementById('station-person-name').textContent = person.name || 'Unknown';
+        const nameElement = document.getElementById('station-person-name');
+        if (nameElement) {
+            nameElement.textContent = person.name || 'Unknown';
+            console.log('Updated person name display'); // Debug
+        } else {
+            console.log('station-person-name element not found'); // Debug
+        }
 
         // Show measurement inputs if station is selected
         if (this.currentStation) {
-            document.getElementById('station-measurement-inputs').classList.remove('hidden');
-            this.loadStationMeasurement();
+            const inputsElement = document.getElementById('station-measurement-inputs');
+            if (inputsElement) {
+                inputsElement.classList.remove('hidden');
+                this.loadStationMeasurement();
+                console.log('Showed measurement inputs'); // Debug
+            } else {
+                console.log('station-measurement-inputs element not found'); // Debug
+            }
         }
 
         this.logActivity('STATION_PERSON_SELECTED', { personId: person.id });
