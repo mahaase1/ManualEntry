@@ -790,13 +790,23 @@ class ManualEntryApp {
         this.currentStationMeasurement = stationSelect.value; // Set for 10-key
         
         if (this.currentStation) {
-            document.getElementById('station-measurement-label').textContent = 
-                stationSelect.options[stationSelect.selectedIndex].text;
+            const selectedOption = stationSelect.options[stationSelect.selectedIndex];
+            document.getElementById('station-measurement-label').textContent = selectedOption.text;
             
-            // Show measurement inputs if person is selected
-            if (this.selectedPersonInStation) {
-                document.getElementById('station-measurement-inputs').classList.remove('hidden');
-                this.loadStationMeasurement();
+            // Show measurement inputs when station is selected (regardless of person selection)
+            const inputsElement = document.getElementById('station-measurement-inputs');
+            if (inputsElement) {
+                inputsElement.classList.remove('hidden');
+                
+                // Update label based on person selection
+                if (this.selectedPersonInStation) {
+                    document.getElementById('station-measurement-label').textContent = 
+                        `${selectedOption.text} for ${this.selectedPersonInStation.name}`;
+                    this.loadStationMeasurement();
+                } else {
+                    document.getElementById('station-measurement-label').textContent = 
+                        `${selectedOption.text} - Select a person`;
+                }
             }
         } else {
             document.getElementById('station-measurement-inputs').classList.add('hidden');
@@ -992,16 +1002,25 @@ class ManualEntryApp {
             console.log('station-person-name element not found'); // Debug
         }
 
-        // Show measurement inputs if station is selected
-        if (this.currentStation) {
-            const inputsElement = document.getElementById('station-measurement-inputs');
-            if (inputsElement) {
-                inputsElement.classList.remove('hidden');
+        // Show measurement inputs when person is selected (regardless of station selection)
+        const inputsElement = document.getElementById('station-measurement-inputs');
+        if (inputsElement) {
+            inputsElement.classList.remove('hidden');
+            console.log('Showed measurement inputs'); // Debug
+            
+            // Update the measurement label
+            if (this.currentStation) {
+                const stationSelect = document.getElementById('station-select');
+                const selectedOption = stationSelect.options[stationSelect.selectedIndex];
+                document.getElementById('station-measurement-label').textContent = 
+                    `${selectedOption.text} for ${person.name}`;
                 this.loadStationMeasurement();
-                console.log('Showed measurement inputs'); // Debug
             } else {
-                console.log('station-measurement-inputs element not found'); // Debug
+                document.getElementById('station-measurement-label').textContent = 
+                    `Select a station to enter measurements for ${person.name}`;
             }
+        } else {
+            console.log('station-measurement-inputs element not found'); // Debug
         }
 
         this.logActivity('STATION_PERSON_SELECTED', { personId: person.id });
@@ -1564,6 +1583,74 @@ class ManualEntryApp {
     showCheckinSection() {
         document.getElementById('roster-section').classList.add('hidden');
         document.getElementById('checkin-section').classList.remove('hidden');
+        
+        // Render check-in grid
+        this.renderCheckinGrid();
+        
+        this.logActivity('CHECKIN_SECTION_OPENED');
+    }
+
+    renderCheckinGrid() {
+        const checkinGrid = document.getElementById('checkin-grid');
+        if (!checkinGrid) {
+            console.error('Checkin grid not found');
+            return;
+        }
+
+        checkinGrid.innerHTML = '';
+
+        if (this.roster.length === 0) {
+            checkinGrid.innerHTML = '<p class="no-data">No roster uploaded. Please upload a CSV file to get started.</p>';
+            return;
+        }
+
+        // Render each person in the checkin grid
+        this.roster.forEach(person => {
+            const personCard = document.createElement('div');
+            personCard.className = 'checkin-item';
+            const personId = person.id || person.name;
+            personCard.setAttribute('data-person-id', personId);
+
+            // Add status classes
+            if (person.present) {
+                personCard.classList.add('present');
+            }
+
+            // Create card content
+            personCard.innerHTML = `
+                <h4>${person.name || 'Unknown'}</h4>
+                <p><strong>ID:</strong> ${person.id || 'N/A'}</p>
+                <p><strong>Gender:</strong> ${person.gender || 'N/A'}</p>
+                <div class="checkin-controls">
+                    <button class="checkin-toggle-btn ${person.present ? 'present' : 'absent'}" 
+                            data-person-id="${personId}">
+                        ${person.present ? '✅ Present' : '❌ Absent'}
+                    </button>
+                </div>
+            `;
+
+            // Add click event to toggle check-in status
+            const toggleBtn = personCard.querySelector('.checkin-toggle-btn');
+            toggleBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.togglePersonPresence(person);
+            });
+
+            checkinGrid.appendChild(personCard);
+        });
+    }
+
+    togglePersonPresence(person) {
+        person.present = !person.present;
+        this.saveState();
+        this.renderCheckinGrid(); // Re-render to update UI
+        
+        this.logActivity('PERSON_PRESENCE_TOGGLED', { 
+            personId: person.id || person.name, 
+            present: person.present 
+        });
+        
+        this.showToast(`${person.name} marked as ${person.present ? 'present' : 'absent'}`, 'success');
     }
 
     toggleCheckinEditMode() {
