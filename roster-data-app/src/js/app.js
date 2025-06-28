@@ -1084,8 +1084,10 @@ class ManualEntryApp {
         // Get startup form values
         const operatorName = document.getElementById('operator-name').value;
         const eventName = document.getElementById('event-name').value;
-        const location = document.getElementById('location').value;
-        const date = document.getElementById('event-date').value;
+        const locationElement = document.getElementById('location');
+        const dateElement = document.getElementById('event-date');
+        const location = locationElement ? locationElement.value : '';
+        const date = dateElement ? dateElement.value : '';
         
         if (!operatorName || !eventName) {
             this.showToast('Please fill in operator name and event name', 'error');
