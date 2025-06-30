@@ -1,0 +1,945 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Manual Entry v2.7 User Manual</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        h1 {
+            color: #2c5aa0;
+            border-bottom: 3px solid #2c5aa0;
+            padding-bottom: 10px;
+            font-size: 28px;
+        }
+        
+        h2 {
+            color: #2c5aa0;
+            margin-top: 30px;
+            font-size: 22px;
+            border-left: 4px solid #2c5aa0;
+            padding-left: 15px;
+        }
+        
+        h3 {
+            color: #555;
+            margin-top: 25px;
+            font-size: 18px;
+        }
+        
+        .toc {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+        
+        .toc ul {
+            list-style: none;
+            padding-left: 0;
+        }
+        
+        .toc li {
+            margin: 8px 0;
+        }
+        
+        .toc a {
+            text-decoration: none;
+            color: #2c5aa0;
+        }
+        
+        .feature-box {
+            background: #e3f2fd;
+            border: 1px solid #2196f3;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        
+        .warning-box {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        
+        .code-block {
+            background: #f5f5f5;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            overflow-x: auto;
+            margin: 15px 0;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        
+        th {
+            background: #2c5aa0;
+            color: white;
+            font-weight: 600;
+        }
+        
+        tr:nth-child(even) {
+            background: #f9f9f9;
+        }
+        
+        .steps {
+            counter-reset: step-counter;
+        }
+        
+        .steps li {
+            counter-increment: step-counter;
+            margin: 10px 0;
+        }
+        
+        .steps li::marker {
+            content: counter(step-counter) ". ";
+            font-weight: bold;
+            color: #2c5aa0;
+        }
+        
+        .button-ref {
+            background: #007AFF;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        
+        .footer {
+            margin-top: 50px;
+            padding-top: 20px;
+            border-top: 2px solid #2c5aa0;
+            text-align: center;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Manual Entry v2.7 User Manual</h1>
+<div class="footer">
+    <em>Training Guide for Athletic Measurement Data Collection</em><br>
+    Version 2.7 - June 2025
+</div>
+
+<div class="toc">
+    <h2>Table of Contents</h2>
+    <ul>
+        <li><a href="#introduction">1. Introduction</a></li>
+        <li><a href="#getting-started">2. Getting Started</a></li>
+        <li><a href="#roster-management">3. Roster Management</a></li>
+        <li><a href="#measurement-setup">4. Measurement Setup</a></li>
+        <li><a href="#data-collection">5. Data Collection</a></li>
+        <li><a href="#check-in-system">6. Check-in System</a></li>
+        <li><a href="#view-modes">7. View Modes</a></li>
+        <li><a href="#spreadsheet-view">8. Spreadsheet View</a></li>
+        <li><a href="#data-export">9. Data Export</a></li>
+        <li><a href="#settings">10. Settings & Administration</a></li>
+        <li><a href="#technical">11. Technical Requirements</a></li>
+        <li><a href="#troubleshooting">12. Troubleshooting</a></li>
+    </ul>
+</div>
+
+<h2 id="introduction">Introduction</h2>
+
+<p>The Manual Entry app v2.7 is a comprehensive data collection system designed for athletic measurements and roster management. It provides a touch-friendly interface optimized for iPad use, with offline capability and local data storage.</p>
+
+<div class="feature-box">
+    <h3>Key Features</h3>
+    <ul>
+        <li><strong>Offline Operation:</strong> Works without internet connection after initial load</li>
+        <li><strong>Local Data Storage:</strong> All information saved securely on your device</li>
+        <li><strong>Double-Entry Validation:</strong> Ensures accuracy through confirmation entries</li>
+        <li><strong>Flexible Units:</strong> Choose metric or imperial units per measurement</li>
+        <li><strong>Adjustment System:</strong> Apply systematic corrections to measurements</li>
+        <li><strong>Export Capabilities:</strong> Generate CSV files for data analysis</li>
+        <li><strong>Session Persistence:</strong> Resume work exactly where you left off</li>
+    </ul>
+</div>
+
+<h2 id="getting-started">Getting Started</h2>
+
+<h3>Initial Setup</h3>
+
+<ol class="steps">
+    <li><strong>Launch the Application</strong>
+        <ul>
+            <li>Open the app in Safari on your iPad</li>
+            <li>For best experience, add to Home Screen for app-like functionality</li>
+        </ul>
+    </li>
+    
+    <li><strong>Enter Operator Information</strong>
+        <ul>
+            <li>Your Name: Enter the name of the person collecting data</li>
+            <li>Event Name: Provide a descriptive name for this measurement session</li>
+        </ul>
+    </li>
+    
+    <li><strong>Upload Roster</strong>
+        <ul>
+            <li>Click "Import Roster (CSV)" and select your participant file</li>
+            <li>See Roster Requirements section for proper format</li>
+        </ul>
+    </li>
+    
+    <li><strong>Proceed to Setup</strong>
+        <ul>
+            <li>Click "Next: Setup Measurements" to configure your measurement parameters</li>
+        </ul>
+    </li>
+</ol>
+
+<h3>Roster Requirements</h3>
+
+<p>Your CSV file must contain the following columns in this exact order:</p>
+
+<div class="code-block">
+ID,Name,Gender<br>
+001,"John Smith",M<br>
+002,"Jane O'Connor",F<br>
+003,"Mike Johnson",M
+</div>
+
+<table>
+    <tr>
+        <th>Column</th>
+        <th>Requirements</th>
+        <th>Examples</th>
+    </tr>
+    <tr>
+        <td><strong>ID</strong></td>
+        <td>Unique identifier (can be numbers, letters, or blank for new entries)</td>
+        <td>001, A01, SMITH_J, (blank)</td>
+    </tr>
+    <tr>
+        <td><strong>Name</strong></td>
+        <td>Full participant name (use quotes if name contains apostrophes or commas)</td>
+        <td>John Smith, "O'Connor, Jane", "Smith, Jr., John"</td>
+    </tr>
+    <tr>
+        <td><strong>Gender</strong></td>
+        <td>M (Male), F (Female), or Other (affects adjustment calculations)</td>
+        <td>M, F, Other</td>
+    </tr>
+</table>
+
+<div class="warning-box">
+    <strong>Important Notes:</strong>
+    <ul>
+        <li>First row must contain column headers exactly as shown</li>
+        <li>Names with special characters should be enclosed in quotes</li>
+        <li>Gender affects which adjustment values are applied to measurements</li>
+        <li>File must have .csv extension</li>
+    </ul>
+</div>
+
+<h2 id="measurement-setup">Measurement Setup</h2>
+
+<h3>Units Configuration</h3>
+
+<p>Configure measurement units for each category before starting data collection:</p>
+
+<table>
+    <tr>
+        <th>Measurement Category</th>
+        <th>Available Units</th>
+        <th>Default</th>
+    </tr>
+    <tr>
+        <td>Height Measurements</td>
+        <td>Inches, Centimeters</td>
+        <td>Inches</td>
+    </tr>
+    <tr>
+        <td>Jump/Distance Measurements</td>
+        <td>Inches, Centimeters</td>
+        <td>Inches</td>
+    </tr>
+    <tr>
+        <td>Weight</td>
+        <td>Pounds (fixed)</td>
+        <td>Pounds</td>
+    </tr>
+    <tr>
+        <td>Hand Measurements</td>
+        <td>Inches (fixed)</td>
+        <td>Inches</td>
+    </tr>
+</table>
+
+<h3>Adjustment System</h3>
+
+<p>Adjustments are systematic corrections applied to all measurements based on equipment calibration, environmental factors, or standardization requirements.</p>
+
+<div class="feature-box">
+    <h4>How Adjustments Work:</h4>
+    <ol>
+        <li><strong>Gender-Specific:</strong> Different adjustments for Male (M) and Female (F) participants</li>
+        <li><strong>Additive:</strong> Adjustments are added to raw measurements</li>
+        <li><strong>Automatic:</strong> Applied during data collection and export</li>
+        <li><strong>Measurement-Specific:</strong> Each measurement type has its own adjustment value</li>
+    </ol>
+</div>
+
+<h3>Available Adjustments</h3>
+
+<table>
+    <tr>
+        <th>Measurement Type</th>
+        <th>Description</th>
+        <th>Typical Use Case</th>
+    </tr>
+    <tr>
+        <td>Height with Shoes</td>
+        <td>Standing height wearing shoes</td>
+        <td>Shoe sole thickness correction</td>
+    </tr>
+    <tr>
+        <td>Height without Shoes</td>
+        <td>Standing height barefoot/socks</td>
+        <td>Floor surface correction</td>
+    </tr>
+    <tr>
+        <td>Reach</td>
+        <td>Standing reach measurement</td>
+        <td>Equipment calibration</td>
+    </tr>
+    <tr>
+        <td>Wingspan</td>
+        <td>Arm span measurement</td>
+        <td>Wall/equipment offset</td>
+    </tr>
+    <tr>
+        <td>Weight</td>
+        <td>Body weight</td>
+        <td>Scale calibration</td>
+    </tr>
+    <tr>
+        <td>Hand Length</td>
+        <td>Wrist to fingertip</td>
+        <td>Measurement point standardization</td>
+    </tr>
+    <tr>
+        <td>Hand Width</td>
+        <td>Palm width</td>
+        <td>Measurement point standardization</td>
+    </tr>
+    <tr>
+        <td>Vertical Jump</td>
+        <td>Maximum vertical leap</td>
+        <td>Equipment/surface correction</td>
+    </tr>
+    <tr>
+        <td>Approach Jump</td>
+        <td>Running vertical leap</td>
+        <td>Equipment/surface correction</td>
+    </tr>
+    <tr>
+        <td>Broad Jump</td>
+        <td>Standing horizontal jump</td>
+        <td>Surface/measurement correction</td>
+    </tr>
+</table>
+
+<h3>Setting Adjustments</h3>
+
+<ol class="steps">
+    <li>Enter values in the Measurement Adjustments table</li>
+    <li>Use positive numbers to add to measurements</li>
+    <li>Use negative numbers to subtract from measurements</li>
+    <li>Default value is 0 (no adjustment)</li>
+    <li>Adjustments automatically save when changed</li>
+</ol>
+
+<div class="feature-box">
+    <h4>Example Adjustment Scenario:</h4>
+    <p>If your measuring tape consistently reads 0.5 inches low due to equipment calibration, enter <strong>+0.5</strong> in the appropriate adjustment field to correct all measurements automatically.</p>
+</div>
+
+<h2 id="data-collection">Data Collection</h2>
+
+<h3>Measurement Process</h3>
+
+<ol class="steps">
+    <li><strong>Select Participant</strong>
+        <ul>
+            <li>Click on a participant card from the roster grid</li>
+            <li>Card will expand to show measurement interface</li>
+        </ul>
+    </li>
+    
+    <li><strong>Enter Measurements</strong>
+        <ul>
+            <li>Each measurement requires two identical entries for validation</li>
+            <li>Enter the first value and press Enter or Tab</li>
+            <li>Enter the second value to confirm</li>
+            <li>Values must match exactly to save</li>
+        </ul>
+    </li>
+    
+    <li><strong>Save Process</strong>
+        <ul>
+            <li>Measurements auto-save when both entries match</li>
+            <li>Green highlighting indicates successful validation</li>
+            <li>Red highlighting indicates entry mismatch</li>
+        </ul>
+    </li>
+</ol>
+
+<h3>Measurement Definitions</h3>
+
+<table>
+    <tr>
+        <th>Measurement</th>
+        <th>Definition</th>
+        <th>Measurement Technique</th>
+    </tr>
+    <tr>
+        <td><strong>Height with Shoes</strong></td>
+        <td>Standing height wearing shoes</td>
+        <td>Participant stands straight against wall, shoes on</td>
+    </tr>
+    <tr>
+        <td><strong>Height without Shoes</strong></td>
+        <td>Standing height barefoot or in socks</td>
+        <td>Participant stands straight against wall, no shoes</td>
+    </tr>
+    <tr>
+        <td><strong>Reach</strong></td>
+        <td>Standing reach (fingertip height)</td>
+        <td>Participant reaches up with dominant hand</td>
+    </tr>
+    <tr>
+        <td><strong>Wingspan</strong></td>
+        <td>Arm span (fingertip to fingertip)</td>
+        <td>Arms extended horizontally, measure tip to tip</td>
+    </tr>
+    <tr>
+        <td><strong>Weight</strong></td>
+        <td>Body weight in pounds</td>
+        <td>Standard scale measurement</td>
+    </tr>
+    <tr>
+        <td><strong>Hand Length</strong></td>
+        <td>Length from wrist to fingertip</td>
+        <td>Measure from wrist crease to middle fingertip</td>
+    </tr>
+    <tr>
+        <td><strong>Hand Width</strong></td>
+        <td>Width across palm</td>
+        <td>Measure across widest part of palm</td>
+    </tr>
+    <tr>
+        <td><strong>Vertical Jump</strong></td>
+        <td>Maximum vertical leap from standing</td>
+        <td>Standing jump, measure highest point reached</td>
+    </tr>
+    <tr>
+        <td><strong>Approach Jump</strong></td>
+        <td>Maximum vertical leap with running start</td>
+        <td>Running approach jump, measure highest point</td>
+    </tr>
+    <tr>
+        <td><strong>Broad Jump</strong></td>
+        <td>Standing horizontal jump distance</td>
+        <td>Standing position, jump forward, measure distance</td>
+    </tr>
+</table>
+
+<h3>Calculation Details</h3>
+
+<div class="code-block">
+<strong>Adjusted Value Calculation:</strong><br>
+Final Value = Raw Measurement + Gender-Specific Adjustment
+</div>
+
+<div class="feature-box">
+    <h4>Unit Conversions:</h4>
+    <ul>
+        <li>All calculations performed in inches internally</li>
+        <li>Display units converted based on your selection</li>
+        <li>Height displays include feet/inches format (e.g., "6' 2\"")</li>
+    </ul>
+</div>
+
+<h3>Validation Rules</h3>
+
+<ul>
+    <li>Both entries must be identical to the decimal place</li>
+    <li>Values must be positive numbers</li>
+    <li>Empty entries are allowed (saves as blank)</li>
+    <li>System prevents impossible values (e.g., negative measurements)</li>
+</ul>
+
+<h2 id="check-in-system">Check-in System</h2>
+
+<p>The check-in system allows you to track participant attendance and readiness for measurement.</p>
+
+<h3>Using Check-in</h3>
+
+<ol class="steps">
+    <li><strong>Access Check-in</strong>
+        <ul>
+            <li>Click <span class="button-ref">👥 Check-in</span> button in the main roster view</li>
+            <li>This switches to the check-in grid layout</li>
+        </ul>
+    </li>
+    
+    <li><strong>Mark Attendance</strong>
+        <ul>
+            <li>Toggle between "Present" and "Absent" for each participant</li>
+            <li>Present participants show with green highlighting</li>
+            <li>Absent participants show with red highlighting</li>
+        </ul>
+    </li>
+    
+    <li><strong>Edit Mode</strong>
+        <ul>
+            <li>Click <span class="button-ref">📝 Edit Mode: OFF</span> to enable editing</li>
+            <li>When active, you can modify attendance status</li>
+            <li>Click again to disable editing</li>
+        </ul>
+    </li>
+    
+    <li><strong>Return to Measurement</strong>
+        <ul>
+            <li>Click <span class="button-ref">← Back to Roster</span> to return to main measurement view</li>
+            <li>Check-in status is preserved and affects display</li>
+        </ul>
+    </li>
+</ol>
+
+<div class="feature-box">
+    <h4>Check-in Benefits:</h4>
+    <ul>
+        <li>Visual tracking of who has arrived</li>
+        <li>Filter participants by attendance status</li>
+        <li>Organize measurement flow more efficiently</li>
+        <li>Maintain accurate event attendance records</li>
+    </ul>
+</div>
+
+<h2 id="view-modes">View Modes</h2>
+
+<h3>Athlete View (Default)</h3>
+<ul>
+    <li><strong>Individual Focus:</strong> One participant at a time</li>
+    <li><strong>Complete Profile:</strong> All measurements for selected athlete</li>
+    <li><strong>Sequential Workflow:</strong> Move through roster systematically</li>
+    <li><strong>Best For:</strong> Complete measurement sessions per person</li>
+</ul>
+
+<h3>Station View</h3>
+<ul>
+    <li><strong>Measurement Focus:</strong> One measurement type across multiple participants</li>
+    <li><strong>Efficient Workflow:</strong> Collect single measurement from many people</li>
+    <li><strong>Equipment Optimization:</strong> Set up once, measure many</li>
+    <li><strong>Best For:</strong> Large groups, specialized measurement stations</li>
+</ul>
+
+<div class="warning-box">
+    <strong>Switching Views:</strong>
+    <ul>
+        <li>Use the "View Mode" dropdown in the controls section</li>
+        <li>Selection persists throughout your session</li>
+        <li>Can switch modes at any time without losing data</li>
+    </ul>
+</div>
+
+<h2 id="spreadsheet-view">Spreadsheet View</h2>
+
+<p>Access the spreadsheet view by clicking the <span class="button-ref">📊</span> button in the header.</p>
+
+<h3>Features</h3>
+<ul>
+    <li><strong>Grid Layout:</strong> See all participants and measurements in table format</li>
+    <li><strong>Edit Mode:</strong> Click "📝 Edit Mode" to modify values directly in cells</li>
+    <li><strong>Sortable Columns:</strong> Click headers to sort by different criteria</li>
+    <li><strong>Status Indicators:</strong> Visual indicators for completion and attendance</li>
+    <li><strong>Bulk View:</strong> Quickly assess data completeness across all participants</li>
+</ul>
+
+<h3>Using Spreadsheet Mode</h3>
+
+<ol class="steps">
+    <li><strong>Viewing Data</strong>
+        <ul>
+            <li>Scroll horizontally to see all measurement columns</li>
+            <li>Participant names remain fixed on the left</li>
+            <li>Status columns show completion percentages</li>
+        </ul>
+    </li>
+    
+    <li><strong>Editing Values</strong>
+        <ul>
+            <li>Enable Edit Mode</li>
+            <li>Click any measurement cell to modify</li>
+            <li>Changes save automatically</li>
+            <li>Validation still applies (positive numbers only)</li>
+        </ul>
+    </li>
+    
+    <li><strong>Data Review</strong>
+        <ul>
+            <li>Identify missing measurements quickly</li>
+            <li>Spot data inconsistencies</li>
+            <li>Review adjusted values vs. raw measurements</li>
+        </ul>
+    </li>
+</ol>
+
+<h2 id="data-export">Data Export</h2>
+
+<h3>Export Process</h3>
+
+<ol class="steps">
+    <li><strong>Initiate Export</strong>
+        <ul>
+            <li>Click the <span class="button-ref">📤 Export</span> button in the header</li>
+            <li>System generates comprehensive CSV file</li>
+        </ul>
+    </li>
+    
+    <li><strong>File Contents</strong>
+        <ul>
+            <li>All participant information</li>
+            <li>Raw measurements</li>
+            <li>Adjusted measurements (with corrections applied)</li>
+            <li>Calculated values (reach + vertical, etc.)</li>
+            <li>Export metadata (timestamp, operator, device)</li>
+        </ul>
+    </li>
+    
+    <li><strong>File Delivery</strong>
+        <ul>
+            <li><strong>iPad:</strong> Files save to Downloads folder automatically</li>
+            <li><strong>Email:</strong> Mail app opens with file pre-attached</li>
+            <li><strong>File Management:</strong> Access via Settings → View Saved Files</li>
+        </ul>
+    </li>
+</ol>
+
+<h3>Export Data Structure</h3>
+
+<table>
+    <tr>
+        <th>Data Category</th>
+        <th>Columns Included</th>
+    </tr>
+    <tr>
+        <td>Participant Info</td>
+        <td>ID, Name, Gender</td>
+    </tr>
+    <tr>
+        <td>Raw Measurements</td>
+        <td>All 10 measurement types as entered</td>
+    </tr>
+    <tr>
+        <td>Adjusted Values</td>
+        <td>Raw measurements + gender-specific adjustments</td>
+    </tr>
+    <tr>
+        <td>Display Values</td>
+        <td>Height in feet/inches format</td>
+    </tr>
+    <tr>
+        <td>Calculated Values</td>
+        <td>Reach + Vertical, other derived measurements</td>
+    </tr>
+    <tr>
+        <td>Status Info</td>
+        <td>Completion status, check-in status</td>
+    </tr>
+    <tr>
+        <td>Metadata</td>
+        <td>Export timestamp, operator name, device info</td>
+    </tr>
+</table>
+
+<div class="code-block">
+<strong>File Naming Convention:</strong><br>
+ManualEntry_[EventName]_[Timestamp].csv<br><br>
+<strong>Example:</strong><br>
+ManualEntry_SpringCombine_2025-06-30_14-30.csv
+</div>
+
+<h2 id="settings">Settings & Administration</h2>
+
+<h3>Accessing Settings</h3>
+
+<p>Click the <span class="button-ref">⚙️ Settings</span> button in the header to access:</p>
+
+<ol class="steps">
+    <li><strong>📏 Measurement Setup</strong>
+        <ul>
+            <li>Return to units and adjustments configuration</li>
+            <li>Modify settings without losing current data</li>
+            <li>Changes apply to future measurements</li>
+        </ul>
+    </li>
+    
+    <li><strong>View Saved Files</strong>
+        <ul>
+            <li>Browse previously exported files</li>
+            <li>Re-download files to device</li>
+            <li>Delete old files to manage storage</li>
+        </ul>
+    </li>
+    
+    <li><strong>Reset for New Event</strong>
+        <ul>
+            <li>Clear all current data to start fresh</li>
+            <li>Password protected (password: 00000)</li>
+            <li>Removes all measurements, roster, and settings</li>
+        </ul>
+    </li>
+</ol>
+
+<h3>File Management</h3>
+
+<table>
+    <tr>
+        <th>Feature</th>
+        <th>Description</th>
+        <th>Benefits</th>
+    </tr>
+    <tr>
+        <td>Automatic Backup</td>
+        <td>App maintains backup copies of exports</td>
+        <td>Data protection, recovery options</td>
+    </tr>
+    <tr>
+        <td>Storage Limit</td>
+        <td>Last 10 exports kept automatically</td>
+        <td>Prevents storage overflow</td>
+    </tr>
+    <tr>
+        <td>Manual Cleanup</td>
+        <td>Delete files individually through file browser</td>
+        <td>User control over storage</td>
+    </tr>
+    <tr>
+        <td>Primary Storage</td>
+        <td>All exports save to iPad Downloads folder</td>
+        <td>Easy access, email attachment</td>
+    </tr>
+</table>
+
+<h3>Session Management</h3>
+
+<ul>
+    <li><strong>Auto-Save:</strong> All changes saved automatically</li>
+    <li><strong>Session Restore:</strong> App resumes exactly where you left off</li>
+    <li><strong>State Persistence:</strong> Survives app closure and device restart</li>
+    <li><strong>Data Security:</strong> All data remains on your device only</li>
+</ul>
+
+<h2 id="technical">Technical Requirements</h2>
+
+<h3>Device Compatibility</h3>
+
+<table>
+    <tr>
+        <th>Priority</th>
+        <th>Device Type</th>
+        <th>Requirements</th>
+    </tr>
+    <tr>
+        <td>Primary</td>
+        <td>iPad</td>
+        <td>iOS 12 or later, Safari browser</td>
+    </tr>
+    <tr>
+        <td>Secondary</td>
+        <td>Android tablets</td>
+        <td>Android 8.0+, Chrome browser</td>
+    </tr>
+    <tr>
+        <td>Secondary</td>
+        <td>Windows tablets</td>
+        <td>Windows 10+, Edge browser</td>
+    </tr>
+</table>
+
+<h3>Storage Requirements</h3>
+
+<ul>
+    <li><strong>App Size:</strong> ~2MB initial download</li>
+    <li><strong>Data Storage:</strong> Varies by roster size (typically <10MB per event)</li>
+    <li><strong>Available Space:</strong> 50MB recommended for smooth operation</li>
+</ul>
+
+<h3>Performance Specifications</h3>
+
+<ul>
+    <li><strong>Roster Size:</strong> Tested with up to 500 participants</li>
+    <li><strong>Measurements:</strong> All 10 measurement types supported simultaneously</li>
+    <li><strong>Export Speed:</strong> Large datasets export in under 30 seconds</li>
+    <li><strong>Battery Usage:</strong> Minimal impact on device battery life</li>
+</ul>
+
+<h3>Network Requirements</h3>
+
+<ul>
+    <li><strong>Initial Load:</strong> Internet connection required for first access</li>
+    <li><strong>Offline Operation:</strong> Full functionality without internet after loading</li>
+    <li><strong>Data Sync:</strong> Manual export only (no automatic cloud sync)</li>
+</ul>
+
+<h2 id="troubleshooting">Troubleshooting</h2>
+
+<h3>Common Issues</h3>
+
+<table>
+    <tr>
+        <th>Problem</th>
+        <th>Possible Causes</th>
+        <th>Solutions</th>
+    </tr>
+    <tr>
+        <td>App Won't Load Roster</td>
+        <td>CSV format incorrect, special characters, file extension</td>
+        <td>Verify CSV format, use quotes for special characters, ensure .csv extension</td>
+    </tr>
+    <tr>
+        <td>Measurements Won't Save</td>
+        <td>Values don't match, negative numbers, no participant selected</td>
+        <td>Ensure both entries identical, use positive numbers, select participant first</td>
+    </tr>
+    <tr>
+        <td>Export Not Working</td>
+        <td>Storage space, permissions, browser issues</td>
+        <td>Check storage space, verify Downloads folder access, try different browser</td>
+    </tr>
+    <tr>
+        <td>App Runs Slowly</td>
+        <td>Large roster, memory issues, other apps</td>
+        <td>Close other apps, restart browser, reduce roster size if extreme</td>
+    </tr>
+</table>
+
+<h3>Data Recovery</h3>
+
+<ul>
+    <li><strong>Auto-Backup:</strong> App maintains automatic backups</li>
+    <li><strong>Manual Backup:</strong> Export data regularly as protection</li>
+    <li><strong>State Recovery:</strong> Restart app to restore last session</li>
+    <li><strong>Emergency Export:</strong> Use View Saved Files if export button fails</li>
+</ul>
+
+<h3>Support Information</h3>
+
+<ul>
+    <li><strong>Error Logging:</strong> Check browser console for detailed error messages</li>
+    <li><strong>Version Info:</strong> App displays current version (v2.7) in header</li>
+    <li><strong>Device Info:</strong> Automatically included in export files for support</li>
+    <li><strong>Data Privacy:</strong> All troubleshooting can be done without sharing personal data</li>
+</ul>
+
+<h2>Best Practices</h2>
+
+<h3>Before Starting</h3>
+
+<ol class="steps">
+    <li><strong>Test Setup:</strong> Try with small sample roster first</li>
+    <li><strong>Verify Equipment:</strong> Ensure measurement tools are calibrated</li>
+    <li><strong>Check Settings:</strong> Configure units and adjustments before data collection</li>
+    <li><strong>Backup Plan:</strong> Know how to export data in case of device issues</li>
+</ol>
+
+<h3>During Data Collection</h3>
+
+<ol class="steps">
+    <li><strong>Regular Exports:</strong> Export data every 50-100 measurements</li>
+    <li><strong>Double-Check:</strong> Review measurements before moving to next participant</li>
+    <li><strong>Consistent Process:</strong> Use same measurement technique for all participants</li>
+    <li><strong>Break Periods:</strong> Take breaks to maintain measurement accuracy</li>
+</ol>
+
+<h3>After Completion</h3>
+
+<ol class="steps">
+    <li><strong>Final Export:</strong> Ensure all data is exported</li>
+    <li><strong>Verify Export:</strong> Open CSV file to confirm data integrity</li>
+    <li><strong>Backup Storage:</strong> Save exported files to multiple locations</li>
+    <li><strong>Reset App:</strong> Clear data if device will be reused for different event</li>
+</ol>
+
+<h2>Quick Reference</h2>
+
+<h3>Essential Buttons</h3>
+
+<table>
+    <tr>
+        <th>Button</th>
+        <th>Function</th>
+    </tr>
+    <tr>
+        <td><span class="button-ref">📊</span></td>
+        <td>Spreadsheet View</td>
+    </tr>
+    <tr>
+        <td><span class="button-ref">⚙️</span></td>
+        <td>Settings</td>
+    </tr>
+    <tr>
+        <td><span class="button-ref">📤</span></td>
+        <td>Export Data</td>
+    </tr>
+    <tr>
+        <td><span class="button-ref">👥</span></td>
+        <td>Check-in</td>
+    </tr>
+    <tr>
+        <td><span class="button-ref">+</span></td>
+        <td>Add Person</td>
+    </tr>
+</table>
+
+<h3>Keyboard Shortcuts</h3>
+
+<ul>
+    <li><strong>Tab/Enter:</strong> Move between measurement fields</li>
+    <li><strong>Escape:</strong> Cancel current entry</li>
+    <li><strong>Space:</strong> Toggle present/absent in check-in mode</li>
+</ul>
+
+<h3>File Locations</h3>
+
+<ul>
+    <li><strong>Primary:</strong> iPad Downloads folder</li>
+    <li><strong>Backup:</strong> Settings → View Saved Files</li>
+    <li><strong>Mail:</strong> Automatically attached to emails</li>
+</ul>
+
+<div class="footer">
+    <p><strong>Manual Entry v2.7 User Manual</strong></p>
+    <p><em>Created June 2025 - For training and operational support</em></p>
+    <p>For technical issues or questions, refer to the browser console for error details and ensure you're using a compatible browser with JavaScript enabled.</p>
+</div>
+
+</body>
+</html>

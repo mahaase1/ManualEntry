@@ -428,6 +428,12 @@ class ManualEntryApp {
     }
 
     bindEvents() {
+        console.log('=== BINDING EVENTS ===');
+        console.log('Save measurements button exists:', !!document.getElementById('save-measurements'));
+        console.log('Settings button exists:', !!document.getElementById('settings-btn'));
+        console.log('Back to athlete view button exists:', !!document.getElementById('back-to-athlete-view'));
+        console.log('Settings modal exists:', !!document.getElementById('settings-modal'));
+        
         // Startup screen events
         document.getElementById('operator-name').addEventListener('input', this.validateStartup.bind(this));
         document.getElementById('event-name').addEventListener('input', this.validateStartup.bind(this));
@@ -496,14 +502,14 @@ class ManualEntryApp {
         let saveTimeout;
         document.addEventListener('input', () => {
             clearTimeout(saveTimeout);
-            saveTimeout = setTimeout(() => this.saveState(), 1000);
-        });
-        
-        // Bind 10-key trigger buttons
-        this.bind10KeyTriggers();
-        
         // Bind setup screen inputs for auto-save
         this.bindSetupInputs();
+    }   if (settingsBtn) {
+            settingsBtn.onclick = (e) => {
+                console.log('Settings button clicked via onclick handler');
+                this.showSettings();
+            };
+        }
     }
 
     bindSetupInputs() {
@@ -1685,7 +1691,7 @@ class ManualEntryApp {
         let hasValidMeasurement = false;
 
         // Get measurements from the measurement form
-        const measurementInputs = document.querySelectorAll('#measurement-screen input[type="number"]');
+        const measurementInputs = document.querySelectorAll('#measurement-form input[type="number"]');
         console.log('Found measurement inputs:', measurementInputs.length);
         
         measurementInputs.forEach(input => {
