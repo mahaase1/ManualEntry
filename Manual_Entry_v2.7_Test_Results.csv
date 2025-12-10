@@ -1,0 +1,213 @@
+Test Case ID,Test Case Name,Objective,Pre-conditions,Test Steps,Expected Results,Heidi - Pass/Fail,Heidi - Notes,MikeV - Pass/Fail,MikeV - Notes,Comments
+TC001,Initial Application Setup,Verify first-time setup process works correctly,Fresh browser session (clear cache/storage); Sample CSV roster file available,"1. Navigate to the application URL
+2. Verify app loads and displays startup screen
+3. Enter operator name: ""Test User""
+4. Enter event name: ""Adoption Test Event""
+5. Click ""Import Roster (CSV)"" and select test file
+6. Verify roster file uploads successfully
+7. Click ""Next: Setup Measurements""
+8. Verify measurement setup screen appears","✅ App loads without errors
+✅ All form fields accept input
+✅ CSV file uploads successfully
+✅ Navigation to setup screen works
+✅ No console errors in browser",,,,
+TC002,Measurement Configuration,Verify measurement units and adjustments can be configured,Test Case 1 completed successfully; Currently on measurement setup screen,"1. Change height unit from ""Inches"" to ""Centimeters""
+2. Change reach unit from ""Inches"" to ""Centimeters""
+3. Set height with shoes adjustment for Males to ""+1.0""
+4. Set height with shoes adjustment for Females to ""+0.5""
+5. Set reach adjustment for Males to ""-0.5""
+6. Leave all other adjustments at 0
+7. Click ""Start Event""","✅ Unit dropdowns change successfully
+✅ Adjustment inputs accept decimal values
+✅ Changes are saved automatically
+✅ ""Start Event"" navigates to main screen
+✅ Event title displays correctly",,,,
+TC003,Roster Navigation and Display,Verify roster displays correctly and navigation works,Test Cases 1-2 completed; Currently on main screen,"1. Verify roster grid displays all participants from CSV
+2. Check that participant names display correctly
+3. Use name filter to search for a specific participant
+4. Clear the filter and verify all participants return
+5. Click on a participant card to select them
+6. Verify measurement form appears for selected participant","✅ All CSV participants display in grid
+✅ Names with special characters display correctly
+✅ Search filter works properly
+✅ Participant selection works
+✅ Measurement form loads for selected participant",,,,
+TC004,Basic Measurement Entry (Athlete View),Verify double-entry measurement process works correctly,Test Cases 1-3 completed; Participant selected in athlete view,"1. Enter height with shoes: First entry ""72.5"", Second entry ""72.5""
+2. Verify green validation and auto-save
+3. Enter height without shoes: First entry ""71.0"", Second entry ""71.1""
+4. Verify red validation (mismatch)
+5. Correct second entry to ""71.0""
+6. Verify green validation and auto-save
+7. Enter reach: First entry ""85.0"", Second entry ""85.0""
+8. Enter weight: First entry ""175"", Second entry ""175""
+9. Click ""Save Measurements"" button","✅ Matching entries show green validation
+✅ Mismatched entries show red validation
+✅ Auto-save works for validated entries
+✅ Manual save button works
+✅ Toast confirmation appears
+✅ Values persist when navigating away and back",,,,
+TC005,Adjustment Calculations,Verify adjustments are applied correctly to measurements,Test Case 4 completed with measurements entered; Adjustments configured in Test Case 2,"1. Navigate to spreadsheet view (📊 button)
+2. Locate the test participant's row
+3. Verify raw height with shoes shows ""72.5""
+4. Verify adjusted height shows ""73.5"" (72.5 + 1.0 adjustment)
+5. Verify raw reach shows ""85.0""
+6. Verify adjusted reach shows ""84.5"" (85.0 - 0.5 adjustment)
+7. Switch units back to inches in settings
+8. Verify values convert correctly","✅ Raw measurements display as entered
+✅ Adjusted measurements include gender-specific adjustments
+✅ Calculations are mathematically correct
+✅ Unit conversions work properly
+✅ Changes persist across view switches",,,,
+TC006,Check-in System,Verify attendance tracking functionality,Test Cases 1-5 completed; Multiple participants in roster,"1. Click ""👥 Check-in"" button from main roster view
+2. Verify check-in grid displays all participants
+3. Click ""📝 Edit Mode: OFF"" to enable editing
+4. Mark 3 participants as ""Present"" (green)
+5. Leave 2 participants as ""Absent"" (red)
+6. Click ""📝 Edit Mode: ON"" to disable editing
+7. Try to change attendance (should be disabled)
+8. Click ""← Back to Roster""
+9. Verify present participants show different visual indicator","✅ Check-in view loads correctly
+✅ Edit mode toggles work
+✅ Attendance changes save properly
+✅ Visual indicators work correctly
+✅ Status persists when returning to roster
+✅ Edit protection works when disabled",,,,
+TC007,Station View Mode,Verify station-based measurement workflow,Test Cases 1-6 completed; Back on main roster screen,"1. Change ""View Mode"" dropdown from ""Athlete View"" to ""Station View""
+2. Select ""Height with Shoes"" from measurement dropdown
+3. Select first participant from participant dropdown
+4. Enter measurement: ""70.0"" (first entry), ""70.0"" (second entry)
+5. Select second participant
+6. Enter measurement: ""68.5"" (first entry), ""68.5"" (second entry)
+7. Change measurement type to ""Weight""
+8. Verify participant selection resets
+9. Switch back to ""Athlete View""","✅ View mode switches correctly
+✅ Station dropdowns populate properly
+✅ Measurement entry works for multiple participants
+✅ Values save correctly for each participant
+✅ Switching measurement types works
+✅ Return to athlete view works",,,,
+TC008,Spreadsheet View and Editing,Verify grid-based data review and editing,Test Cases 1-7 completed with various measurements entered,"1. Click 📊 button to open spreadsheet view
+2. Verify all entered measurements display in grid
+3. Click ""📝 Edit Mode"" to enable editing
+4. Click on a measurement cell and change the value
+5. Press Enter to save the change
+6. Verify the change is reflected immediately
+7. Scroll horizontally to see all measurement columns
+8. Check completion status indicators
+9. Click ""← Back to Main"" to return to roster view","✅ Spreadsheet loads with all data
+✅ Edit mode enables cell editing
+✅ Changes save immediately
+✅ Data validation still applies
+✅ Horizontal scrolling works
+✅ Status indicators are accurate
+✅ Navigation back to main works",,,,
+TC009,Data Export,Verify CSV export functionality works correctly,Test Cases 1-8 completed with measurement data,"1. Click 📤 Export button from main screen
+2. Wait for export processing
+3. Verify file download or email integration
+4. Open the exported CSV file
+5. Verify all participant data is present
+6. Verify raw measurements are correct
+7. Verify adjusted measurements include adjustments
+8. Check export metadata (timestamp, operator, event name)
+9. Verify file naming convention","✅ Export initiates without errors
+✅ File downloads successfully OR email opens with attachment
+✅ CSV file opens in spreadsheet application
+✅ All data is complete and accurate
+✅ Calculations are correct
+✅ Metadata is included
+✅ File name follows naming convention
+✅ No data corruption or missing values",,,,
+TC010,Settings and File Management,Verify settings functionality and file management,Test Cases 1-9 completed,"1. Click ⚙️ Settings button
+2. Click ""📏 Measurement Setup""
+3. Verify return to setup screen with current values
+4. Make a small adjustment change
+5. Click ""Start Event"" to return to main
+6. Go back to Settings
+7. Click ""View Saved Files""
+8. Verify exported file appears in list
+9. Test file download from saved files
+10. Click ""Reset for New Event""
+11. Enter password: ""00000""
+12. Verify app resets to startup screen","✅ Settings modal opens correctly
+✅ Measurement setup retains current values
+✅ Changes save and persist
+✅ File management shows saved exports
+✅ File re-download works
+✅ Reset requires correct password
+✅ Reset clears all data
+✅ App returns to startup state",,,,
+TC011,Session Persistence,Verify data persists across browser sessions,Test Cases 1-10 completed with data entered,"1. Note current state (participants, measurements, settings)
+2. Close the browser tab/window completely
+3. Wait 30 seconds
+4. Reopen browser and navigate to application URL
+5. Verify app resumes where you left off
+6. Check that all measurements are still present
+7. Verify settings/adjustments are preserved
+8. Test that you can continue entering new measurements","✅ App automatically restores previous session
+✅ All measurement data is preserved
+✅ Settings and adjustments are maintained
+✅ Current view mode is remembered
+✅ No data loss occurs
+✅ Full functionality continues to work",,,,
+TC012,Offline Functionality,Verify app works without internet connection,Test Case 11 completed (app loaded at least once online),"1. Disconnect device from internet/WiFi
+2. Refresh the browser page
+3. Verify app still loads
+4. Enter new measurements for a participant
+5. Use check-in functionality
+6. Switch between view modes
+7. Access settings
+8. Attempt data export (should still work locally)
+9. Reconnect to internet
+10. Verify no data loss occurred","✅ App loads completely offline
+✅ All core functionality works without internet
+✅ Data entry and validation work
+✅ Local storage continues working
+✅ Export creates local files
+✅ No functionality is lost
+✅ Data syncs properly when reconnected",,,,
+TC013,Error Handling and Edge Cases,Verify app handles errors gracefully,Fresh app session,"1. Try uploading an invalid CSV file (wrong format)
+2. Try entering negative measurements
+3. Try entering extremely large numbers (>999)
+4. Leave measurement fields empty and try to save
+5. Try rapid clicking on buttons
+6. Enter special characters in measurement fields
+7. Try to access features before completing setup
+8. Test with very long participant names","✅ Invalid CSV shows clear error message
+✅ Negative numbers are rejected with feedback
+✅ Large numbers are handled appropriately
+✅ Empty fields are handled gracefully
+✅ No UI breaking from rapid clicks
+✅ Invalid characters are filtered/rejected
+✅ Proper navigation flow is enforced
+✅ Long names display properly without breaking layout",,,,
+TC014,Multi-User Workflow Simulation,Verify app works efficiently in realistic usage scenario,Fresh app setup with roster of 20+ participants,"1. Set up event with realistic measurements and adjustments
+2. Process first 5 participants completely (all measurements)
+3. Use check-in to mark 10 participants as present
+4. Switch to station view and measure height for 8 participants
+5. Switch back to athlete view
+6. Complete 3 more participants fully
+7. Export data mid-session
+8. Continue with 5 more participants
+9. Use spreadsheet view to review and edit 2 measurements
+10. Perform final export
+11. Verify both exports contain correct progressive data","✅ App handles realistic workload smoothly
+✅ Performance remains good with multiple participants
+✅ Data integrity maintained throughout session
+✅ View switching works efficiently
+✅ Progressive exports show correct data states
+✅ No memory leaks or performance degradation
+✅ All functionality remains responsive",,,,
+TC015,Cross-Browser Compatibility,Verify app works across different browsers,Access to Safari Chrome and/or Edge browsers,"1. Complete Test Cases 1-4 in Safari
+2. Export the data
+3. Open the same app URL in Chrome
+4. Verify data persists across browsers (should not - each browser independent)
+5. Complete basic measurement entry workflow in Chrome
+6. Test export functionality in Chrome
+7. If available, repeat key tests in Edge browser
+8. Compare functionality and performance across browsers","✅ App loads correctly in all tested browsers
+✅ All core functionality works consistently
+✅ Data storage is browser-specific (as expected)
+✅ Export works in all browsers
+✅ UI renders correctly across browsers
+✅ Performance is acceptable in all browsers
+✅ No browser-specific errors occur",,,,
