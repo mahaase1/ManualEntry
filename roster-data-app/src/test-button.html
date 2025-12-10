@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Button Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 40px; }
+        .form-group { margin: 20px 0; }
+        label { display: block; margin-bottom: 5px; }
+        input, button { padding: 10px; font-size: 16px; }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+        button:not(:disabled) { cursor: pointer; background: #007AFF; color: white; }
+    </style>
+</head>
+<body>
+    <h1>Button Validation Test</h1>
+    
+    <div class="form-group">
+        <label for="operator-name">Name:</label>
+        <input type="text" id="operator-name">
+    </div>
+    
+    <div class="form-group">
+        <label for="event-name">Event:</label>
+        <input type="text" id="event-name">
+    </div>
+    
+    <div class="form-group">
+        <label for="roster-upload">Upload CSV:</label>
+        <input type="file" id="roster-upload" accept=".csv">
+    </div>
+    
+    <button id="setup-measurements" disabled>Next: Setup Measurements</button>
+    
+    <div id="result" style="margin-top: 20px; padding: 10px; background: #f0f0f0;"></div>
+
+    <script>
+        function validateStartup() {
+            const operatorName = document.getElementById('operator-name').value.trim();
+            const eventName = document.getElementById('event-name').value.trim();
+            const rosterFile = document.getElementById('roster-upload').files.length > 0;
+            
+            const setupButton = document.getElementById('setup-measurements');
+            setupButton.disabled = !(operatorName && eventName && rosterFile);
+            
+            document.getElementById('result').innerHTML = `
+                Name: ${operatorName ? '✓' : '✗'}<br>
+                Event: ${eventName ? '✓' : '✗'}<br>
+                File: ${rosterFile ? '✓' : '✗'}<br>
+                Button enabled: ${!setupButton.disabled ? 'YES' : 'NO'}
+            `;
+        }
+        
+        document.getElementById('operator-name').addEventListener('input', validateStartup);
+        document.getElementById('event-name').addEventListener('input', validateStartup);
+        document.getElementById('roster-upload').addEventListener('change', validateStartup);
+        
+        document.getElementById('setup-measurements').addEventListener('click', function() {
+            if (!this.disabled) {
+                alert('Button clicked! It works!');
+                document.getElementById('result').innerHTML += '<br><strong style="color: green;">✓ BUTTON WORKS!</strong>';
+            }
+        });
+        
+        // Initial validation
+        validateStartup();
+    </script>
+</body>
+</html>

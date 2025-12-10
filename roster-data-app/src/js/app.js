@@ -1326,9 +1326,9 @@ class ManualEntryApp {
     }
 
     validateStartup() {
-        const operatorName = document.getElementById('operator-name').value.trim();
-        const eventName = document.getElementById('event-name').value.trim();
-        const rosterFile = document.getElementById('roster-upload').files.length > 0;
+        const operatorName = document.getElementById('operator-name')?.value.trim() || '';
+        const eventName = document.getElementById('event-name')?.value.trim() || '';
+        const rosterFile = document.getElementById('roster-upload')?.files.length > 0;
         
         const setupButton = document.getElementById('setup-measurements');
         if (setupButton) {
