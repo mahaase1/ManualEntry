@@ -44,6 +44,8 @@ class ManualEntryApp {
         this.loadState();
         this.bindEvents();
         this.restoreSession();
+        // Validate startup button state after initialization
+        setTimeout(() => this.validateStartup(), 100);
     }
 
     generateDeviceId() {
