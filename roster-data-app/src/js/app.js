@@ -443,10 +443,16 @@ class ManualEntryApp {
         
         // Setup measurements button - add both click and touch events for iPad compatibility
         const setupButton = document.getElementById('setup-measurements');
-        setupButton.addEventListener('click', this.showSetupScreen.bind(this));
+        setupButton.addEventListener('click', (e) => {
+            if (!setupButton.disabled) {
+                this.showSetupScreen();
+            }
+        });
         setupButton.addEventListener('touchend', (e) => {
-            e.preventDefault();
-            this.showSetupScreen();
+            if (!setupButton.disabled) {
+                e.preventDefault();
+                this.showSetupScreen();
+            }
         });
         
         // Setup screen events
