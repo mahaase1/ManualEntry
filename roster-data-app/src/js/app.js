@@ -506,18 +506,8 @@ class ManualEntryApp {
         this.bindMeasurementValidation();
         this.bindIndividualSaveButtons();
 
-        // Auto-save on input (debounced)
-        let saveTimeout;
-        document.addEventListener('input', () => {
-            clearTimeout(saveTimeout);
         // Bind setup screen inputs for auto-save
         this.bindSetupInputs();
-    }   if (settingsBtn) {
-            settingsBtn.onclick = (e) => {
-                console.log('Settings button clicked via onclick handler');
-                this.showSettings();
-            };
-        }
     }
 
     bindSetupInputs() {
@@ -1330,9 +1320,13 @@ class ManualEntryApp {
         const eventName = document.getElementById('event-name')?.value.trim() || '';
         const rosterFile = document.getElementById('roster-upload')?.files.length > 0;
         
+        console.log('validateStartup called:', { operatorName, eventName, rosterFile });
+        
         const setupButton = document.getElementById('setup-measurements');
         if (setupButton) {
-            setupButton.disabled = !(operatorName && eventName && rosterFile);
+            const shouldEnable = operatorName && eventName && rosterFile;
+            setupButton.disabled = !shouldEnable;
+            console.log('Should enable:', shouldEnable, 'Button disabled:', setupButton.disabled);
         }
     }
 

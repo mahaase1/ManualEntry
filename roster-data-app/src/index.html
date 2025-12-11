@@ -11,7 +11,9 @@
     <meta name="apple-mobile-web-app-title" content="Manual Entry">
 </head>
 <body>
-    <img src="../../BAMLogo/bam twitter banner 2.png" alt="BAM Logo" style="width: 100%; max-width: 1500px; height: auto; display: block; margin: 0 auto;">
+    <header id="app-header">
+        <img src="assets/bam-logo.png" alt="BAM Logo" class="header-logo">
+    </header>
     <div id="app">
         <!-- Startup Screen -->
         <div id="startup-screen" class="screen active">
@@ -524,6 +526,16 @@
         </div>
     </div>
 
-    <script src="js/app.js"></script>
+    <script src="js/app.js?v=20251211"></script>
+    <script>
+        // Debug: Log when page loads
+        console.log('Page loaded, checking button state...');
+        window.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded');
+            const button = document.getElementById('setup-measurements');
+            console.log('Button element:', button);
+            console.log('Button disabled:', button?.disabled);
+        });
+    </script>
 </body>
 </html>

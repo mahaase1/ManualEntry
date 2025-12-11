@@ -9,13 +9,33 @@ body {
     font-size: 18px;
     line-height: 1.5;
     background-color: #f5f5f5;
-    padding: 20px;
+    padding: 0;
     -webkit-user-select: none;
     -moz-user-select: none;
     -ms-user-select: none;
     user-select: none;
     -webkit-touch-callout: none;
     -webkit-tap-highlight-color: transparent;
+}
+
+#app-header {
+    background-color: white;
+    padding: 10px 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.header-logo {
+    max-width: 100%;
+    height: auto;
+    max-height: 100px;
+    display: block;
+    margin: 0 auto;
+}
+
+#app {
+    padding: 0 20px 20px;
 }
 
 .screen {
@@ -87,7 +107,7 @@ body {
 }
 
 button {
-    background: #007AFF;
+    background: #FF6600;
     color: white;
     border: none;
     padding: 16px 24px;
@@ -104,11 +124,11 @@ button {
 }
 
 button:hover {
-    background: #0056CC;
+    background: #CC5200;
 }
 
 button:active {
-    background: #004AA3;
+    background: #994000;
 }
 
 button:disabled {
@@ -440,9 +460,9 @@ header {
     width: 100%;
     margin-bottom: 16px;
 }view-files-btn {
-    background: #007AFF;
+    background: #FF6600;
 #view-files-btn:hover {
-    background: #0056CC;
+    background: #CC5200;
 }
 
 #close-settings,hover {
@@ -559,13 +579,13 @@ de.edit-active:hover {
 }ld(even) {
 
 #back-to-main {
-    background: #007AFF;
+    background: #FF6600;
     font-size: 16px;
     padding: 12px 20px;fd;
 }
 
 #back-to-main:hover {-table .name-column {
-    background: #0056CC;: 600;
+    background: #CC5200;: 600;
 }
    position: sticky;
 #spreadsheet-container {    left: 0;
