@@ -269,6 +269,173 @@ header {
     color: #666;
 }
 
+/* Station View */
+#station-view {
+    background: white;
+    padding: 24px;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.station-header h3 {
+    font-size: 24px;
+    color: #333;
+    margin-bottom: 16px;
+}
+
+.station-controls {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 24px;
+}
+
+.station-controls label {
+    font-weight: 600;
+    color: #333;
+}
+
+#station-select {
+    padding: 12px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    font-size: 16px;
+    min-width: 250px;
+}
+
+#back-to-athlete-view {
+    background: #6c757d;
+}
+
+#back-to-athlete-view:hover {
+    background: #545b62;
+}
+
+.station-content {
+    margin-top: 24px;
+}
+
+.station-search {
+    margin-bottom: 24px;
+}
+
+#station-name-filter {
+    width: 100%;
+    max-width: 400px;
+    padding: 12px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    font-size: 16px;
+}
+
+.station-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+}
+
+.station-roster {
+    background: #f8f9fa;
+    padding: 16px;
+    border-radius: 8px;
+    max-height: 600px;
+    overflow-y: auto;
+}
+
+#station-roster-grid {
+    display: grid;
+    gap: 8px;
+}
+
+.station-roster-item {
+    background: white;
+    padding: 8px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 2px solid transparent;
+    font-size: 14px;
+}
+
+.station-roster-item:hover {
+    background: #e9ecef;
+    border-color: #007AFF;
+}
+
+.station-roster-item.selected {
+    background: #e3f2fd;
+    border-color: #007AFF;
+    font-weight: 600;
+}
+
+.station-measurement {
+    background: #f8f9fa;
+    padding: 24px;
+    border-radius: 8px;
+}
+
+#station-measurement-form h4 {
+    font-size: 20px;
+    color: #333;
+    margin-bottom: 20px;
+}
+
+#station-measurement-inputs {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+#station-measurement-label {
+    font-size: 18px;
+    font-weight: 600;
+    color: #333;
+}
+
+.station-measurement .measurement-input-group {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.station-measurement input[type="number"] {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #ddd;
+    border-radius: 6px;
+    font-size: 18px;
+}
+
+/* Station view validation states */
+#station-value-1.error,
+#station-value-2.error {
+    border-color: #dc3545;
+    background: #fff5f5;
+}
+
+#station-value-1.valid,
+#station-value-2.valid {
+    border-color: #28a745;
+    background: #f8fff8;
+}
+
+#station-save-btn {
+    width: 100%;
+    padding: 16px;
+    font-size: 18px;
+}
+
+@media (max-width: 1024px) {
+    .station-layout {
+        grid-template-columns: 1fr;
+    }
+    
+    .station-roster {
+        max-height: 400px;
+    }
+}
+
 /* Measurement Form */
 #measurement-form {
     background: white;
@@ -314,6 +481,12 @@ header {
     color: #333;
     font-size: 16px;
     margin-bottom: 8px;
+}
+
+.measurement-input-group {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
 }
 
 .measurement-item input:not(.adjustment-override) {

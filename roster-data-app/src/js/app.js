@@ -36,6 +36,7 @@ class ManualEntryApp {
         this.currentView = 'athlete'; // 'athlete' or 'station'
         this.currentStation = '';
         this.selectedPersonInStation = null;
+        this.lastLoadedMeasurementKey = null; // Track last loaded to prevent reloading after save
         
         this.init();
     }
@@ -747,8 +748,14 @@ class ManualEntryApp {
 
         } else if (mode === 'station') {
             // Update station view inputs
-            document.getElementById('station-value-1').value = value;
-            document.getElementById('station-value-2').value = value;
+            const input1 = document.getElementById('station-value-1');
+            const input2 = document.getElementById('station-value-2');
+            input1.value = value;
+            input2.value = value;
+            
+            // Clear validation classes
+            input1.classList.remove('error', 'valid');
+            input2.classList.remove('error', 'valid');
             
             // Trigger save automatically
             document.getElementById('station-save-btn').click();
@@ -808,7 +815,10 @@ class ManualEntryApp {
                 if (this.selectedPersonInStation) {
                     document.getElementById('station-measurement-label').textContent = 
                         `${selectedOption.text} for ${this.selectedPersonInStation.name}`;
-                    this.loadStationMeasurement();
+                    const currentKey = `${this.selectedPersonInStation.id}_${this.currentStation}`;
+                    if (currentKey !== this.lastLoadedMeasurementKey) {
+                        this.loadStationMeasurement();
+                    }
                 } else {
                     document.getElementById('station-measurement-label').textContent = 
                         `${selectedOption.text} - Select a person`;
@@ -840,6 +850,7 @@ class ManualEntryApp {
     }
 
     saveStationMeasurement() {
+        console.log('saveStationMeasurement called'); // Debug
         if (!this.selectedPersonInStation || !this.currentStation) {
             this.showToast('Please select a person and station', 'error');
             return;
@@ -849,18 +860,19 @@ class ManualEntryApp {
         const value2 = parseFloat(document.getElementById('station-value-2').value);
         const override = parseFloat(document.getElementById('station-override').value) || 0;
 
+        console.log('Station values:', value1, value2, override); // Debug
+
         if (isNaN(value1) || isNaN(value2)) {
             this.showToast('Please enter valid measurements', 'error');
             return;
         }
 
-        if (Math.abs(value1 - value2) > 1) {
-            this.showToast('Measurements differ by more than 1 unit', 'error');
+        if (value1 !== value2) {
+            this.showToast('Measurements must be identical', 'error');
             return;
         }
 
-        const average = (value1 + value2) / 2;
-        const finalValue = average + override;
+        const finalValue = value1 + override;
 
         // Save measurement
         const measurementKey = `${this.selectedPersonInStation.id}_${this.currentStation}`;
@@ -869,7 +881,7 @@ class ManualEntryApp {
             measurement: this.currentStation,
             value1: value1,
             value2: value2,
-            average: average,
+            value: value1,
             adjustment: override,
             finalValue: finalValue,
             timestamp: new Date().toISOString(),
@@ -879,10 +891,22 @@ class ManualEntryApp {
         });
 
         // Clear inputs
-        document.getElementById('station-value-1').value = '';
-        document.getElementById('station-value-2').value = '';
-        document.getElementById('station-override').value = '';
-        document.getElementById('station-display-value').textContent = '';
+        const input1El = document.getElementById('station-value-1');
+        const input2El = document.getElementById('station-value-2');
+        const overrideEl = document.getElementById('station-override');
+        
+        console.log('Clearing station inputs after save'); // Debug
+        if (input1El) input1El.value = '';
+        if (input2El) input2El.value = '';
+        if (overrideEl) overrideEl.value = '';
+        
+        // Remove validation classes
+        if (input1El) input1El.classList.remove('error', 'valid');
+        if (input2El) input2El.classList.remove('error', 'valid');
+        
+        // Clear tracking so fields stay empty until user switches person/station
+        this.lastLoadedMeasurementKey = measurementKey;
+        console.log('Set lastLoadedMeasurementKey to:', this.lastLoadedMeasurementKey); // Debug
 
         // Update display
         this.updateStationPersonCard(this.selectedPersonInStation);
@@ -898,40 +922,39 @@ class ManualEntryApp {
     }
 
     updateStationDisplay() {
-        const value1 = parseFloat(document.getElementById('station-value-1').value);
-        const value2 = parseFloat(document.getElementById('station-value-2').value);
-        const override = parseFloat(document.getElementById('station-override').value) || 0;
-
-        if (!isNaN(value1) && !isNaN(value2)) {
-            const average = (value1 + value2) / 2;
-            const finalValue = average + override;
-            const unit = this.measurementUnits[this.currentStation] || '';
-            
-            document.getElementById('station-display-value').textContent = 
-                `Average: ${average.toFixed(2)} + ${override.toFixed(2)} = ${finalValue.toFixed(2)} ${unit}`;
-        } else {
-            document.getElementById('station-display-value').textContent = '';
-        }
+        // Display removed - validation handled by CSS classes
     }
 
     loadStationMeasurement() {
+        console.log('loadStationMeasurement called'); // Debug
         if (!this.selectedPersonInStation || !this.currentStation) return;
 
         const measurementKey = `${this.selectedPersonInStation.id}_${this.currentStation}`;
+        this.lastLoadedMeasurementKey = measurementKey;
+        console.log('Loading measurement for key:', measurementKey); // Debug
         const measurement = this.measurements.get(measurementKey);
 
+        const input1El = document.getElementById('station-value-1');
+        const input2El = document.getElementById('station-value-2');
+        const overrideEl = document.getElementById('station-override');
+        
         if (measurement) {
-            document.getElementById('station-value-1').value = measurement.value1;
-            document.getElementById('station-value-2').value = measurement.value2;
-            document.getElementById('station-override').value = measurement.adjustment || 0;
+            console.log('Loading existing measurement:', measurement); // Debug
+            input1El.value = measurement.value1;
+            input2El.value = measurement.value2;
+            overrideEl.value = measurement.adjustment || 0;
             this.updateStationDisplay();
         } else {
+            console.log('No existing measurement, clearing fields'); // Debug
             // Clear inputs for new measurement
-            document.getElementById('station-value-1').value = '';
-            document.getElementById('station-value-2').value = '';
-            document.getElementById('station-override').value = '';
-            document.getElementById('station-display-value').textContent = '';
+            input1El.value = '';
+            input2El.value = '';
+            overrideEl.value = '';
         }
+        
+        // Always clear validation classes when loading
+        input1El.classList.remove('error', 'valid');
+        input2El.classList.remove('error', 'valid');
     }
 
     updateStationPersonCard(person) {
@@ -984,6 +1007,11 @@ class ManualEntryApp {
     selectStationPerson(person) {
         console.log('Station person selected:', person); // Debug
         
+        // Check if this is the same person already selected
+        const isSamePerson = this.selectedPersonInStation && 
+                            this.selectedPersonInStation.id === person.id;
+        console.log('Is same person?', isSamePerson); // Debug
+        
         // Clear previous selection
         document.querySelectorAll('.station-person-card').forEach(card => {
             card.classList.remove('selected');
@@ -1020,7 +1048,14 @@ class ManualEntryApp {
                 const selectedOption = stationSelect.options[stationSelect.selectedIndex];
                 document.getElementById('station-measurement-label').textContent = 
                     `${selectedOption.text} for ${person.name}`;
-                this.loadStationMeasurement();
+                // Only load measurement if switching to a different combination
+                const currentKey = `${person.id}_${this.currentStation}`;
+                if (currentKey !== this.lastLoadedMeasurementKey) {
+                    console.log('Loading measurement for new combination:', currentKey); // Debug
+                    this.loadStationMeasurement();
+                } else {
+                    console.log('Same combination, not reloading measurement'); // Debug
+                }
             } else {
                 document.getElementById('station-measurement-label').textContent = 
                     `Select a station to enter measurements for ${person.name}`;
@@ -1443,8 +1478,70 @@ class ManualEntryApp {
 
     // Additional missing methods
     bindMeasurementValidation() {
-        // Add measurement validation logic here if needed
-        // This method is called in bindEvents but was missing
+        // Validate measurement inputs on change for ATHLETE VIEW
+        const measurementTypes = ['height-shoes', 'height-no-shoes', 'reach', 'wingspan', 'weight', 
+                                  'hand-length', 'hand-width', 'vertical', 'approach', 'broad'];
+        
+        measurementTypes.forEach(type => {
+            const input1 = document.getElementById(`${type}-1`);
+            const input2 = document.getElementById(`${type}-2`);
+            
+            if (input1 && input2) {
+                const validatePair = () => {
+                    const val1 = parseFloat(input1.value);
+                    const val2 = parseFloat(input2.value);
+                    
+                    // Remove previous validation classes
+                    input1.classList.remove('error', 'valid');
+                    input2.classList.remove('error', 'valid');
+                    
+                    if (!isNaN(val1) && !isNaN(val2)) {
+                        if (val1 !== val2) {
+                            // Values are not identical - show error
+                            input1.classList.add('error');
+                            input2.classList.add('error');
+                        } else {
+                            // Values are identical - show valid
+                            input1.classList.add('valid');
+                            input2.classList.add('valid');
+                        }
+                    }
+                };
+                
+                input1.addEventListener('input', validatePair);
+                input2.addEventListener('input', validatePair);
+            }
+        });
+        
+        // Validate STATION VIEW inputs
+        const stationInput1 = document.getElementById('station-value-1');
+        const stationInput2 = document.getElementById('station-value-2');
+        
+        if (stationInput1 && stationInput2) {
+            const validateStationPair = () => {
+                const val1 = parseFloat(stationInput1.value);
+                const val2 = parseFloat(stationInput2.value);
+                
+                // Remove previous validation classes
+                stationInput1.classList.remove('error', 'valid');
+                stationInput2.classList.remove('error', 'valid');
+                
+                if (!isNaN(val1) && !isNaN(val2)) {
+                    if (val1 !== val2) {
+                        // Values are not identical - show error
+                        stationInput1.classList.add('error');
+                        stationInput2.classList.add('error');
+                    } else {
+                        // Values are identical - show valid
+                        stationInput1.classList.add('valid');
+                        stationInput2.classList.add('valid');
+                    }
+                }
+            };
+            
+            stationInput1.addEventListener('input', validateStationPair);
+            stationInput2.addEventListener('input', validateStationPair);
+        }
     }
 
     bindIndividualSaveButtons() {
@@ -1499,11 +1596,11 @@ class ManualEntryApp {
             return;
         }
 
-        if (Math.abs(value1 - value2) > 1) {
-            this.showToast('Measurements differ by more than 1 unit', 'warning');
+        if (value1 !== value2) {
+            this.showToast('Measurements must be identical', 'error');
+            return;
         }
 
-        const average = (value1 + value2) / 2;
         const unit = this.getMeasurementUnit(measurementType.replace('-', '_'));
         
         // Get or create measurement data
@@ -1516,7 +1613,7 @@ class ManualEntryApp {
 
         // Save the measurement
         measurementData[measurementType.replace('-', '_')] = {
-            value: average,
+            value: value1,
             unit: unit,
             value1: value1,
             value2: value2,
@@ -1529,8 +1626,17 @@ class ManualEntryApp {
         this.logActivity('MEASUREMENT_SAVED', {
             personId: this.currentPersonId,
             measurement: measurementType,
-            value: average
+            value: value1
         });
+
+        // Clear input fields after successful save
+        input1.value = '';
+        input2.value = '';
+        if (overrideInput) overrideInput.value = '';
+        
+        // Remove validation classes
+        input1.classList.remove('error', 'valid');
+        input2.classList.remove('error', 'valid');
 
         this.showToast(`${measurementType.replace('-', ' ')} saved successfully!`, 'success');
     }
@@ -1815,6 +1921,48 @@ class ManualEntryApp {
         if (measurementType.includes('hand')) return 'inches';
         
         return unitMap[measurementType] || 'inches';
+    }
+
+    convertToInches(value, unit) {
+        if (unit === 'cm') {
+            return value / 2.54;
+        }
+        return value; // Already in inches
+    }
+
+    inchesToFeetAndInches(inches) {
+        const feet = Math.floor(inches / 12);
+        const remainingInches = (inches % 12).toFixed(1);
+        return `${feet}' ${remainingInches}"`;
+    }
+
+    roundMeasurement(value, measurementType) {
+        // Round to 2 decimal places for most measurements
+        return Math.round(value * 100) / 100;
+    }
+
+    getAdjustedMeasurementValue(measurement, measurementType, gender) {
+        if (!measurement) return null;
+        
+        const data = measurement[measurementType];
+        if (!data || !data.value) return null;
+        
+        // Get the unit for this measurement
+        const unit = this.getMeasurementUnit(measurementType);
+        
+        // Convert to inches if needed
+        const rawValueInInches = this.convertToInches(data.value, data.unit || unit);
+        
+        // Get adjustment and override
+        const adjustmentValue = this.getAdjustment(measurementType, gender);
+        const overrideValue = parseFloat(data.override || 0);
+        
+        // Calculate adjusted value (apply override if exists, otherwise use adjustment)
+        const adjustedValue = overrideValue !== 0 ? 
+            rawValueInInches + overrideValue : 
+            rawValueInInches + adjustmentValue;
+        
+        return this.roundMeasurement(adjustedValue, measurementType);
     }
 }
 
